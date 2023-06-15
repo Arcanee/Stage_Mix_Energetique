@@ -18,13 +18,13 @@ def displayBorder(im, pts):
 
 dictZone = {}
 def detectZone(corner, ids, img):
-    inBounds = 0 # origine
+    regionOK = 0 # origine
     for k in range(len(ids)):
         if ids[k][0] == 0:
             o = corner[k].astype(int)[0]
-            inBounds = 1
+            regionOK = 1
             break
-    if not inBounds:
+    if not regionOK:
         sys.exit("Pas de region detectee\n")
 
     vx = o[1] - o[0]
@@ -95,55 +95,7 @@ def detectZone(corner, ids, img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {0: "img/photo/A3-7-clean.png",
-            1: "img/photo/A3-7-clean-50p.png",
-            2: "img/photo/A3-7-clean-30p.png",
-            3: "img/photo/A3-15-clean.png",
-            4: "img/photo/A3-15-clean-50p.png",
-            5: "img/photo/A3-15-clean-30p.png",
-            6: "img/photo/A3-15-lean.png",
-            7: "img/photo/A3-15-lean-50p.png",
-            8: "img/photo/A3-15-lean-30p.png",
-            9: "img/photo/A3-15-lean-slight-rotate.png",
-            10: "img/photo/A3-15-lean-slight-rotate-50p.png",
-            11: "img/photo/A3-15-lean-slight-rotate-30p.png", # FAIL (30% de la taille + taille reduite a cause de l'inclinaison => trop petit)
-            12: "img/photo/A3-15-lean-full-rotate.png",
-            13: "img/photo/A3-15-lean-full-rotate-50p.png",
-            14: "img/photo/A3-15-lean-full-rotate-30p.png", # FAIL (30% de la taille + taille reduite a cause de l'inclinaison => trop petit)
-            15: "img/photo/A3-15-reverse.png",
-            16: "img/photo/A3-15-reverse-50p.png",
-            17: "img/photo/A3-15-reverse-30p.png",
-            18: "img/photo/A3-15-reverse-slight-rotate.png",
-            19: "img/photo/A3-15-reverse-slight-rotate-50p.png",
-            20: "img/photo/A3-15-reverse-slight-rotate-30p.png", # FAIL (30% de la taille + taille reduite a cause de l'inclinaison => trop petit)
-            21: "img/photo/A3-15-reverse-full-rotate.png",
-            22: "img/photo/A3-15-reverse-full-rotate-50p.png",
-            23: "img/photo/A3-15-reverse-full-rotate-30p.png", # FAIL (30% de la taille + taille reduite a cause de l'inclinaison => trop petit)
-            24: "img/photo/reel-l1-i1.png",
-            25: "img/photo/reel-l1-i1-far.png",
-            26: "img/photo/reel-l1-i3.png",
-            27: "img/photo/reel-l1-i3-far.png",
-            28: "img/photo/reel-l2-i2-far.png",
-            29: "img/photo/reel-l2-i3.png",
-            30: "img/photo/reel-l3-i1-far.png",
-            31: "img/photo/reel-l3-i2.png",
-            32: "img/photo/reel-l3-i3.png",
-            33: "img/photo/reel-l4-i1.png",
-            34: "img/photo/reel-l4-i2.png",
-            35: "img/photo/reel-l4-i2-bis.png",
-            36: "img/photo/reel-l4-i2-far.png", # FAIL (trop loin / apparait trop petit)
-            37: "img/photo/reel-l4-i3.png",
-            38: "img/photo/reel-l4-i3-bis.png", # FAIL (1 code loin / petit / pas focus)
-            39: "img/photo/reel-l0-i1.png", # FAIL (pas assez de lumiere)
-            40: "img/photo/reel-l0-i2-far.png", # FAIL (pas assez de lumiere)
-            41: "img/photo/size-test-l0-rotate.png", 
-            42: "img/photo/size-test-l0-angle.png",
-            43: "img/photo/size-test-l0-far.png",
-            44: "img/photo/size-test.png",
-            45: "img/photo/size-test-angle.png"}
-
-# Pour les tests (plus rapide)
-dictImgTest =  {41: "img/photo/zone-clean.png",
+dictImg =  {41: "img/photo/zone-clean.png",
                 2: "img/photo/zone-full.png",
                 4: "img/photo/zone-angle.png"} 
 
@@ -159,7 +111,7 @@ dictCode = {0: "France",
 
 # Le detecteur de code ArUco
 det = cv.aruco.ArucoDetector()
-dico = dictImgTest
+dico = dictImg
 
 
 for x in dico: # Pour chaque image

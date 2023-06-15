@@ -54,7 +54,12 @@ dictImg =  {0: "img/photo/A3-7-clean.png",
             37: "img/photo/reel-l4-i3.png",
             38: "img/photo/reel-l4-i3-bis.png", # FAIL (1 code loin / petit / pas focus)
             39: "img/photo/reel-l0-i1.png", # FAIL (pas assez de lumiere)
-            40: "img/photo/reel-l0-i2-far.png"} # FAIL (pas assez de lumiere)
+            40: "img/photo/reel-l0-i2-far.png", # FAIL (pas assez de lumiere)
+            41: "img/photo/size-test-l0-rotate.png", 
+            42: "img/photo/size-test-l0-angle.png",
+            43: "img/photo/size-test-l0-far.png",
+            44: "img/photo/size-test.png",
+            45: "img/photo/size-test-angle.png"}
 
 # Pour les tests (plus rapide)
 dictImgTest =  {39: "img/photo/size-test-l0-rotate.png", 
