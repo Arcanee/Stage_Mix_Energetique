@@ -33,7 +33,7 @@ def getBoardCorners(img):
             corners.append(pts[i][0].astype(int))
 
 
-    # On trie les coordonnees pour avoir les Arucoen partant d'en haut a gauche dans le sens horaire
+    # On trie les coordonnees pour avoir les Aruco en partant d'en haut a gauche dans le sens horaire
 
     # Tri horizontal
     for i in range(len(corners)):
@@ -166,10 +166,7 @@ def locateAruco(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {0: "img/photo/risk-1.png",
-            4: "img/photo/risk-2.png",
-            2: "img/photo/risk-3.png",
-            1 : "img/photo/risk-4.png"} 
+dictImg =  {0: "img/photo/risk-1.png"} 
 
 # Pour donner un sentiment de reel dans l'affichage
 dictCode = {0: "France",
