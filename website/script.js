@@ -7,16 +7,40 @@ window.onload = function() {
 
 
 
-    if (document.title == "qrcode-webapp") {
+    if (document.title == "Jeu mix énergétique") {
+
+        function displayResults(data) {
+            for (const k in data) {
+                if (k == "Carte") {
+                    const p = document.getElementById(k);
+                    p.innerHTML = `Carte détectée : ${data[k]}`;
+                }
+            }
+
+            for (const k in data) {
+                if (k != "Carte") {
+                    const p = document.getElementById(k);
+                    p.innerHTML = `${k} :`;
+
+                    const ul = document.createElement('ul');
+                    for (a of data[k]) {
+                        const li = document.createElement('li');
+                        li.innerHTML = `${a.nombre} ${a.nom}`;
+                        ul.appendChild(li);
+                    }
+                    p.appendChild(ul);
+                }
+            }
+        }
 
         function toBase64 (url, callback){
 
-            const img = document.createElement('IMG');
-            canvas = document.createElement('CANVAS');
+            const img = document.createElement('img');
+            canvas = document.createElement('canvas');
             ctx = canvas.getContext('2d');
             data = '';
         
-            img.crossOrigin = 'Anonymous'
+            img.crossOrigin = 'Anonymous';
         
             img.onload = function(){
                 canvas.height = this.height;
@@ -40,6 +64,7 @@ window.onload = function() {
                     if (request.status === 200) {
                       const response = JSON.parse(request.responseText);
                       console.log(response);
+                      displayResults(response);
                     } else {
                       console.log('Un problème est survenu avec la requête.');
                     }

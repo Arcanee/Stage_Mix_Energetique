@@ -124,16 +124,19 @@ def locateAruco(img, det, dictZone):
     for i in range(len(ids)):
         id = ids[i][0]
         pt = pts[i][0].astype(int)[0] # On regarde un seul point pour simplifier la tache
+
+        if id == 0:
+            dictZone["Carte"] = 0
         
         if id != 0:
             # OUEST
             if pt[0] < (boardCorners[0]+MER_AM_AF*vxTop)[0]:
                 # NORD
                 if pt[1] < (boardCorners[0]+PAR_N_S*vyLeft)[1]:
-                    dictZone["Amerique du Nord"].append(int(id))
+                    dictZone["Amerique_du_Nord"].append(int(id))
                 # SUD
                 else:
-                    dictZone["Amerique du Sud"].append(int(id))
+                    dictZone["Amerique_du_Sud"].append(int(id))
             
             # SINON (EST), SI NORD
             elif pt[1] < (boardCorners[0]+PAR_N_S*vyLeft)[1]:
@@ -160,9 +163,6 @@ def locateAruco(img, det, dictZone):
             else:
                 dictZone["Oceanie"].append(int(id))
 
-    for k in dictZone:
-        print(k, ":", dictZone[k])
-
     highlightAruco(img, pts, ids)
 
 
@@ -170,8 +170,8 @@ def locateAruco(img, det, dictZone):
 
 def coord_main():
     #Liste des elements par zone
-    dictZone = {"Amerique du Nord": [], "Amerique du Sud": [], "Asie": [],
-                        "Afrique": [], "Oceanie": [], "Europe": []}
+    dictZone = {"Amerique_du_Nord": [], "Amerique_du_Sud": [], "Asie": [],
+                        "Afrique": [], "Oceanie": [], "Europe": [], "Carte": ""}
 
     # Pour boucler sur toutes les images
     dictImg =  {0: "image.png"} 
@@ -204,9 +204,28 @@ def coord_main():
         print("")
 
         locateAruco(img, det, dictZone)
+
+        print("Carte utilisee : " + dictCode[dictZone["Carte"]] + "\n")
+        print("Elements detectes :")
+        for k in dictZone:
+            print("")
+            if dictZone[k] != 0:
+                c = Counter(dictZone[k])
+                print(k + " : ")
+                for i in c:
+                        print("  - {} ".format(c[i]) + dictCode[i])
     
 
     print("")
 
+    output = {"Carte" : dictCode[dictZone["Carte"]]}
+    for k in dictZone:
+        if k != "Carte":
+            output[k] = []
+            c = Counter(dictZone[k])
+            for i in c:
+                output[k].append({"nom":dictCode[i], "nombre":c[i]})
+
+
     with open("data_output.json", "w") as f:
-        json.dump(dictZone, f)
+        json.dump(output, f)
