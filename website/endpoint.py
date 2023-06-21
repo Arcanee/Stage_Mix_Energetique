@@ -23,12 +23,16 @@ def imgProcess():
     with open('image.png', 'wb') as imgFile:
         imgFile.write(img)
 
-    coord_main()
-    with open("data_output.json", "r") as readOutput:
-        result = json.load(readOutput)
+    try:
+        coord_main()
+        with open("data_output.json", "r") as readOutput:
+            result = ["detection_success", json.load(readOutput)]
+    except:
+        result = ["detection_error", None]
+
 
     return result
 
 #Run the app:
 if __name__ == "__main__": 
-   app.run(debug=True)
+   app.run()

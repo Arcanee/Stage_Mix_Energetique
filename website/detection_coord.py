@@ -133,10 +133,10 @@ def locateAruco(img, det, dictZone):
             if pt[0] < (boardCorners[0]+MER_AM_AF*vxTop)[0]:
                 # NORD
                 if pt[1] < (boardCorners[0]+PAR_N_S*vyLeft)[1]:
-                    dictZone["Amerique_du_Nord"].append(int(id))
+                    dictZone["AN"].append(int(id))
                 # SUD
                 else:
-                    dictZone["Amerique_du_Sud"].append(int(id))
+                    dictZone["AS"].append(int(id))
             
             # SINON (EST), SI NORD
             elif pt[1] < (boardCorners[0]+PAR_N_S*vyLeft)[1]:
@@ -170,7 +170,7 @@ def locateAruco(img, det, dictZone):
 
 def coord_main():
     #Liste des elements par zone
-    dictZone = {"Amerique_du_Nord": [], "Amerique_du_Sud": [], "Asie": [],
+    dictZone = {"AN": [], "AS": [], "Asie": [],
                         "Afrique": [], "Oceanie": [], "Europe": [], "Carte": ""}
 
     # Pour boucler sur toutes les images
@@ -179,10 +179,10 @@ def coord_main():
     # Pour donner un sentiment de reel dans l'affichage
     dictCode = {0: "France",
                 1: "Barrage",
-                2: "Panneaux PV",
-                3: "Centrale nucléaire",
-                4: "Eolienne ON",
-                5: "Eolienne OFF",
+                2: "PV",
+                3: "Centrale",
+                4: "E_ON",
+                5: "E_OFF",
                 6: "Methaniseur"}
 
     #Le detecteur

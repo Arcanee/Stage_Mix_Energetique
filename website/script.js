@@ -1,36 +1,53 @@
-window.onload = function() {
+$(function() {
 
     const imgData = document.createElement('img');
-    const imgInput = document.getElementById('imgInput');
-    const button = document.getElementById('imgOutput');
-
-
 
 
     if (document.title == "Jeu mix énergétique") {
+        $("#sous-titre").fadeIn();
+        
 
         function displayResults(data) {
             for (const k in data) {
                 if (k == "Carte") {
-                    const p = document.getElementById(k);
-                    p.innerHTML = `Carte détectée : ${data[k]}`;
+                    $('#'+k).html(`Carte : ${data[k]}`);
                 }
             }
 
             for (const k in data) {
                 if (k != "Carte") {
-                    const p = document.getElementById(k);
-                    p.innerHTML = `${k} :`;
-
-                    const ul = document.createElement('ul');
                     for (a of data[k]) {
-                        const li = document.createElement('li');
-                        li.innerHTML = `${a.nombre} ${a.nom}`;
-                        ul.appendChild(li);
+                        $(`#tab_${k}_${a.nom}`).html(`${a.nombre}`);
                     }
-                    p.appendChild(ul);
                 }
             }
+            
+            $("#inputError").hide();
+            $("#sous-titre").hide();
+            $("#resultats").fadeIn();
+            
+        }
+
+        function displayError(reason) {
+            let msg;
+            switch (reason) {
+                case "img":
+                    msg = "Le plateau n'a pas été correctement détecté. Essayez de faire en sorte que tout le plateau soit visible et vu du dessus.";
+                    break;
+                case "http":
+                    msg = "Une erreur est survenue avec le serveur.";
+                    break;
+                case "input":
+                    msg = "Vous n'avez rien envoyé. Prenez une photo ou choisissez-en une dans votre bibliothèque.";
+                    break;
+
+                default:
+                    break;
+            }
+
+            $("#errorMsg").html(msg);
+            $("#inputError").css('display', 'none');
+            $("#inputError").fadeIn();
         }
 
         function toBase64 (url, callback){
@@ -55,32 +72,27 @@ window.onload = function() {
 
 
         function sendImg(img) {
-            const request = new XMLHttpRequest(),
-            path = "http://127.0.0.1:5000/receiver";
-            data = JSON.stringify({image: img});
-
-            request.onreadystatechange = function() {
-                if (request.readyState === XMLHttpRequest.DONE) {
-                    if (request.status === 200) {
-                      const response = JSON.parse(request.responseText);
-                      console.log(response);
-                      displayResults(response);
-                    } else {
-                      console.log('Un problème est survenu avec la requête.');
-                    }
+            $.ajax({
+            url: "http://127.0.0.1:5000/receiver",
+            type: "POST",
+            data: JSON.stringify({image: img}),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                if (data[0] == "detection_success") {
+                    displayResults(data[1]);
+                } else {
+                    displayError("img");
                 }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                displayError("http");
             }
-
-            request.open("POST", path, true);
-            request.setRequestHeader('Content-Type', 'application/json');
-            request.send(data);
+            });
         }
-
         
 
-
-
-        imgInput.addEventListener('change', () =>   {
+        $('#imgInput').change(() => {
             const file = imgInput.files[0];
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -91,11 +103,18 @@ window.onload = function() {
         })
         
         
-        button.addEventListener('click', () => {
+        $('#imgOutput').click(() => {
             if (imgData.src) {
                toBase64(imgData.src, function(data){sendImg(data);})
+            } else {
+                displayError("input");
             }
+        })
+
+        $('#retakePhoto').click(() => {
+            $("#resultats").css('display', 'none');
+            $("#sous-titre").fadeIn();
         })
     }
 
-}
+});
