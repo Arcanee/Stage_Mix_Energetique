@@ -3,6 +3,9 @@ from collections import Counter
 import cv2 as cv
 import sys
 
+# Le detecteur de code Aruco
+det = cv.aruco.ArucoDetector()
+
 
 # Affichage de fenetre
 def display(title, img):
@@ -36,7 +39,7 @@ def detCircles(img):
     
 
 def locate(coord, color):
-    print(color)
+    print("couleur", color, "detectee dans la zone [?]")
 
 # Recupere les 4 coins du plateau
 def getBoardCorners(img):
@@ -84,7 +87,7 @@ def getBoardCorners(img):
 
     return corners
 
-dictZone = {}
+
 def detColor(img):
     display("Image d'origine", img)
 
@@ -139,7 +142,8 @@ def detColor(img):
         elif (borderColor >= cal["feutre_rouge"][0]).all() and (borderColor <= cal["feutre_rouge"][1]).all():
             locate(c, "feutre_rouge")
         else:
-            raise Exception("couleur non reconnue")
+            print("couleur non reconnue")
+            #raise Exception("couleur non reconnue")
 
     
 
@@ -148,37 +152,17 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {2: "img/photo/cercle-1.jpg",
-            3: "img/photo/cercle-2.jpg",
-            4: "img/photo/cercle-3.jpg",} 
-
-# Pour donner un sentiment de reel dans l'affichage
-dictCode = {0: "France",
-            1: "Barrage",
-            2: "Panneaux PV",
-            3: "Centrale nucléaire",
-            4: "Eolienne ON",
-            5: "Eolienne OFF",
-            6: "Methaniseur"}
+dictImg =  {5: "img/photo/cercle-4.png",
+            1: "img/photo/cercle-5.png"} 
 
 
-# Le detecteur de code Aruco
-det = cv.aruco.ArucoDetector()
-dico = dictImg
 
-
-for k in dico: # Pour chaque image
-
-    # Liste des IDs contenus dans chaque zone
-    dictZone = {"Carte":"", "HDF":[], "IDF": [], "GE":[],
-                "Normandie":[], "Bretagne":[], "PDLL":[],
-                "CVL":[], "NA":[], "Occitanie":[], "PACA":[],
-                "AURA":[], "BFC":[]}
+for k in dictImg: # Pour chaque image
 
     print("\n################\n")
 
-    img = cv.imread(dico[k]) # Lecture de img
-    print(dico[k])
+    img = cv.imread(dictImg[k]) # Lecture de img
+    print(dictImg[k])
     print("")
 
     detColor(img)
