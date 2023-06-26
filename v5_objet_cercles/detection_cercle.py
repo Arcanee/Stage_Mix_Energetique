@@ -19,8 +19,8 @@ def highlightCircles(img, circles):
     for i in circles[0]:
             center = (i[0], i[1])
             radius = i[2]
-            cv.circle(img, center, 1, (0, 100, 100), 3)
-            cv.circle(img, center, radius, (255, 0, 255), 3)
+            cv.circle(img, center, 1, (0, 100, 100), 1)
+            cv.circle(img, center, radius, (255, 0, 255), 1)
  
     display("Detection des cercles", img)
 
@@ -30,7 +30,8 @@ def detCircles(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 5)
     
-    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=100, param2=30, minRadius=5, maxRadius=20)    
+    #circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=100, param2=30, minRadius=5, maxRadius=20)    
+    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=45, maxRadius=65)    
     
     circles = np.uint16(np.around(circles))
 
@@ -152,8 +153,8 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {5: "img/photo/cercle-4.png",
-            1: "img/photo/cercle-5.png"} 
+dictImg =  {
+            1: "img/photo/cercle-6.png"} 
 
 
 

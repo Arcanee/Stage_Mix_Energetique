@@ -24,6 +24,7 @@ $(function() {
             
             $("#inputError").hide();
             $("#sous-titre").hide();
+            $("#noPhoto").hide();
             $("#resultats").fadeIn();
             
         }
@@ -46,6 +47,7 @@ $(function() {
             }
 
             $("#errorMsg").html(msg);
+            $("#inputError").css('visibility', 'visible');
             $("#inputError").css('display', 'none');
             $("#inputError").fadeIn();
         }
