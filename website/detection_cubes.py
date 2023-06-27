@@ -2,10 +2,7 @@ import numpy as np
 from collections import Counter
 import cv2 as cv
 import sys
-
-
-# Le detecteur de code Aruco
-det = cv.aruco.ArucoDetector()
+import json
 
 
 # Affichage de fenetre
@@ -15,8 +12,9 @@ def display(title, img):
     cv.destroyAllWindows()
 
 
-def locate(box, color):
-    locImg = cv.imread("img/locImg.png")
+# Localisation de l'objet
+def locate(box, color, dictZone):
+    locImg = cv.imread("locImg.png")
     hsv = cv.cvtColor(locImg, cv.COLOR_BGR2HSV)
     x = box[0][0]
     y = box[0][1]
@@ -34,36 +32,16 @@ def locate(box, color):
            "ara" : (hsv[500][700] - np.array([2, 20, 20]), hsv[500][700] + np.array([2, 20, 20])),
            "nor" : (hsv[200][500] - np.array([2, 20, 20]), hsv[200][500] + np.array([2, 20, 20]))}
     
-    if (hsv[y][x] >= cal["hdf"][0]).all() and (hsv[y][x] <= cal["hdf"][1]).all():
-        print(color, "detectee en hauts de france")
-    elif (hsv[y][x] >= cal["idf"][0]).all() and (hsv[y][x] <= cal["idf"][1]).all():
-        print(color, "detectee en ile de france")
-    elif (hsv[y][x] >= cal["bre"][0]).all() and (hsv[y][x] <= cal["bre"][1]).all():
-        print(color, "detectee en bretagne")
-    elif (hsv[y][x] >= cal["pll"][0]).all() and (hsv[y][x] <= cal["pll"][1]).all():
-        print(color, "detectee en pays de la loire")
-    elif (hsv[y][x] >= cal["cvl"][0]).all() and (hsv[y][x] <= cal["cvl"][1]).all():
-        print(color, "detectee en centre val de loire")
-    elif (hsv[y][x] >= cal["bfc"][0]).all() and (hsv[y][x] <= cal["bfc"][1]).all():
-        print(color, "detectee en bourgogne franche comte")
-    elif (hsv[y][x] >= cal["pac"][0]).all() and (hsv[y][x] <= cal["pac"][1]).all():
-        print(color, "detectee en provence alpes cote d'azur")
-    elif (hsv[y][x] >= cal["occ"][0]).all() and (hsv[y][x] <= cal["occ"][1]).all():
-        print(color, "detectee en occitanie")
-    elif (hsv[y][x] >= cal["naq"][0]).all() and (hsv[y][x] <= cal["naq"][1]).all():
-        print(color, "detectee en nouvelle aquitaine")
-    elif (hsv[y][x] >= cal["est"][0]).all() and (hsv[y][x] <= cal["est"][1]).all():
-        print(color, "detectee en grand est")
-    elif (hsv[y][x] >= cal["ara"][0]).all() and (hsv[y][x] <= cal["ara"][1]).all():
-        print(color, "detectee en auvergne rhone alpes")
-    elif (hsv[y][x] >= cal["nor"][0]).all() and (hsv[y][x] <= cal["nor"][1]).all():
-        print(color, "detectee en normandie")
-    else:
-        print(color, "detectee dans AUCUNE REGION")
-
+    for reg in cal:
+        if (hsv[y][x] >= cal[reg][0]).all() and (hsv[y][x] <= cal[reg][1]).all():
+            dictZone[reg].append(color)
+        
 
 # Recupere les 4 coins du plateau
-def getBoardCorners(img):
+def getBoardCorners(img, dictZone):
+    # Le detecteur de code Aruco
+    det = cv.aruco.ArucoDetector()
+    
     pts, ids, reject = det.detectMarkers(img)
     corners = []
 
@@ -71,6 +49,7 @@ def getBoardCorners(img):
     for i in range(len(ids)):
         if ids[i][0] == 0:
             corners.append(pts[i][0].astype(int))
+            dictZone["carte"] = "France"
 
 
     # On trie les coordonnees pour avoir les Aruco en partant d'en haut a gauche dans le sens horaire
@@ -109,15 +88,16 @@ def getBoardCorners(img):
     return corners
 
 
+# Renvoie vrai si fait partie de la légende
 def inCaption(box):
     return (box[0][0] <= 230 and box[0][1] >= 375)
 
 
-def detColor(img):
-    display("Image d'origine", img)
+# Detecte les objets grace a leur couleur
+def detColor(img, dictZone):
 
     # On recupere les coins
-    boardCorners = getBoardCorners(img)
+    boardCorners = getBoardCorners(img, dictZone)
 
     # Correction de la perspective
     pts1 = np.float32(boardCorners)
@@ -127,8 +107,7 @@ def detColor(img):
 
 
     # On recupere les nouveaux coins
-    boardCorners = getBoardCorners(img)
-    display("Perspective corrigee", img)
+    boardCorners = getBoardCorners(img, dictZone)
 
     # Contours du plateau
     cv.polylines(img, np.array([boardCorners]), True, (0,0,255), 2)
@@ -165,30 +144,23 @@ def detColor(img):
             box = np.int0(box)
             if not inCaption(box):
                 cv.drawContours(sketch,[box],0,(0,255,0),2)
-                locate(box, col)
+                locate(box, col, dictZone)
         
-        display(col+" contours", sketch)
 
+# main
+def cubes_main():
+    #Liste des regions
+    dictZone = {"hdf": [], "idf": [], "est": [],
+                "nor": [], "occ": [], "pac": [],
+                "bre": [], "cvl": [], "pll": [],
+                "naq": [], "ara": [], "bfc": [],
+                "carte": ""}
 
+    # Lecture de img
+    img = cv.imread("image.png")
 
-# Pour boucler sur toutes les images
-dictImg =  {5: "img/photo/cube-1.png"} 
+    detColor(img, dictZone)
 
-
-
-for k in dictImg: # Pour chaque image
-
-    print("\n################\n")
-
-    img = cv.imread(dictImg[k]) # Lecture de img
-    print(dictImg[k])
-    print("")
-
-    detColor(img)
-   
-    
-
-print("")    
-
-
+    with open("data_output.json", "w") as f:
+        json.dump(dictZone, f)
 

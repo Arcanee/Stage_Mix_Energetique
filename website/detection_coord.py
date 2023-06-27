@@ -169,7 +169,7 @@ def locateAruco(img, det, dictZone):
 
 
 def coord_main():
-    #Liste des elements par zone
+    #Liste des zones
     dictZone = {"AN": [], "AS": [], "Asie": [],
                         "Afrique": [], "Oceanie": [], "Europe": [], "Carte": ""}
 

@@ -30,8 +30,8 @@ def detCircles(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 5)
     
-    #circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=100, param2=30, minRadius=5, maxRadius=20)    
-    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=45, maxRadius=65)    
+    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=100, param2=30, minRadius=5, maxRadius=20)    
+    #circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=45, maxRadius=65)    #Pour les figurines
     
     circles = np.uint16(np.around(circles))
 
@@ -40,7 +40,51 @@ def detCircles(img):
     
 
 def locate(coord, color):
-    print("couleur", color, "detectee dans la zone [?]")
+    locImg = cv.imread("img/locImg.png")
+    hsv = cv.cvtColor(locImg, cv.COLOR_BGR2HSV)
+    x = coord[0]
+    y = coord[1]
+
+    cal = {"hdf" : (hsv[100][600] - np.array([2, 20, 20]), hsv[100][600] + np.array([2, 20, 20])),
+           "idf" : (hsv[200][600] - np.array([2, 20, 20]), hsv[200][600] + np.array([2, 20, 20])),
+           "bre" : (hsv[250][250] - np.array([2, 20, 20]), hsv[250][250] + np.array([2, 20, 20])),
+           "pll" : (hsv[300][400] - np.array([2, 20, 20]), hsv[300][400] + np.array([2, 20, 20])),
+           "cvl" : (hsv[300][550] - np.array([2, 20, 20]), hsv[300][550] + np.array([2, 20, 20])),
+           "bfc" : (hsv[300][700] - np.array([2, 20, 20]), hsv[300][700] + np.array([2, 20, 20])),
+           "pac" : (hsv[600][800] - np.array([2, 20, 20]), hsv[600][800] + np.array([2, 20, 20])),
+           "occ" : (hsv[600][600] - np.array([2, 20, 20]), hsv[600][600] + np.array([2, 20, 20])),
+           "naq" : (hsv[500][500] - np.array([2, 20, 20]), hsv[500][500] + np.array([2, 20, 20])),
+           "est" : (hsv[200][700] - np.array([2, 20, 20]), hsv[200][700] + np.array([2, 20, 20])),
+           "ara" : (hsv[500][700] - np.array([2, 20, 20]), hsv[500][700] + np.array([2, 20, 20])),
+           "nor" : (hsv[200][500] - np.array([2, 20, 20]), hsv[200][500] + np.array([2, 20, 20]))}
+    
+    if (hsv[y][x] >= cal["hdf"][0]).all() and (hsv[y][x] <= cal["hdf"][1]).all():
+        print(color, "detectee en hauts de france")
+    elif (hsv[y][x] >= cal["idf"][0]).all() and (hsv[y][x] <= cal["idf"][1]).all():
+        print(color, "detectee en ile de france")
+    elif (hsv[y][x] >= cal["bre"][0]).all() and (hsv[y][x] <= cal["bre"][1]).all():
+        print(color, "detectee en bretagne")
+    elif (hsv[y][x] >= cal["pll"][0]).all() and (hsv[y][x] <= cal["pll"][1]).all():
+        print(color, "detectee en pays de la loire")
+    elif (hsv[y][x] >= cal["cvl"][0]).all() and (hsv[y][x] <= cal["cvl"][1]).all():
+        print(color, "detectee en centre val de loire")
+    elif (hsv[y][x] >= cal["bfc"][0]).all() and (hsv[y][x] <= cal["bfc"][1]).all():
+        print(color, "detectee en bourgogne franche comte")
+    elif (hsv[y][x] >= cal["pac"][0]).all() and (hsv[y][x] <= cal["pac"][1]).all():
+        print(color, "detectee en provence alpes cote d'azur")
+    elif (hsv[y][x] >= cal["occ"][0]).all() and (hsv[y][x] <= cal["occ"][1]).all():
+        print(color, "detectee en occitanie")
+    elif (hsv[y][x] >= cal["naq"][0]).all() and (hsv[y][x] <= cal["naq"][1]).all():
+        print(color, "detectee en nouvelle aquitaine")
+    elif (hsv[y][x] >= cal["est"][0]).all() and (hsv[y][x] <= cal["est"][1]).all():
+        print(color, "detectee en grand est")
+    elif (hsv[y][x] >= cal["ara"][0]).all() and (hsv[y][x] <= cal["ara"][1]).all():
+        print(color, "detectee en auvergne rhone alpes")
+    elif (hsv[y][x] >= cal["nor"][0]).all() and (hsv[y][x] <= cal["nor"][1]).all():
+        print(color, "detectee en normandie")
+    else:
+        print(color, "detectee dans AUCUNE REGION")
+
 
 # Recupere les 4 coins du plateau
 def getBoardCorners(img):
@@ -101,6 +145,8 @@ def detColor(img):
     M = cv.getPerspectiveTransform(pts1,pts2)
     img = cv.warpPerspective(img,M,(1135,755))
 
+    cv.imwrite("OUI.png", img)
+
 
     # On recupere les nouveaux coins
     boardCorners = getBoardCorners(img)
@@ -127,24 +173,14 @@ def detColor(img):
            "feutre_rouge" : (hsv[210][40] - np.array([5, 40, 60]), hsv[210][40] + np.array([5, 40, 60]))}
 
     for c in circles[0]:
-        color = hsv[c[1]][c[0]]
         borderColor = hsv[c[1]+c[2]][c[0]]
 
-        if (color >= cal["green"][0]).all() and (color <= cal["green"][1]).all():
-            locate(c, "green")
-        elif (color >= cal["navy"][0]).all() and (color <= cal["navy"][1]).all():
-            locate(c, "navy")
-        elif (color >= cal["beige"][0]).all() and (color <= cal["beige"][1]).all():
-            locate(c, "beige")
-        elif (color >= cal["sky"][0]).all() and (color <= cal["sky"][1]).all():
-            locate(c, "sky")
-        elif (borderColor >= cal["feutre_vert"][0]).all() and (borderColor <= cal["feutre_vert"][1]).all():
+        if (borderColor >= cal["feutre_vert"][0]).all() and (borderColor <= cal["feutre_vert"][1]).all():
             locate(c, "feutre_vert")
         elif (borderColor >= cal["feutre_rouge"][0]).all() and (borderColor <= cal["feutre_rouge"][1]).all():
             locate(c, "feutre_rouge")
         else:
-            print("couleur non reconnue")
-            #raise Exception("couleur non reconnue")
+            locate(c, "???")
 
     
 
@@ -153,8 +189,7 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {
-            1: "img/photo/cercle-6.png"} 
+dictImg =  {0: "img/photo/cercle-1.jpg"} 
 
 
 

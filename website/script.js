@@ -8,16 +8,34 @@ $(function() {
         
 
         function displayResults(data) {
-            for (const k in data) {
-                if (k == "Carte") {
-                    $('#'+k).html(`Carte : ${data[k]}`);
+            let copper;
+            let navy;
+            let beige;
+            let sky;
+            let green;
+
+            for (const reg in data) {
+                if (reg == "carte") {
+                    $('#carte').html(`Carte: ${data[reg]}`);
                 }
             }
 
-            for (const k in data) {
-                if (k != "Carte") {
-                    for (a of data[k]) {
-                        $(`#tab_${k}_${a.nom}`).html(`${a.nombre}`);
+            for (const reg in data) {
+                if (reg != "Carte") {
+                    colors = {
+                        "copper" : 0,
+                        "navy" : 0,
+                        "beige" : 0,
+                        "sky" : 0,
+                        "green" : 0,
+                    }
+
+                    for (a of data[reg]) {
+                        colors[a] ++;
+                    }
+
+                    for (const c in colors) {
+                        $(`#${reg}_${c}`).html(c + ": " + colors[c]);
                     }
                 }
             }
@@ -25,7 +43,7 @@ $(function() {
             $("#inputError").hide();
             $("#sous-titre").hide();
             $("#noPhoto").hide();
-            $("#resultats").fadeIn();
+            $("#validation").fadeIn();
             
         }
 
@@ -75,7 +93,7 @@ $(function() {
 
         function sendImg(img) {
             $.ajax({
-            url: "http://127.0.0.1:5000/receiver",
+            url: "http://127.0.0.1:5000/detector",
             type: "POST",
             data: JSON.stringify({image: img}),
             contentType: "application/json; charset=utf-8",
@@ -114,7 +132,7 @@ $(function() {
         })
 
         $('#retakePhoto').click(() => {
-            $("#resultats").css('display', 'none');
+            $("#validation").hide();
             $("#sous-titre").fadeIn();
         })
     }

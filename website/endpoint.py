@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from detection_coord import *
+from detection_cubes import *
 import base64
 import json
 
@@ -11,8 +11,8 @@ app = Flask(__name__)
 cors = CORS(app)
 CORS(app, support_credentials=True)
 
-#Create the receiver API POST endpoint:
-@app.route("/receiver", methods=["POST"])
+#Create the detector API POST endpoint:
+@app.route("/detector", methods=["POST"])
 @cross_origin(supports_credentials=True)
 def imgProcess():
     data = request.get_json()
@@ -24,7 +24,7 @@ def imgProcess():
         imgFile.write(img)
 
     try:
-        coord_main()
+        cubes_main()
         with open("data_output.json", "r") as readOutput:
             result = ["detection_success", json.load(readOutput)]
     except:
