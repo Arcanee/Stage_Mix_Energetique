@@ -30,8 +30,8 @@ def detCircles(img):
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     gray = cv.medianBlur(gray, 5)
     
-    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=100, param2=30, minRadius=5, maxRadius=20)    
-    #circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=45, maxRadius=65)    #Pour les figurines
+    #circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=100, param2=30, minRadius=5, maxRadius=20)    
+    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=20, param2=30, minRadius=45, maxRadius=65)    #Pour les figurines
     
     circles = np.uint16(np.around(circles))
 
@@ -145,9 +145,6 @@ def detColor(img):
     M = cv.getPerspectiveTransform(pts1,pts2)
     img = cv.warpPerspective(img,M,(1135,755))
 
-    cv.imwrite("OUI.png", img)
-
-
     # On recupere les nouveaux coins
     boardCorners = getBoardCorners(img)
     display("Perspective corrigee", img)
@@ -189,7 +186,7 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {0: "img/photo/cercle-1.jpg"} 
+dictImg =  {0: "img/photo/A1-blank.jpg"} 
 
 
 

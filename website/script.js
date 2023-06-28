@@ -7,12 +7,16 @@ $(function() {
         $("#sous-titre").fadeIn();
         
 
-        function displayResults(data) {
-            let copper;
-            let navy;
-            let beige;
-            let sky;
-            let green;
+        function photoCheck(data) {
+            let eolienneON;
+            let eolienneOFF;
+            let barrage;
+            let centrale;
+            let panneauPV;
+            let usineCharbon;
+            let usineGaz;
+            let batterie;
+            let stockageGaz;
 
             for (const reg in data) {
                 if (reg == "carte") {
@@ -23,11 +27,15 @@ $(function() {
             for (const reg in data) {
                 if (reg != "Carte") {
                     colors = {
-                        "copper" : 0,
-                        "navy" : 0,
-                        "beige" : 0,
-                        "sky" : 0,
-                        "green" : 0,
+                        "eolienneON" : 0,
+                        "eolienneOFF" : 0,
+                        "barrage" : 0,
+                        "centrale" : 0,
+                        "panneauPV" : 0,
+                        "usineCharbon" : 0,
+                        "usineGaz" : 0,
+                        "batterie" : 0,
+                        "stockageGaz" : 0
                     }
 
                     for (a of data[reg]) {
@@ -100,7 +108,7 @@ $(function() {
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
                 if (data[0] == "detection_success") {
-                    displayResults(data[1]);
+                    photoCheck(data[1]);
                 } else {
                     displayError("img");
                 }
@@ -135,6 +143,24 @@ $(function() {
             $("#validation").hide();
             $("#sous-titre").fadeIn();
         })
+    
+        $('#noPhotoBtn').click(() => {
+            $('#sous-titre').hide();
+            $('#noPhoto').hide();
+            $('#spacing').hide();
+            $('#inputError').hide();
+            $('#manualInput').fadeIn();
+        })
+    
+        $('.backHome').click(() => {
+            $('#manualInput').hide();
+            $('#sous-titre').fadeIn();
+            $('#noPhoto').fadeIn();
+            $('#spacing').fadeIn();
+        })
+    
+    
+    
     }
 
 });

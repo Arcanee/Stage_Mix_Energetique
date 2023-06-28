@@ -19,7 +19,7 @@ def displayBorder(im, pts):
 
 det = cv.aruco.ArucoDetector()
 
-img = cv.imread("img/aruco-0.png")
+img = cv.imread("img/photo/A1-blank.jpg")
 corner, id, reject = det.detectMarkers(img)
 
 if id is not None:
