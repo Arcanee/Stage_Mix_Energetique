@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <meta name="author" content="Aymeric Shinawi">
+        <meta name="description" content="Jeu Mix Energétique pour l'INSA Toulouse">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Entrée manuelle - Jeu mix énergétique</title>
+
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="script.js"></script>
+        
+    </head>
+    <body>
+
+        <h1 id="titre" class="container-fluid pt-2 pb-5 text-center">Interface du jeu de mix énergétique</h1>
+
+
+        <div id="manualInput" class="container pt-5" style="display: none;">
+            <div class="container text-center mb-5">
+                <button class="btn btn-outline-secondary backHome" type="button">Retour à l'accueil</button>
+            </div>
+
+            <h2 class="container-fluid pb-5 text-center">Choisissez votre carte et entrez la quantité d'installation pour chaque région</h2>
+
+            <form>
+                <select name="carte" id="carte" class="form-select form-select-lg">
+                    <option value="default" selected>Choisir une carte...</option>
+                    <option value="fr">France</option>
+                </select>
+            </form>
+            
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="hdf">Hauts-de-France</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="hdf_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="bre">Bretagne</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bre_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="nor">Normandie</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="nor_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="idf">Ile-de-France</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="idf_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="est">Grand Est</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="est_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="cvl">Centre-Val de Loire</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cvl_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="pll">Pays de la Loire</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pll_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="bfc">Bourgogne-Franche-Comté</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="bfc_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="naq">Nouvelle-Aquitaine</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="naq_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="ara">Auvergne-Rhône-Alpes</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="ara_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="occ">Occitanie</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="occ_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="pac">Provence-Alpes-Côte d'Azur</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="pac_batterie" class="form-control"/>
+                </div>
+            </div>
+
+
+            <h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id="cor">Corse</h3>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes on.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_eolienneON" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Eoliennes off.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_eolienneOFF" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Panneaux</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_panneauPV" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Barrages</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_barrage" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Centrales nuc.</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_centrale" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines charbon</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_usineCharbon" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Usines gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_usineGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Stockages gaz</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_stockageGaz" class="form-control"/>
+                </div>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col-5 mt-2">Batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="0" min="0" max="10" type="number" id="cor_batterie" class="form-control"/>
+                </div>
+            </div>
+
+            <div class="mb-5" style="visibility: hidden;">SPACING</div>
+
+            <div class="text-center pt-5 my-5">  
+                <div class="row justify-content-evenly">
+                    <button class="btn btn-success col-4" type="button" id="computeResults">Valider</button>
+                    <button class="btn btn-danger col-4 backHome" type="button" id="retakePhoto">Retour à l'accueil</button>
+                </div>
+            </div>
+
+        </div>
+        
+    </body>
+</html>
+        

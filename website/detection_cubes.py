@@ -32,9 +32,15 @@ def locate(box, color, dictZone):
            "ara" : (hsv[500][700] - np.array([2, 20, 20]), hsv[500][700] + np.array([2, 20, 20])),
            "nor" : (hsv[200][500] - np.array([2, 20, 20]), hsv[200][500] + np.array([2, 20, 20]))}
     
+    dictPion = {"copper" : "eolienneON",
+                "navy" : "barrage",
+                "beige" : "centrale",
+                "sky" : "batterie",
+                "green" : "usineCharbon"}
+    
     for reg in cal:
         if (hsv[y][x] >= cal[reg][0]).all() and (hsv[y][x] <= cal[reg][1]).all():
-            dictZone[reg].append(color)
+            dictZone[reg].append(dictPion[color])
         
 
 # Recupere les 4 coins du plateau
@@ -161,6 +167,5 @@ def cubes_main():
 
     detColor(img, dictZone)
 
-    with open("data_output.json", "w") as f:
+    with open("detection_output.json", "w") as f:
         json.dump(dictZone, f)
-

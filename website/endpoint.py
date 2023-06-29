@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from detection_cubes import *
+import detection_cubes
+import production
 import base64
 import json
 
@@ -17,22 +18,36 @@ CORS(app, support_credentials=True)
 def imgProcess():
     data = request.get_json()
     b64str = data['image'].partition(",")[2]
-    data = jsonify(data)
     
     img = base64.b64decode(b64str + "==")
     with open('image.png', 'wb') as imgFile:
         imgFile.write(img)
 
     try:
-        cubes_main()
-        with open("data_output.json", "r") as readOutput:
+        detection_cubes.cubes_main()
+        with open("detection_output.json", "r") as readOutput:
+            result = ["detection_success", readOutput.readlines()[0]]
+    except:
+        result = ["detection_error", None]
+
+
+    return jsonify(result)
+
+
+#Create the production API POST endpoint:
+@app.route("/production", methods=["GET"])
+@cross_origin(supports_credentials=True)
+def prodCompute():
+    try:
+        production.prod_main()
+        with open("production_output.json", "r") as readOutput:
             result = ["detection_success", json.load(readOutput)]
     except:
         result = ["detection_error", None]
 
 
-    return result
+    return jsonify(result)
 
 #Run the app:
-if __name__ == "__main__": 
-   app.run()
+if __name__ == "__main__":
+   app.run(debug=True)

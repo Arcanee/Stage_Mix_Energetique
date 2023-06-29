@@ -12,54 +12,12 @@ def display(title, img):
     cv.destroyAllWindows()
 
 
-# Surbrillance des cercles
-def highlightCircles(img, circles):
-    for i in circles[0]:
-            center = (i[0], i[1])
-            radius = i[2]
-            cv.circle(img, center, 1, (255, 0, 255), 2)
-            cv.circle(img, center, radius, (255, 0, 255), 2)
- 
-    display("Detection des cercles", img)
-    cv.imwrite("tests_A1/detectedCircles.png", img)
-
-
-def detCircles(img):
-
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    gray = cv.medianBlur(gray, 5)
-    
-    circles = cv.HoughCircles(gray, cv.HOUGH_GRADIENT, 1, 30, param1=100, param2=18, minRadius=15, maxRadius=35)
-    
-    circles = np.uint16(np.around(circles))
-
-    
-    return circles
-
-
-def weight(x, y, reg):
-    regWeights = {"cor" : ((802,1118), (900,1067), (828,1056), (760,1050)),
-                  "bre" : ((0,0), (220,585), (0,0), (0,0)),
-                  "hdf" : ((504,397), (0,0), (0,0), (0,0)),
-                  "occ" : ((464,1097), (418,1062), (527,1090), (590,1058)),}
-
-    coords = regWeights[reg]
-    dist = [sqrt((coords[0][0] - x)**2 + (coords[0][1] - y)**2),
-            sqrt((coords[1][0]-x)**2 + (coords[1][1]-y)**2),
-            sqrt((coords[2][0]-x)**2 + (coords[2][1]-y)**2),
-            sqrt((coords[3][0]-x)**2 + (coords[3][1]-y)**2)]
-    
-    dmin = np.argmin(dist)
-    corresp = [1, 2, 2, 5]
-
-    return corresp[dmin]
-
-
-def locate(coord, color):
+# Localise la region
+def locate(box, color):
     locImg = cv.imread("tests_A1/img/regions.png")
     hsv = cv.cvtColor(locImg, cv.COLOR_BGR2HSV)
-    x = coord[0]
-    y = coord[1]
+    x = box[0][0]
+    y = box[0][1]
 
     # Couleur par region
     cal = {"hdf" : (hsv[350][500] - np.array([2, 20, 20]), hsv[350][500] + np.array([2, 20, 20])),
@@ -78,8 +36,12 @@ def locate(coord, color):
     
     for reg in cal:
         if (hsv[y][x] >= cal[reg][0]).all() and (hsv[y][x] <= cal[reg][1]).all():
-            print("pion detecte en", reg, ", valeur :", weight(x, y, reg))
+            print("{} soldier in {}".format(color, reg))
 
+
+# Renvoie vrai si fait partie de la légende
+def inRegions(box):
+    return (box[2][1] <= 1154 and box[0][1] >= 207)
 
 # Recupere les 4 coins du plateau
 def getBoardCorners(img):
@@ -131,6 +93,7 @@ def getBoardCorners(img):
     return corners
 
 
+# Detecte les pions grace a leur couleur
 def detColor(img):
     display("Image d'origine", img)
 
@@ -142,7 +105,6 @@ def detColor(img):
     pts2 = np.float32([[5,5], [995,5], [995,1195], [5,1195]])
     M = cv.getPerspectiveTransform(pts1,pts2)
     img = cv.warpPerspective(img,M,(1000,1200))
-
     
 
     # On recupere les nouveaux coins
@@ -153,23 +115,54 @@ def detColor(img):
     cv.polylines(img, np.array([boardCorners]), True, (0,0,255), 2)
     display("Detection du plateau", img)
 
-    # Contours (pour visualiser seulement)
-    edges = cv.Canny(img, 80, 40)
-    display("Detection des contours", edges)
 
-    # Detection des cercles
-    circles = detCircles(img)
 
-    highlightCircles(img, circles)
-
-    # Etalonnage couleurs cercles
+    # Etalonnage
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    cal = {}
+    cal = {"blue" : (hsv[41][84] - np.array([5, 100, 100]), hsv[41][84] + np.array([5, 100, 100])),
+           "green" : (hsv[53][170] - np.array([5, 100, 100]), hsv[53][170] + np.array([5, 100, 100])),
+           "orange" : (hsv[73][88] - np.array([5, 100, 100]), hsv[73][88] + np.array([5, 100, 100])),
+           "yellow" : (hsv[83][136] - np.array([5, 100, 100]), hsv[83][136] + np.array([5, 100, 100])),
+           "black" : (hsv[40][128] - np.array([180, 255, 38]), hsv[40][128] + np.array([180, 255, 38]))
+        #    "beige" : (hsv[557][403] - np.array([5, 60, 100]), hsv[557][403] + np.array([5, 60, 100]))
+            }
+    
+    # Pour chaque couleur : application de masque + detection de contours
+    for col in cal:
+        thresh = cv.inRange(hsv, cal[col][0], cal[col][1])
 
-    for c in circles[0]:
-        #borderColor = hsv[c[1]+c[2]][c[0]]
+        # Reduction bruit hors contours puis dans contours
+        kernel = cv.getStructuringElement(cv.MORPH_RECT, (5,5))
+        open = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel)
+        kernel = cv.getStructuringElement(cv.MORPH_RECT, (5,5))
+        close = cv.morphologyEx(open, cv.MORPH_CLOSE, kernel)
+        display(col+" mask + noise reduction", close)
 
-        locate(c, "???")
+        contours = cv.findContours(close, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+        contours = contours[0]
+
+        # Pour chaque contour : trouver le rectangle qui matche le mieux puis tous les dessiner
+        sketch = img.copy()
+        for c in contours:
+            # peri = cv.arcLength(c, True)
+            # approx = cv.approxPolyDP(c, 0.1 * peri, True)
+            # l = len(approx)
+            # d = {3:"triangle", 4:"carre"}
+            # try:
+            #     print(d[l])
+            # except:
+            #     print("forme non reconnue")
+
+        
+            rot_rect = cv.minAreaRect(c)
+            box = cv.boxPoints(rot_rect)
+            box = np.int0(box)
+            if inRegions(box):
+                # cv.drawContours(sketch,[c],0,(0,255,0),2)
+                cv.drawContours(sketch,[box],0,(0,255,0),2)
+                locate(box, col)
+
+        display("boxes", sketch)
 
     
 
@@ -178,7 +171,7 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {0: "tests_A1/img/tmp.jpg"} 
+dictImg =  {0: "tests_A1/img/carre_triangle.jpg"} 
 
 
 
