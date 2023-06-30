@@ -119,11 +119,11 @@ def detColor(img):
 
     # Etalonnage
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    cal = {"blue" : (hsv[41][84] - np.array([5, 100, 100]), hsv[41][84] + np.array([5, 100, 100])),
+    cal = {"blue" : (hsv[35][83] - np.array([5, 100, 100]), hsv[35][83] + np.array([5, 100, 100])),
            "green" : (hsv[53][170] - np.array([5, 100, 100]), hsv[53][170] + np.array([5, 100, 100])),
-           "orange" : (hsv[73][88] - np.array([5, 100, 100]), hsv[73][88] + np.array([5, 100, 100])),
+           "orange" : (hsv[71][85] - np.array([5, 100, 100]), hsv[71][85] + np.array([5, 100, 100])),
            "yellow" : (hsv[83][136] - np.array([5, 100, 100]), hsv[83][136] + np.array([5, 100, 100])),
-           "black" : (hsv[40][128] - np.array([180, 255, 38]), hsv[40][128] + np.array([180, 255, 38]))
+           "black" : (hsv[40][128] - np.array([180, 255, 30]), hsv[40][128] + np.array([180, 255, 30]))
         #    "beige" : (hsv[557][403] - np.array([5, 60, 100]), hsv[557][403] + np.array([5, 60, 100]))
             }
     
@@ -162,6 +162,7 @@ def detColor(img):
                 cv.drawContours(sketch,[box],0,(0,255,0),2)
                 locate(box, col)
 
+        #cv.imwrite("{}.png".format(col), sketch)
         display("boxes", sketch)
 
     
@@ -171,7 +172,7 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {0: "tests_A1/img/carre_triangle.jpg"} 
+dictImg =  {0: "tests_A1/img/A1-112.jpg"} 
 
 
 

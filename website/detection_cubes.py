@@ -33,14 +33,13 @@ def locate(box, color, dictZone):
            "nor" : (hsv[200][500] - np.array([2, 20, 20]), hsv[200][500] + np.array([2, 20, 20]))}
     
     dictPion = {"copper" : "eolienneON",
-                "navy" : "barrage",
-                "beige" : "centrale",
-                "sky" : "batterie",
-                "green" : "usineCharbon"}
+                "navy" : "eolienneOFF",
+                "beige" : "panneauPV",
+                "sky" : "barrage"}
     
     for reg in cal:
         if (hsv[y][x] >= cal[reg][0]).all() and (hsv[y][x] <= cal[reg][1]).all():
-            dictZone[reg].append(dictPion[color])
+            dictZone[reg][dictPion[color]] += 1
         
 
 # Recupere les 4 coins du plateau
@@ -125,8 +124,8 @@ def detColor(img, dictZone):
     cal = {"copper" : (hsv[400][30] - np.array([5, 40, 100]), hsv[400][30] + np.array([5, 40, 100])),
            "navy" : (hsv[483][187] - np.array([5, 40, 60]), hsv[483][187] + np.array([5, 40, 60])),
            "beige" : (hsv[422][116] - np.array([5, 40, 60]), hsv[422][116] + np.array([5, 40, 60])),
-           "sky" : (hsv[490][117] - np.array([5, 40, 60]), hsv[490][117] + np.array([5, 40, 60])),
-           "green" : (hsv[419][183] - np.array([5, 40, 60]), hsv[419][183] + np.array([5, 40, 60]))
+           "sky" : (hsv[490][117] - np.array([5, 40, 60]), hsv[490][117] + np.array([5, 40, 60]))
+           #"green" : (hsv[419][183] - np.array([5, 40, 60]), hsv[419][183] + np.array([5, 40, 60]))
             }
     # Pour chaque couleur : application de masque + detection de contours
     for col in cal:
@@ -156,11 +155,10 @@ def detColor(img, dictZone):
 # main
 def cubes_main():
     #Liste des regions
-    dictZone = {"hdf": [], "idf": [], "est": [],
-                "nor": [], "occ": [], "pac": [],
-                "bre": [], "cvl": [], "pll": [],
-                "naq": [], "ara": [], "bfc": [],
-                "carte": ""}
+    regions = ["hdf", "idf", "est", "nor", "occ", "pac", "bre", "cvl", "pll", "naq", "ara", "bfc", "cor"]
+    dictZone = {"carte": ""}
+    for reg in regions:
+        dictZone[reg]= {"eolienneON":0, "eolienneOFF":0, "panneauPV":0, "barrage":0}
 
     # Lecture de img
     img = cv.imread("image.png")

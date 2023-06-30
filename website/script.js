@@ -10,7 +10,8 @@ $(function() {
         
         
         function photoCheck(data) {
-            window.sessionStorage.setItem("photoDetection", data);
+            const dataStr = JSON.stringify(data);
+            window.sessionStorage.setItem("photoDetection", dataStr);
             window.location.href = "detection.html";   
         }
 
@@ -260,7 +261,7 @@ $(function() {
                     batterie : $("#cor_batterie").val(),
                 };
 
-                const result = {
+                const global = {
                     carte : map,
                     hdf : pions_hdf,
                     bre : pions_bre,
@@ -277,6 +278,8 @@ $(function() {
                     cor : pions_cor
                 };
 
+                const result = [true, global];
+
                 return JSON.stringify(result);
             }
         }
@@ -289,12 +292,8 @@ $(function() {
 
         $('#computeResults').click(() => {
             const data = saveData();
-            console.log(data);
-            console.log(typeof(data));
-            sessionStorage.setItem("test", data);
-            const x = sessionStorage.getItem("test");
-            console.log(x);
-            //window.location.href = "results.html";
+            sessionStorage.setItem("prodInput", data);
+            window.location.href = "results.html";
         })
     }
 
@@ -305,8 +304,8 @@ $(function() {
         const data = JSON.parse(window.sessionStorage.getItem("photoDetection"));
 
         txtCorresp = {
-            "eolienneON" : "Eoliennes on.",
-            "eolienneOFF" : "Eoliennes off.",
+            "eolienneON" : "Eol. onshore",
+            "eolienneOFF" : "Eol. offshore",
             "barrage" : "Barrages",
             "centrale" : "Centrales",
             "panneauPV" : "Panneaux",
@@ -323,25 +322,9 @@ $(function() {
         }
 
         for (const reg in data) {
-            if (reg != "Carte") {
-                colors = {
-                    "eolienneON" : 0,
-                    "eolienneOFF" : 0,
-                    "barrage" : 0,
-                    "centrale" : 0,
-                    "panneauPV" : 0,
-                    "usineCharbon" : 0,
-                    "usineGaz" : 0,
-                    "batterie" : 0,
-                    "stockageGaz" : 0
-                }
-
-                for (a of data[reg]) {
-                    colors[a] ++;
-                }
-
-                for (const c in colors) {
-                    $(`#${reg}_${c}`).html(txtCorresp[c] + ": " + colors[c]);
+            if (reg != "carte") {
+                for (const p in data[reg]) {
+                    $(`#${reg}_${p}`).html(txtCorresp[p] + ": " + data[reg][p]);
                 }
             }
         }
@@ -350,6 +333,7 @@ $(function() {
 
 
         $('#computeResults').click(() => {
+            window.sessionStorage.setItem("prodInput", '["false", "null"]')
             window.location.href = "results.html";
         })
 
@@ -366,29 +350,61 @@ $(function() {
 
     if (document.title == "Résultats - Jeu mix énergétique") {
 
+        const dataStr = sessionStorage.getItem("prodInput");
+
         function displayResults(data) {
-            console.log(data);
+            txtCorresp = {
+                "eolienneON" : "Eol. onshore",
+                "eolienneOFF" : "Eol. offshore",
+                "barrage" : "Barrages",
+                "centrale" : "Centrales",
+                "panneauPV" : "Panneaux",
+                "usineCharbon" : "Usines charbon",
+                "usineGaz" : "Usines gaz",
+                "batterie" : "Batteries",
+                "stockageGaz" : "Stockages gaz"
+            }
+    
+            for (const reg in data) {
+                if (reg == "carte") {
+                    $('#carte').html(`Carte: ${data[reg]}`);
+                }
+            }
+    
+            for (const reg in data) {
+                if (reg != "carte") {
+                    for (const p in data[reg]) {
+                        $(`#${reg}_${p}`).html(txtCorresp[p] + ": " + data[reg][p]);
+                    }
+                }
+            }
         }
 
         $.ajax({
             url: "http://127.0.0.1:5000/production",
-            type: "GET",
+            type: "POST",
+            data: dataStr,
+            contentType: "application/json; charset=utf-8",
             dataType: "json",
             success: function (data, textStatus, jqXHR) {
-                if (data[0] == "detection_success") {
+                if (data[0] == "production_success") {
                     displayResults(data[1]);
                 } else {
-                    console.log("error prod computation");
+                    console.log("error 1");
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                console.log("network error");
+                console.log("error 2");
             }
-        });
+            });
 
 
 
         $("#results").fadeIn();
+
+        $(".backHome").click(() => { 
+            window.location.href = "index.html";
+        });
     }
 
 });

@@ -26,7 +26,7 @@ def imgProcess():
     try:
         detection_cubes.cubes_main()
         with open("detection_output.json", "r") as readOutput:
-            result = ["detection_success", readOutput.readlines()[0]]
+            result = ["detection_success", json.load(readOutput)]
     except:
         result = ["detection_error", None]
 
@@ -35,15 +35,17 @@ def imgProcess():
 
 
 #Create the production API POST endpoint:
-@app.route("/production", methods=["GET"])
+@app.route("/production", methods=["POST"])
 @cross_origin(supports_credentials=True)
 def prodCompute():
+    data = request.get_json()
     try:
-        production.prod_main()
+        production.prod_main(data)
         with open("production_output.json", "r") as readOutput:
-            result = ["detection_success", json.load(readOutput)]
-    except:
-        result = ["detection_error", None]
+            result = ["production_success", json.load(readOutput)]
+    except Exception as e:
+        print(e)
+        result = ["production_error", None]
 
 
     return jsonify(result)

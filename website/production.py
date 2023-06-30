@@ -4,81 +4,89 @@ import cv2 as cv
 import sys
 import json
 
-def prod_main():
+def prod_main(manual):
 
-    fdcEolON = {"hdf" : 0.29,
-                "idf" : 0.37,
-                "bre" : 0.26,
-                "pll" : 0.23,
-                "cvl" : 0.23,
-                "bfc" : 0.2,
-                "pac" : 0.22,
-                "occ" : 0.25,
-                "naq" : 0.22,
-                "est" : 0.18,
-                "ara" : 0.19,
-                "nor" : 0.3,
-                "cor" : 0.23}
+    # INIT CALCULS /////////////////////////////
+
+    # Les prod sont annuelles et en GWh
+
+    prodEolON= {"hdf" : 355.656,
+                "idf" : 453.768,
+                "bre" : 318.864,
+                "pll" : 282.072,
+                "cvl" : 282.072,
+                "bfc" : 245.28,
+                "pac" : 269.808,
+                "occ" : 306.6,
+                "naq" : 269.808,
+                "est" : 220.752,
+                "ara" : 233.016,
+                "nor" : 367.92,
+                "cor" : 282.072}
     
-    fdcEolOFF = {"hdf" : 0.45,
+    prodEolOFF={"hdf" : 1892.16,
                 "idf" : 0,
-                "bre" : 0.45,
-                "pll" : 0.42,
+                "bre" : 1892.16,
+                "pll" : 1766.016,
                 "cvl" : 0,
                 "bfc" : 0,
-                "pac" : 0.45,
-                "occ" : 0.48,
-                "naq" : 0.49,
+                "pac" : 1892.16,
+                "occ" : 2018.304,
+                "naq" : 2060.352,
                 "est" : 0,
                 "ara" : 0,
-                "nor" : 0.45,
-                "cor" : 0.24}
+                "nor" : 1892.16,
+                "cor" : 1009.152}
     
-    fdcPV = {"hdf" : 0.14,
-            "idf" : 0.15,
-            "bre" : 0.15,
-            "pll" : 0.16,
-            "cvl" : 0.15,
-            "bfc" : 0.16,
-            "pac" : 0.19,
-            "occ" : 0.17,
-            "naq" : 0.16,
-            "est" : 0.15,
-            "ara" : 0.18,
-            "nor" : 0.15,
-            "cor" : 0.19}
+    prodPV={"hdf" : 367.92,
+            "idf" : 394.2,
+            "bre" : 394.2,
+            "pll" : 420.48,
+            "cvl" : 394.2,
+            "bfc" : 420.48,
+            "pac" : 499.32,
+            "occ" : 446.76,
+            "naq" : 420.48,
+            "est" : 394.2,
+            "ara" : 473.04,
+            "nor" : 394.2,
+            "cor" : 499.32}
 
-    fdc = { "panneauPV" : fdcPV,
-            "eolienneON" : fdcEolON,
-            "eolienneOFF" : fdcEolOFF}
+    prodPluie= {"hdf" : 8.5,
+                "idf" : 65,
+                "bre" : 29,
+                "pll" : 1.846,
+                "cvl" : 32.25,
+                "bfc" : 37.769,
+                "pac" : 158.75,
+                "occ" : 61.993,
+                "naq" : 44.281,
+                "est" : 419.316,
+                "ara" : 191.852,
+                "nor" : 18.667,
+                "cor" : 48.818}
 
-    # Hours yearly
-    hy = 8760
+    prod = {"panneauPV" : prodPV,
+            "eolienneON" : prodEolON,
+            "eolienneOFF" : prodEolOFF,
+            "barrage" : prodPluie}
 
-    # MW
-    power = {"panneauPV" : 300,
-             "eolienneON" : 140,
-             "eolienneOFF" : 480}
+ 
+
+
+    # RECUP DONNEES PLATEAU /////////////////////////////
+
+    if manual[0] == True:
+        data = manual[1]
+    else:
+        with open("detection_output.json", "r") as input:
+            data = json.load(input)
+        
+
+    for p in prod:
+        for reg in prod[p]:
+            data[reg][p] = int(data[reg][p] * prod[p][reg])
+
     
-    prodPanneauPV = {}
-    for reg in fdcPV:
-        prodPanneauPV[reg] = fdcPV[reg]/100 * power["panneauPV"] * hy
-
-    prodEolienneON = {}
-    for reg in fdcEolON:
-        prodEolienneON[reg] = fdcEolON[reg]/100 * power["eolienneON"] * hy
-    
-    prodEolienneOFF = {}
-    for reg in fdcEolOFF:
-        prodEolienneOFF[reg] = fdcEolOFF[reg]/100 * power["eolienneOFF"] * hy
-
-    # MWh / an
-    prod = {}
-    for reg in fdcPV:
-        prod[reg] = {}
-        for pion in power:
-            prod[reg][pion] = int (fdc[pion][reg] / 100 * power[pion] * hy)
-
-    
-    with open("production_output.json", "w") as f:
-        json.dump(prod, f)
+    with open("production_output.json", "w") as output:
+        json.dump(data, output)
