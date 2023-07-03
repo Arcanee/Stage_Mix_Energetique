@@ -4,7 +4,7 @@ import cv2 as cv
 import sys
 import json
 
-def prod_main(manual):
+def prod_main(data):
 
     # INIT CALCULS /////////////////////////////
 
@@ -74,19 +74,13 @@ def prod_main(manual):
  
 
 
-    # RECUP DONNEES PLATEAU /////////////////////////////
-
-    if manual[0] == True:
-        data = manual[1]
-    else:
-        with open("detection_output.json", "r") as input:
-            data = json.load(input)
-        
+    # RECUP DONNEES PLATEAU /////////////////////////////   
 
     for p in prod:
         for reg in prod[p]:
-            data[reg][p] = int(data[reg][p] * prod[p][reg])
-
+            if data[reg][p] == '':
+                data[reg][p] = 0
+            data[reg][p] = int(int(data[reg][p]) * prod[p][reg])
     
     with open("production_output.json", "w") as output:
         json.dump(data, output)

@@ -105,6 +105,9 @@ def detColor(img):
     pts2 = np.float32([[5,5], [995,5], [995,1195], [5,1195]])
     M = cv.getPerspectiveTransform(pts1,pts2)
     img = cv.warpPerspective(img,M,(1000,1200))
+
+    # cv.imwrite("tests_A1/img/shape_blank.png", img)
+    # sys.exit(0)
     
 
     # On recupere les nouveaux coins
@@ -119,12 +122,7 @@ def detColor(img):
 
     # Etalonnage
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    cal = {"blue" : (hsv[35][83] - np.array([5, 100, 100]), hsv[35][83] + np.array([5, 100, 100])),
-           "green" : (hsv[53][170] - np.array([5, 100, 100]), hsv[53][170] + np.array([5, 100, 100])),
-           "orange" : (hsv[71][85] - np.array([5, 100, 100]), hsv[71][85] + np.array([5, 100, 100])),
-           "yellow" : (hsv[83][136] - np.array([5, 100, 100]), hsv[83][136] + np.array([5, 100, 100])),
-           "black" : (hsv[40][128] - np.array([180, 255, 30]), hsv[40][128] + np.array([180, 255, 30]))
-            }
+    cal = {"beige" : (hsv[85][169] - np.array([5, 100, 150]), hsv[85][169] + np.array([5, 100, 150]))}
     
     # Pour chaque couleur : application de masque + detection de contours
     for col in cal:
@@ -142,16 +140,24 @@ def detColor(img):
 
         # Pour chaque contour : trouver le rectangle qui matche le mieux puis tous les dessiner
         sketch = img.copy()
-        for c in contours:        
+        for c in contours:
+            peri = cv.arcLength(c, True)
+            approx = cv.approxPolyDP(c, 0.04 * peri, True)
+            l = len(approx)
+            d = {3:"triangle", 4:"carre", 6:"hexa", 5:"penta"}
+            try:
+                print("\n", d[l])
+            except:
+                print("\nforme non reconnue")
+        
             rot_rect = cv.minAreaRect(c)
             box = cv.boxPoints(rot_rect)
             box = np.int0(box)
             if inRegions(box):
-                cv.drawContours(sketch,[box],0,(0,255,0),2)
+                cv.drawContours(sketch,[approx],0,(0,255,0),2)
                 locate(box, col)
 
-        #cv.imwrite("{}.png".format(col), sketch)
-        display("boxes", sketch)
+        display("contours", sketch)
 
     
 
@@ -160,7 +166,7 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {0: "tests_A1/img/A1-112.jpg"} 
+dictImg =  {0: "tests_A1/img/forme_edited.jpg"} 
 
 
 
