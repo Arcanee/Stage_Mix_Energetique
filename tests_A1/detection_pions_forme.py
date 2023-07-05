@@ -36,7 +36,7 @@ def locate(box, color):
     
     for reg in cal:
         if (hsv[y][x] >= cal[reg][0]).all() and (hsv[y][x] <= cal[reg][1]).all():
-            print("{} soldier in {}".format(color, reg))
+            print("{} in {}".format(color, reg))
 
 
 # Renvoie vrai si fait partie de la légende
@@ -106,7 +106,7 @@ def detColor(img):
     M = cv.getPerspectiveTransform(pts1,pts2)
     img = cv.warpPerspective(img,M,(1000,1200))
 
-    # cv.imwrite("tests_A1/img/shape_blank.png", img)
+    # cv.imwrite("tests_A1/img/ref_triangle.png", img)
     # sys.exit(0)
     
 
@@ -115,18 +115,33 @@ def detColor(img):
     display("Perspective corrigee", img)
 
     # Contours du plateau
-    cv.polylines(img, np.array([boardCorners]), True, (0,0,255), 2)
+    cv.polylines(img, np.array([boardCorners]), True, (255,255,255), 2)
     display("Detection du plateau", img)
 
 
 
     # Etalonnage
+    hsv = cv.imread("tests_A1/img/ref_paint.png")
+    hsv = cv.cvtColor(hsv, cv.COLOR_BGR2HSV)
+    cal = {#"beige" : (hsv[85][169] - np.array([5, 100, 150]), hsv[85][169] + np.array([5, 100, 150])),
+           "jaune" : (hsv[355][300] - np.array([5, 100, 150]), hsv[355][300] + np.array([5, 100, 150])),
+           "orange" : (hsv[850][450] - np.array([5, 100, 150]), hsv[850][450] + np.array([5, 100, 150]))
+        #    "rouge1" : (hsv[493][255] - np.array([5, 180, 180]), hsv[493][255] + np.array([5, 180, 180])),
+        #    "rouge2" : (hsv[482][252] - np.array([5, 180, 180]), hsv[482][252] + np.array([5, 180, 180]))
+           #"bleu" : (hsv[296][263] - np.array([5, 100, 150]), hsv[296][263] + np.array([5, 100, 150]))
+           }
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-    cal = {"beige" : (hsv[85][169] - np.array([5, 100, 150]), hsv[85][169] + np.array([5, 100, 150]))}
+
+    # t1 = cv.inRange(hsv, cal["rouge1"][0], cal["rouge1"][1])
+    # t2 = cv.inRange(hsv, cal["rouge2"][0], cal["rouge2"][1])
+    # t3 = cv.bitwise_or(t1, t2)
     
     # Pour chaque couleur : application de masque + detection de contours
     for col in cal:
         thresh = cv.inRange(hsv, cal[col][0], cal[col][1])
+        # if col == "rouge1" or col == "rouge2":
+        #     thresh = t3
+        display(col+" mask", thresh)
 
         # Reduction bruit hors contours puis dans contours
         kernel = cv.getStructuringElement(cv.MORPH_RECT, (5,5))
@@ -146,9 +161,9 @@ def detColor(img):
             l = len(approx)
             d = {3:"triangle", 4:"carre", 6:"hexa", 5:"penta"}
             try:
-                print("\n", d[l])
+                print("\n", d[l], end=" ")
             except:
-                print("\nforme non reconnue")
+                print("\nforme non reconnue({})".format(l), end=" ")
         
             rot_rect = cv.minAreaRect(c)
             box = cv.boxPoints(rot_rect)
@@ -160,29 +175,46 @@ def detColor(img):
         display("contours", sketch)
 
     
+def createRef():
+    img = cv.imread("tests_A1/img/flat_paint.jpg")
 
+    # On recupere les coins
+    boardCorners = getBoardCorners(img)
+
+    # Correction de la perspective
+    pts1 = np.float32(boardCorners)
+    pts2 = np.float32([[5,5], [995,5], [995,1195], [5,1195]])
+    M = cv.getPerspectiveTransform(pts1,pts2)
+    img = cv.warpPerspective(img,M,(1000,1200))
+
+    cv.imwrite("tests_A1/img/ref_paint.png", img)
+    sys.exit(0)
+
+
+
+def main():
+    # Pour boucler sur toutes les images
+    dictImg =  {0: "tests_A1/img/draw_paint_1.jpg",
+                1: "tests_A1/img/draw_paint_2.jpg",
+                2: "tests_A1/img/draw_paint_3.jpg"} 
+
+
+
+    for k in dictImg: # Pour chaque image
+
+        print("\n################\n")
+
+        img = cv.imread(dictImg[k]) # Lecture de img
+        print(dictImg[k])
+        print("")
+
+        detColor(img)
     
+        
+
+    print("")    
 
 
 
-# Pour boucler sur toutes les images
-dictImg =  {0: "tests_A1/img/forme_edited.jpg"} 
-
-
-
-for k in dictImg: # Pour chaque image
-
-    print("\n################\n")
-
-    img = cv.imread(dictImg[k]) # Lecture de img
-    print(dictImg[k])
-    print("")
-
-    detColor(img)
-   
-    
-
-print("")    
-
-
-
+#createRef()
+main()

@@ -66,10 +66,43 @@ def prod_main(data):
                 "nor" : 18.667,
                 "cor" : 48.818}
 
+    prodNuc  = {"hdf" : 6000,
+                "idf" : 6000,
+                "bre" : 6000,
+                "pll" : 6000,
+                "cvl" : 6000,
+                "bfc" : 6000,
+                "pac" : 6000,
+                "occ" : 6000,
+                "naq" : 6000,
+                "est" : 6000,
+                "ara" : 6000,
+                "nor" : 6000,
+                "cor" : 6000}
+    
+    prodTherm= {"hdf" : 1425,
+                "idf" : 1425,
+                "bre" : 1425,
+                "pll" : 1425,
+                "cvl" : 1425,
+                "bfc" : 1425,
+                "pac" : 1425,
+                "occ" : 1425,
+                "naq" : 1425,
+                "est" : 1425,
+                "ara" : 1425,
+                "nor" : 1425,
+                "cor" : 1425}
+
+
+
     prod = {"panneauPV" : prodPV,
             "eolienneON" : prodEolON,
             "eolienneOFF" : prodEolOFF,
-            "barrage" : prodPluie}
+            "barrage" : prodPluie,
+            "centrale" : prodNuc,
+            "usineCharbon" : prodTherm,
+            "usineGaz" : prodTherm}
 
  
 

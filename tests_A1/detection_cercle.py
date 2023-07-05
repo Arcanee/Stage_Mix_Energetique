@@ -21,7 +21,6 @@ def highlightCircles(img, circles):
             cv.circle(img, center, radius, (255, 0, 255), 2)
  
     display("Detection des cercles", img)
-    cv.imwrite("tests_A1/detectedCircles.png", img)
 
 
 def detCircles(img):
@@ -178,7 +177,7 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {0: "tests_A1/img/forme_mat.jpg"} 
+dictImg =  {0: "tests_A1/img/peinture.jpg"} 
 
 
 
