@@ -36,11 +36,6 @@ $(function() {
             $("#noPhoto").fadeIn();
         });
         
-        
-        function photoCheck(data) {
-               
-        }
-
 
         function displayError(reason) {
             let msg;
@@ -66,7 +61,6 @@ $(function() {
 
 
         function toBase64 (url, callback){
-
             const img = document.createElement('img');
             canvas = document.createElement('canvas');
             ctx = canvas.getContext('2d');
@@ -142,7 +136,7 @@ $(function() {
                 <button class="btn btn-outline-secondary backHome" type="button">Retour à l'accueil</button>
             </div>
 
-            <h2 class="container-fluid pb-5 mb-4 text-center">Vérifiez les informations, corrigez si nécessaire</h2>
+            <h2 class="container-fluid pb-5 mb-4 text-center">Vérifiez les informations, et corrigez si nécessaire</h2>
 
             <div class="row justify-content-evenly bg-success bg-opacity-50 rounded pb-2">
                 <div class="col-2 mt-2 h2">Carte</div>
@@ -206,174 +200,33 @@ $(function() {
         }
 
         function saveData() {
+            let err = 0;
+            let result;
+            const data = {};
+
             if ($("#carte").val() == "default") {
                 alert("Veuillez slectionner une carte");
+                err = 1;
             } else {
                 const map = $("#carte").val();
-                const pions_hdf = {
-                    eolienneON : $("#hdf_eolienneON").val(),
-                    eolienneOFF : $("#hdf_eolienneOFF").val(),
-                    panneauPV : $("#hdf_panneauPV").val(),
-                    barrage : $("#hdf_barrage").val(),
-                    centrale : $("#hdf_centrale").val(),
-                    usineCharbon : $("#hdf_usineCharbon").val(),
-                    usinegaz : $("#hdf_usinegaz").val(),
-                    stockageGaz : $("#hdf_stockageGaz").val(),
-                    batterie : $("#hdf_batterie").val(),
-                };
-                const pions_bre = {
-                    eolienneON : $("#bre_eolienneON").val(),
-                    eolienneOFF : $("#bre_eolienneOFF").val(),
-                    panneauPV : $("#bre_panneauPV").val(),
-                    barrage : $("#bre_barrage").val(),
-                    centrale : $("#bre_centrale").val(),
-                    usineCharbon : $("#bre_usineCharbon").val(),
-                    usinegaz : $("#bre_usinegaz").val(),
-                    stockageGaz : $("#bre_stockageGaz").val(),
-                    batterie : $("#bre_batterie").val(),
-                };
-                const pions_nor = {
-                    eolienneON : $("#nor_eolienneON").val(),
-                    eolienneOFF : $("#nor_eolienneOFF").val(),
-                    panneauPV : $("#nor_panneauPV").val(),
-                    barrage : $("#nor_barrage").val(),
-                    centrale : $("#nor_centrale").val(),
-                    usineCharbon : $("#nor_usineCharbon").val(),
-                    usinegaz : $("#nor_usinegaz").val(),
-                    stockageGaz : $("#nor_stockageGaz").val(),
-                    batterie : $("#nor_batterie").val(),
-                };
-                const pions_idf = {
-                    eolienneON : $("#idf_eolienneON").val(),
-                    eolienneOFF : $("#idf_eolienneOFF").val(),
-                    panneauPV : $("#idf_panneauPV").val(),
-                    barrage : $("#idf_barrage").val(),
-                    centrale : $("#idf_centrale").val(),
-                    usineCharbon : $("#idf_usineCharbon").val(),
-                    usinegaz : $("#idf_usinegaz").val(),
-                    stockageGaz : $("#idf_stockageGaz").val(),
-                    batterie : $("#idf_batterie").val(),
-                };
-                const pions_est = {
-                    eolienneON : $("#est_eolienneON").val(),
-                    eolienneOFF : $("#est_eolienneOFF").val(),
-                    panneauPV : $("#est_panneauPV").val(),
-                    barrage : $("#est_barrage").val(),
-                    centrale : $("#est_centrale").val(),
-                    usineCharbon : $("#est_usineCharbon").val(),
-                    usinegaz : $("#est_usinegaz").val(),
-                    stockageGaz : $("#est_stockageGaz").val(),
-                    batterie : $("#est_batterie").val(),
-                };
-                const pions_cvl = {
-                    eolienneON : $("#cvl_eolienneON").val(),
-                    eolienneOFF : $("#cvl_eolienneOFF").val(),
-                    panneauPV : $("#cvl_panneauPV").val(),
-                    barrage : $("#cvl_barrage").val(),
-                    centrale : $("#cvl_centrale").val(),
-                    usineCharbon : $("#cvl_usineCharbon").val(),
-                    usinegaz : $("#cvl_usinegaz").val(),
-                    stockageGaz : $("#cvl_stockageGaz").val(),
-                    batterie : $("#cvl_batterie").val(),
-                };
-                const pions_pll = {
-                    eolienneON : $("#pll_eolienneON").val(),
-                    eolienneOFF : $("#pll_eolienneOFF").val(),
-                    panneauPV : $("#pll_panneauPV").val(),
-                    barrage : $("#pll_barrage").val(),
-                    centrale : $("#pll_centrale").val(),
-                    usineCharbon : $("#pll_usineCharbon").val(),
-                    usinegaz : $("#pll_usinegaz").val(),
-                    stockageGaz : $("#pll_stockageGaz").val(),
-                    batterie : $("#pll_batterie").val(),
-                };
-                const pions_bfc = {
-                    eolienneON : $("#bfc_eolienneON").val(),
-                    eolienneOFF : $("#bfc_eolienneOFF").val(),
-                    panneauPV : $("#bfc_panneauPV").val(),
-                    barrage : $("#bfc_barrage").val(),
-                    centrale : $("#bfc_centrale").val(),
-                    usineCharbon : $("#bfc_usineCharbon").val(),
-                    usinegaz : $("#bfc_usinegaz").val(),
-                    stockageGaz : $("#bfc_stockageGaz").val(),
-                    batterie : $("#bfc_batterie").val(),
-                };
-                const pions_naq = {
-                    eolienneON : $("#naq_eolienneON").val(),
-                    eolienneOFF : $("#naq_eolienneOFF").val(),
-                    panneauPV : $("#naq_panneauPV").val(),
-                    barrage : $("#naq_barrage").val(),
-                    centrale : $("#naq_centrale").val(),
-                    usineCharbon : $("#naq_usineCharbon").val(),
-                    usinegaz : $("#naq_usinegaz").val(),
-                    stockageGaz : $("#naq_stockageGaz").val(),
-                    batterie : $("#naq_batterie").val(),
-                };
-                const pions_ara = {
-                    eolienneON : $("#ara_eolienneON").val(),
-                    eolienneOFF : $("#ara_eolienneOFF").val(),
-                    panneauPV : $("#ara_panneauPV").val(),
-                    barrage : $("#ara_barrage").val(),
-                    centrale : $("#ara_centrale").val(),
-                    usineCharbon : $("#ara_usineCharbon").val(),
-                    usinegaz : $("#ara_usinegaz").val(),
-                    stockageGaz : $("#ara_stockageGaz").val(),
-                    batterie : $("#ara_batterie").val(),
-                };
-                const pions_occ = {
-                    eolienneON : $("#occ_eolienneON").val(),
-                    eolienneOFF : $("#occ_eolienneOFF").val(),
-                    panneauPV : $("#occ_panneauPV").val(),
-                    barrage : $("#occ_barrage").val(),
-                    centrale : $("#occ_centrale").val(),
-                    usineCharbon : $("#occ_usineCharbon").val(),
-                    usinegaz : $("#occ_usinegaz").val(),
-                    stockageGaz : $("#occ_stockageGaz").val(),
-                    batterie : $("#occ_batterie").val(),
-                };
-                const pions_pac = {
-                    eolienneON : $("#pac_eolienneON").val(),
-                    eolienneOFF : $("#pac_eolienneOFF").val(),
-                    panneauPV : $("#pac_panneauPV").val(),
-                    barrage : $("#pac_barrage").val(),
-                    centrale : $("#pac_centrale").val(),
-                    usineCharbon : $("#pac_usineCharbon").val(),
-                    usinegaz : $("#pac_usinegaz").val(),
-                    stockageGaz : $("#pac_stockageGaz").val(),
-                    batterie : $("#pac_batterie").val(),
-                };
-                const pions_cor = {
-                    eolienneON : $("#cor_eolienneON").val(),
-                    eolienneOFF : $("#cor_eolienneOFF").val(),
-                    panneauPV : $("#cor_panneauPV").val(),
-                    barrage : $("#cor_barrage").val(),
-                    centrale : $("#cor_centrale").val(),
-                    usineCharbon : $("#cor_usineCharbon").val(),
-                    usinegaz : $("#cor_usinegaz").val(),
-                    stockageGaz : $("#cor_stockageGaz").val(),
-                    batterie : $("#cor_batterie").val(),
-                };
+                data["carte"] = map;
 
-                const result = {
-                    carte : map,
-                    hdf : pions_hdf,
-                    bre : pions_bre,
-                    nor : pions_nor,
-                    idf : pions_idf,
-                    est : pions_est,
-                    cvl : pions_cvl,
-                    pll : pions_pll,
-                    bfc : pions_bfc,
-                    naq : pions_naq,
-                    ara : pions_ara,
-                    occ : pions_occ,
-                    pac : pions_pac,
-                    cor : pions_cor
-                };
-
-
-                return JSON.stringify(result);
+                for (const reg of maps[map]) {
+                    data[reg[0]] = {};
+                    for (const p of pions) {
+                        const str = $(`#${reg[0]}_${p[0]}`).val();
+                        const nb = parseFloat(str);
+                        if (str == "" || nb < 0 || nb > 10 || !(Number.isInteger(nb))) {
+                            alert("Veuillez entrer des nombres entiers entre 0 et 10 seulement.");
+                            err = 1;
+                        }
+                        data[reg[0]][p[0]] = str;
+                    }
+                }
             }
+
+            result = err ? false : JSON.stringify(data);
+            return result;
         }
 
         function initCallbacks() {
@@ -389,7 +242,7 @@ $(function() {
             $('#computeResults').click(() => {
                 const dataProd = saveData();
     
-                if ($("#carte").val() != "default") {
+                if (dataProd != false) {
                     $.ajax({
                         url: "http://127.0.0.1:5000/production",
                         type: "POST",
@@ -419,10 +272,10 @@ $(function() {
         const data = JSON.parse(sessionStorage.getItem("photoDetection"));
 
         // Squelette de la page pour la carte qui a été détectée
-        initContent(`${data["carte"]}`);
+        initContent(data["carte"]);
 
         // Remplissage de la page avec les valeurs récupérées
-        $('#carte').val(`${data["carte"]}`);
+        $('#carte').val(data["carte"]);
         for (const reg in data) {
             if (reg != "carte") {
                 for (const p in data[reg]) {
@@ -513,173 +366,33 @@ $(function() {
         }
 
         function saveData() {
+            let err = 0;
+            let result;
+            const data = {};
+
             if ($("#carte").val() == "default") {
                 alert("Veuillez slectionner une carte");
+                err = 1;
             } else {
                 const map = $("#carte").val();
-                const pions_hdf = {
-                    eolienneON : $("#hdf_eolienneON").val(),
-                    eolienneOFF : $("#hdf_eolienneOFF").val(),
-                    panneauPV : $("#hdf_panneauPV").val(),
-                    barrage : $("#hdf_barrage").val(),
-                    centrale : $("#hdf_centrale").val(),
-                    usineCharbon : $("#hdf_usineCharbon").val(),
-                    usinegaz : $("#hdf_usinegaz").val(),
-                    stockageGaz : $("#hdf_stockageGaz").val(),
-                    batterie : $("#hdf_batterie").val(),
-                };
-                const pions_bre = {
-                    eolienneON : $("#bre_eolienneON").val(),
-                    eolienneOFF : $("#bre_eolienneOFF").val(),
-                    panneauPV : $("#bre_panneauPV").val(),
-                    barrage : $("#bre_barrage").val(),
-                    centrale : $("#bre_centrale").val(),
-                    usineCharbon : $("#bre_usineCharbon").val(),
-                    usinegaz : $("#bre_usinegaz").val(),
-                    stockageGaz : $("#bre_stockageGaz").val(),
-                    batterie : $("#bre_batterie").val(),
-                };
-                const pions_nor = {
-                    eolienneON : $("#nor_eolienneON").val(),
-                    eolienneOFF : $("#nor_eolienneOFF").val(),
-                    panneauPV : $("#nor_panneauPV").val(),
-                    barrage : $("#nor_barrage").val(),
-                    centrale : $("#nor_centrale").val(),
-                    usineCharbon : $("#nor_usineCharbon").val(),
-                    usinegaz : $("#nor_usinegaz").val(),
-                    stockageGaz : $("#nor_stockageGaz").val(),
-                    batterie : $("#nor_batterie").val(),
-                };
-                const pions_idf = {
-                    eolienneON : $("#idf_eolienneON").val(),
-                    eolienneOFF : $("#idf_eolienneOFF").val(),
-                    panneauPV : $("#idf_panneauPV").val(),
-                    barrage : $("#idf_barrage").val(),
-                    centrale : $("#idf_centrale").val(),
-                    usineCharbon : $("#idf_usineCharbon").val(),
-                    usinegaz : $("#idf_usinegaz").val(),
-                    stockageGaz : $("#idf_stockageGaz").val(),
-                    batterie : $("#idf_batterie").val(),
-                };
-                const pions_est = {
-                    eolienneON : $("#est_eolienneON").val(),
-                    eolienneOFF : $("#est_eolienneOFF").val(),
-                    panneauPV : $("#est_panneauPV").val(),
-                    barrage : $("#est_barrage").val(),
-                    centrale : $("#est_centrale").val(),
-                    usineCharbon : $("#est_usineCharbon").val(),
-                    usinegaz : $("#est_usinegaz").val(),
-                    stockageGaz : $("#est_stockageGaz").val(),
-                    batterie : $("#est_batterie").val(),
-                };
-                const pions_cvl = {
-                    eolienneON : $("#cvl_eolienneON").val(),
-                    eolienneOFF : $("#cvl_eolienneOFF").val(),
-                    panneauPV : $("#cvl_panneauPV").val(),
-                    barrage : $("#cvl_barrage").val(),
-                    centrale : $("#cvl_centrale").val(),
-                    usineCharbon : $("#cvl_usineCharbon").val(),
-                    usinegaz : $("#cvl_usinegaz").val(),
-                    stockageGaz : $("#cvl_stockageGaz").val(),
-                    batterie : $("#cvl_batterie").val(),
-                };
-                const pions_pll = {
-                    eolienneON : $("#pll_eolienneON").val(),
-                    eolienneOFF : $("#pll_eolienneOFF").val(),
-                    panneauPV : $("#pll_panneauPV").val(),
-                    barrage : $("#pll_barrage").val(),
-                    centrale : $("#pll_centrale").val(),
-                    usineCharbon : $("#pll_usineCharbon").val(),
-                    usinegaz : $("#pll_usinegaz").val(),
-                    stockageGaz : $("#pll_stockageGaz").val(),
-                    batterie : $("#pll_batterie").val(),
-                };
-                const pions_bfc = {
-                    eolienneON : $("#bfc_eolienneON").val(),
-                    eolienneOFF : $("#bfc_eolienneOFF").val(),
-                    panneauPV : $("#bfc_panneauPV").val(),
-                    barrage : $("#bfc_barrage").val(),
-                    centrale : $("#bfc_centrale").val(),
-                    usineCharbon : $("#bfc_usineCharbon").val(),
-                    usinegaz : $("#bfc_usinegaz").val(),
-                    stockageGaz : $("#bfc_stockageGaz").val(),
-                    batterie : $("#bfc_batterie").val(),
-                };
-                const pions_naq = {
-                    eolienneON : $("#naq_eolienneON").val(),
-                    eolienneOFF : $("#naq_eolienneOFF").val(),
-                    panneauPV : $("#naq_panneauPV").val(),
-                    barrage : $("#naq_barrage").val(),
-                    centrale : $("#naq_centrale").val(),
-                    usineCharbon : $("#naq_usineCharbon").val(),
-                    usinegaz : $("#naq_usinegaz").val(),
-                    stockageGaz : $("#naq_stockageGaz").val(),
-                    batterie : $("#naq_batterie").val(),
-                };
-                const pions_ara = {
-                    eolienneON : $("#ara_eolienneON").val(),
-                    eolienneOFF : $("#ara_eolienneOFF").val(),
-                    panneauPV : $("#ara_panneauPV").val(),
-                    barrage : $("#ara_barrage").val(),
-                    centrale : $("#ara_centrale").val(),
-                    usineCharbon : $("#ara_usineCharbon").val(),
-                    usinegaz : $("#ara_usinegaz").val(),
-                    stockageGaz : $("#ara_stockageGaz").val(),
-                    batterie : $("#ara_batterie").val(),
-                };
-                const pions_occ = {
-                    eolienneON : $("#occ_eolienneON").val(),
-                    eolienneOFF : $("#occ_eolienneOFF").val(),
-                    panneauPV : $("#occ_panneauPV").val(),
-                    barrage : $("#occ_barrage").val(),
-                    centrale : $("#occ_centrale").val(),
-                    usineCharbon : $("#occ_usineCharbon").val(),
-                    usinegaz : $("#occ_usinegaz").val(),
-                    stockageGaz : $("#occ_stockageGaz").val(),
-                    batterie : $("#occ_batterie").val(),
-                };
-                const pions_pac = {
-                    eolienneON : $("#pac_eolienneON").val(),
-                    eolienneOFF : $("#pac_eolienneOFF").val(),
-                    panneauPV : $("#pac_panneauPV").val(),
-                    barrage : $("#pac_barrage").val(),
-                    centrale : $("#pac_centrale").val(),
-                    usineCharbon : $("#pac_usineCharbon").val(),
-                    usinegaz : $("#pac_usinegaz").val(),
-                    stockageGaz : $("#pac_stockageGaz").val(),
-                    batterie : $("#pac_batterie").val(),
-                };
-                const pions_cor = {
-                    eolienneON : $("#cor_eolienneON").val(),
-                    eolienneOFF : $("#cor_eolienneOFF").val(),
-                    panneauPV : $("#cor_panneauPV").val(),
-                    barrage : $("#cor_barrage").val(),
-                    centrale : $("#cor_centrale").val(),
-                    usineCharbon : $("#cor_usineCharbon").val(),
-                    usinegaz : $("#cor_usinegaz").val(),
-                    stockageGaz : $("#cor_stockageGaz").val(),
-                    batterie : $("#cor_batterie").val(),
-                };
+                data["carte"] = map;
 
-                const result = {
-                    carte : map,
-                    hdf : pions_hdf,
-                    bre : pions_bre,
-                    nor : pions_nor,
-                    idf : pions_idf,
-                    est : pions_est,
-                    cvl : pions_cvl,
-                    pll : pions_pll,
-                    bfc : pions_bfc,
-                    naq : pions_naq,
-                    ara : pions_ara,
-                    occ : pions_occ,
-                    pac : pions_pac,
-                    cor : pions_cor
-                };
-
-                return JSON.stringify(result);
+                for (const reg of maps[map]) {
+                    data[reg[0]] = {};
+                    for (const p of pions) {
+                        const str = $(`#${reg[0]}_${p[0]}`).val();
+                        const nb = parseFloat(str);
+                        if (str == "" || nb < 0 || nb > 10 || !(Number.isInteger(nb))) {
+                            alert("Veuillez entrer des nombres entiers entre 0 et 10 seulement.");
+                            err = 1;
+                        }
+                        data[reg[0]][p[0]] = str;
+                    }
+                }
             }
+
+            result = err ? false : JSON.stringify(data);
+            return result;
         }
 
         function initCallbacks() {
@@ -699,7 +412,7 @@ $(function() {
             $('#computeResults').click(() => {
                 const dataProd = saveData();
     
-                if ($("#carte").val() != "default") {
+                if (dataProd != false) {
                     $.ajax({
                         url: "http://127.0.0.1:5000/production",
                         type: "POST",
@@ -739,42 +452,48 @@ $(function() {
 
 
     if (document.title == "Résultats - Jeu mix énergétique") {
-
+        
         const dataProd = JSON.parse(sessionStorage.getItem("prodInput"));
 
-        txtCorresp = {
-            "eolienneON" : "Eol. onshore",
-            "eolienneOFF" : "Eol. offshore",
-            "barrage" : "Barrages",
-            "centrale" : "Centrales",
-            "panneauPV" : "Panneaux",
-            "usineCharbon" : "Usines charbon",
-            "usineGaz" : "Usines gaz",
-            "batterie" : "Batteries",
-            "stockageGaz" : "Stockages gaz"
-        }
+        function initContent(map) {
+            let divStr =
+            `<h2 class="container-fluid pb-3 text-center">Résultats de production annuelle en GWh</h2>`;
 
-        for (const reg in dataProd) {
-            if (reg == "carte") {
-                $('#carte').html(`Carte: ${dataProd[reg]}`);
-            }
-        }
-
-        for (const reg in dataProd) {
-            if (reg != "carte") {
-                for (const p in dataProd[reg]) {
-                    $(`#${reg}_${p}`).html(txtCorresp[p] + ": " + dataProd[reg][p]);
+            for (const reg of maps[map]) {
+                divStr += `<h3 class="row mt-5 ps-2 bg-info rounded bg-opacity-50 justify-content-center" id=${reg[0]}>${reg[1]}</h3>`;
+                for (let i = 0; i < pions.length-1; i += 2) {
+                    divStr +=
+                    `<div class="row justify-content-between">
+                        <div class="col-5 mt-2" id="${reg[0]}_${pions[i][0]}">${pions[i][1]}: ${dataProd[reg[0]][pions[i][0]]}</div>
+                        <div class="col-5 mt-2" id="${reg[0]}_${pions[i+1][0]}">${pions[i+1][1]}: ${dataProd[reg[0]][pions[i+1][0]]}</div>
+                    </div>`;
                 }
+                divStr +=
+                    `<div class="row justify-content-between">
+                        <div class="col-5 mt-2" id="${reg[0]}_${pions[pions.length-1][0]}">
+                            ${pions[pions.length-1][1]}: ${dataProd[reg[0]][pions[pions.length-1][0]]}
+                        </div>
+                    </div>`;
             }
+
+            divStr +=
+            `<div class="container text-center my-5">
+                <button class="btn btn-outline-secondary backHome" type="button">Retour à l'accueil</button>
+            </div>`;
+
+            $("#results").html(divStr);
         }
 
+        function initCallbacks() {
+            $(".backHome").click(() => { 
+                location.href = "index.html";
+            });
+        }
 
+        initContent(dataProd["carte"]);
+        initCallbacks();
 
         $("#results").fadeIn();
-
-        $(".backHome").click(() => { 
-            location.href = "index.html";
-        });
     }
 
 });

@@ -44,7 +44,6 @@ def prodCompute():
         with open("production_output.json", "r") as readOutput:
             result = ["production_success", json.load(readOutput)]
     except Exception as e:
-        print(e)
         result = ["production_error", None]
 
 
