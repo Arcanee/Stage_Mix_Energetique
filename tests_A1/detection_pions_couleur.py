@@ -160,7 +160,7 @@ def detColor(img):
 
 
 # Pour boucler sur toutes les images
-dictImg =  {0: "tests_A1/img/A1-112.jpg"} 
+dictImg =  {0: "tests_A1/img/soldiers.jpg"} 
 
 
 

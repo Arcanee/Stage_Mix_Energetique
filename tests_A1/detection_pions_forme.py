@@ -123,12 +123,11 @@ def detColor(img):
     # Etalonnage
     hsv = cv.imread("tests_A1/img/ref_paint.png")
     hsv = cv.cvtColor(hsv, cv.COLOR_BGR2HSV)
-    cal = {#"beige" : (hsv[85][169] - np.array([5, 100, 150]), hsv[85][169] + np.array([5, 100, 150])),
-           "jaune" : (hsv[355][300] - np.array([5, 100, 150]), hsv[355][300] + np.array([5, 100, 150])),
-           "orange" : (hsv[850][450] - np.array([5, 100, 150]), hsv[850][450] + np.array([5, 100, 150]))
-        #    "rouge1" : (hsv[493][255] - np.array([5, 180, 180]), hsv[493][255] + np.array([5, 180, 180])),
-        #    "rouge2" : (hsv[482][252] - np.array([5, 180, 180]), hsv[482][252] + np.array([5, 180, 180]))
-           #"bleu" : (hsv[296][263] - np.array([5, 100, 150]), hsv[296][263] + np.array([5, 100, 150]))
+    cal = {"jaune" : (hsv[355][300] - np.array([5, 100, 150]), hsv[355][300] + np.array([5, 100, 150])),
+           "orange" : (hsv[850][450] - np.array([5, 100, 150]), hsv[850][450] + np.array([5, 100, 150])),
+           "rouge1" : (hsv[300][570] - np.array([5, 180, 180]), hsv[300][570] + np.array([5, 180, 180])),
+           "rouge2" : (hsv[300][630] - np.array([5, 180, 180]), hsv[300][630] + np.array([5, 180, 180])),
+           "bleu" : (hsv[250][570] - np.array([5, 100, 150]), hsv[250][570] + np.array([5, 100, 150]))
            }
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
 
@@ -196,7 +195,7 @@ def main():
     # Pour boucler sur toutes les images
     dictImg =  {0: "tests_A1/img/draw_paint_1.jpg",
                 1: "tests_A1/img/draw_paint_2.jpg",
-                2: "tests_A1/img/draw_paint_3.jpg"} 
+                2: "tests_A1/img/peinture.jpg"} 
 
 
 
