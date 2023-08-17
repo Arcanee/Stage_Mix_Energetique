@@ -41,27 +41,35 @@ class Techno:
 
 # Definition des fonctions de charge et décharge d'une technologie
 def load(tec,k,astocker):
-    if astocker==0:
-        out=0
+    if astocker == 0:
+        out = 0
+
     else:
-        temp=min(astocker*tec.etain,tec.vol-tec.stored[k-1],tec.S*tec.etain)
-        tec.stored[k:]=tec.stored[k-1]+temp
-        out=astocker-temp/tec.etain
+        temp = min(astocker*tec.etain, tec.vol-tec.stored[k-1], tec.S*tec.etain)
+        tec.stored[k:] = tec.stored[k-1] + temp
+        out = astocker - temp / tec.etain
+    
     return out
 
 
 def unload(tec,k,aproduire, endmonthlake, prod=True):
-    if aproduire==0:
-        out=0
+    if aproduire == 0:
+        out = 0
+
     else:
-        temp=min(aproduire/tec.etaout,tec.stored[k],tec.Q/tec.etaout)
-        if tec.name=='Lake':
-            tec.stored[k:int(endmonthlake[k])]=tec.stored[k]-temp
+        temp = min(aproduire/tec.etaout, tec.stored[k], tec.Q/tec.etaout)
+
+        if tec.name == 'Lake':
+            tec.stored[k:int(endmonthlake[k])] = tec.stored[k] - temp
         else:
-            tec.stored[k:]=tec.stored[k]-temp
+            tec.stored[k:] = tec.stored[k] - temp
+
         if prod:
-            tec.prod[k]=temp*tec.etaout
-        out=aproduire-temp*tec.etaout
+            # Si on veut que ça compte dans la prod totale (ce n'est pas le cas pour les échanges internes)
+            tec.prod[k] = temp * tec.etaout
+
+        out = aproduire - temp * tec.etaout
+    
     return out
 
 
@@ -77,22 +85,23 @@ def unload(tec,k,aproduire, endmonthlake, prod=True):
 # Dans cette fonction, on regarde dans quel partie du cycle on est pour chaque groupe, 
 # pour calibrer la production min et max.
 def cycle(k):
+    H = 8760
     N = 8
     n = 1/N
     
     # Intervalles des 3 parties importantes du cycle, pour chaque groupe
-    A_ranges = [((2180+6570)%8760,(2180+8030)%8760), ((2920+6570)%8760,(2920+8030)%8760), 
-               ((3650+6570)%8760,(3650+8030)%8760), ((4400+6570)%8760,(4400+8030)%8760),
-               ((5130+6570)%8760,(5130+8030)%8760), ((5900+6570)%8760,(5900+8030)%8760),
-               ((6732+6570)%8760,(6732+8030)%8760), ((7580+6570)%8760,(7580+8030)%8760)]
+    A_ranges = [((2180+6570)%H,(2180+8030)%H), ((2920+6570)%H,(2920+8030)%H), 
+               ((3650+6570)%H,(3650+8030)%H), ((4400+6570)%H,(4400+8030)%H),
+               ((5130+6570)%H,(5130+8030)%H), ((5900+6570)%H,(5900+8030)%H),
+               ((6732+6570)%H,(6732+8030)%H), ((7580+6570)%H,(7580+8030)%H)]
     
-    B_ranges = [((2180+8030)%8760,2180), ((2920+8030)%8760,2920), ((3650+8030)%8760,3650),
-               ((4400+8030)%8760,4400), ((5130+8030)%8760,5130), ((5900+8030)%8760,5900),
-               ((6732+8030)%8760,6732), ((7580+8030)%8760,7580)]
+    B_ranges = [((2180+8030)%H,2180), ((2920+8030)%H,2920), ((3650+8030)%H,3650),
+               ((4400+8030)%H,4400), ((5130+8030)%H,5130), ((5900+8030)%H,5900),
+               ((6732+8030)%H,6732), ((7580+8030)%H,7580)]
     
-    C_ranges = [(2180, (2180+730)%8760), (2920, (2920+730)%8760), (3650, (3650+730)%8760),
-               (4400, (4400+730)%8760), (5130, (5130+730)%8760), (5900, (5900+730)%8760),
-               (6732, (6732+730)%8760), (7580, (7580+730)%8760)]
+    C_ranges = [(2180, (2180+730)%H), (2920, (2920+730)%H), (3650, (3650+730)%H),
+               (4400, (4400+730)%H), (5130, (5130+730)%H), (5900, (5900+730)%H),
+               (6732, (6732+730)%H), (7580, (7580+730)%H)]
 
     inA = [lower <= k < upper for (lower, upper) in A_ranges]
     inB = [lower <= k < upper for (lower, upper) in B_ranges]
@@ -128,10 +137,10 @@ def nucProd(tec, k, aproduire):
     Pmax = MinMax[1]
     
     if aproduire > tec.Q/tec.etaout * Pmin:
-        temp=min(aproduire/tec.etaout,tec.Q*Pmax/tec.etaout)
-        tec.prod[k]=temp*tec.etaout
+        temp = min(aproduire/tec.etaout, tec.Q*Pmax/tec.etaout)
+        tec.prod[k] = temp * tec.etaout
     else:
-        tec.prod[k] = tec.Q/tec.etaout * Pmin
+        tec.prod[k] = tec.Q / tec.etaout * Pmin
     
     out = aproduire - tec.prod[k]
     
@@ -140,28 +149,36 @@ def nucProd(tec, k, aproduire):
 
 # Centrales thermiques
 def thermProd(tec, k, aproduire):
-    temp=min(aproduire/tec.etaout,tec.Q/tec.etaout)
-    tec.prod[k]=temp*tec.etaout
-    out=aproduire-tec.prod[k]
+    temp = min(aproduire/tec.etaout, tec.Q/tec.etaout)
+    tec.prod[k] = temp * tec.etaout
+    out = aproduire - tec.prod[k]
     
     return out
 
 
 # Méthode 1 : intervalles de confiance
-def certitudeglobal(y1,y2,y3):
+def certitudeglobal(y1, y2, y3, stockmax):
+    certitude_interval = np.zeros(3)
     
-    ##distribution écretage : min, max, moyenne et écart-type 
-    emoy = np.mean(y1[y1!=-1]) ##moyenne de l'échantillon //
-    eetype = np.std(y1[y1!=-1]) ##ecart-type de l'échantillon //
+    ##distribution écretage : min, max, moyenne et écart-type
+    if y1[y1!=-1].size > 0:
+        emoy = np.mean(y1[y1!=-1]) ##moyenne de l'échantillon //
+        eetype = np.std(y1[y1!=-1]) ##ecart-type de l'échantillon //
+        certitude_interval[1] = emoy - 2.33 * eetype / np.sqrt(len(y1[y1!=-1])) ##99% sur écretage (valeur sup de l'IC)
+    else:
+        # Si jamais de surplus
+        certitude_interval[1] = stockmax - 10
 
     ##distribution pénurie : min, max, moyenne, écart-type
-    pmoy = np.mean(y2[y2!=-1])
-    petype = np.std(y2[y2!=-1])
-
-    certitude_interval = np.zeros(3)
-    certitude_interval[0] = pmoy + (1.76)*(petype)/np.sqrt(len(y2[y2!=-1])) ##98% sur pénurie (valeur sup de l'IC)
-    certitude_interval[1] = emoy - (2.33)*(eetype)/np.sqrt(len(y1[y1!=-1])) ##99% sur écretage (valeur inf de l'IC)
-    certitude_interval[2] = (certitude_interval[0] + certitude_interval[1])/2 ##valeur moyenne entre 98% et 99% 
+    if y2[y2!=-1].size > 0:
+        pmoy = np.mean(y2[y2!=-1])
+        petype = np.std(y2[y2!=-1])
+        certitude_interval[0] = pmoy + 1.76 * petype / np.sqrt(len(y2[y2!=-1])) ##98% sur pénurie (valeur inf de l'IC)
+    else:
+        # Si jamais de pénurie
+        certitude_interval[0] = 10
+    
+    certitude_interval[2] = (certitude_interval[0] + certitude_interval[1]) / 2 ##valeur moyenne entre 98% et 99% 
 
     return certitude_interval
 
@@ -171,7 +188,7 @@ def certitudeglobal(y1,y2,y3):
 # Et choisit le seuil à la proportion la plus proche du critère voulu
 
 # Ecretage / Penurie / Ok
-def seuil(a,b,c, crit, mode):
+def seuil(a, b, c, crit, mode):
         
     y1 = np.copy(a)
     y2 = np.copy(b)
@@ -213,17 +230,17 @@ def seuil(a,b,c, crit, mode):
     return bestStock
 
 
-def StratStockage(prodres,n,Phs,Battery,Methanation,Lake,Thermal,Nuclear, endmonthlake):
-    Surplus=np.zeros(n)
+def StratStockage(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear, endmonthlake):
+    Surplus=np.zeros(H)
     ##Ajout paramètre Penurie
-    Manque = np.zeros(n)
+    Manque = np.zeros(H)
     #Definition d'un ordre sur les differentes technologies de stockage et destockage
-    Tecstock= {"Phs" : Phs,"Battery" : Battery, "Methanation": Methanation}
-    Tecstock2= {"Methanation": Methanation,"Phs" : Phs,"Battery" : Battery}
+    Tecstock= {"Phs":Phs , "Battery":Battery , "Methanation":Methanation}
+    Tecstock2= {"Methanation":Methanation , "Phs":Phs , "Battery":Battery}
         
-    Tecdestock= {"Battery" : Battery,"Phs" : Phs,"Methanation": Methanation,"Lake" : Lake}
+    Tecdestock= {"Battery":Battery , "Phs":Phs , "Methanation":Methanation , "Lake":Lake}
     
-    for k in np.arange(1,n):
+    for k in range(1,H):
         if prodres[k]>0:
             
             # La production min de nucléaire s'ajoute à la qté d'énergie à stocker
@@ -231,42 +248,43 @@ def StratStockage(prodres,n,Phs,Battery,Methanation,Lake,Thermal,Nuclear, endmon
             Astocker = prodres[k] + abs(nucMin)
             
             for tec in Tecstock:
-                Astocker=load(Tecstock[tec],k,Astocker)
-            Surplus[k]=Astocker
+                Astocker = load(Tecstock[tec], k, Astocker)
+
+            Surplus[k] = Astocker
 
         else:
-            Aproduire=-prodres[k]
+            Aproduire = -prodres[k]
             
             Aproduire = nucProd(Nuclear, k, Aproduire)
             
             for tec in Tecdestock:
-                Aproduire=unload(Tecdestock[tec],k,Aproduire, endmonthlake)
+                Aproduire = unload(Tecdestock[tec], k, Aproduire, endmonthlake)
                 
             # Si le nucléaire n'a pas suffi, on fait tourner les centrales thermiques
             if Aproduire > 0:
                 Aproduire = thermProd(Thermal, k, Aproduire)
                 
             ##liste penurie --> pour savoir si il y a pénurie dans la production d'électricité 
-            Manque[k]=Aproduire
+            Manque[k] = Aproduire
                 
-    return Surplus,Manque
+    return Surplus, Manque
 
 
-def StratStockagev2(prodres,n,Phs,Battery,Methanation,Lake,Thermal,Nuclear, I0, I1, I2, endmonthlake):
-    Surplus=np.zeros(n)
+def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear, I0, I1, I2, endmonthlake):
+    Surplus=np.zeros(H)
     ##Ajout paramètre Penurie
-    Manque = np.zeros(n)
+    Manque = np.zeros(H)
     
     #Definition d'un ordre sur les differentes technologies de stockage et destockage
-    Tecstock2= {"Methanation": Methanation,"Phs" : Phs,"Battery" : Battery} ##on stocke du gaz zone 1,2
-    Tecstock3= {"Phs" : Phs,"Battery" : Battery, "Methanation": Methanation} ## zone 3
-    Tecstock4 = {"Battery" : Battery, "Phs" : Phs,"Methanation": Methanation} ## zone 4
+    Tecstock2= {"Methanation":Methanation , "Phs":Phs , "Battery":Battery} ##on stocke du gaz zone 1,2
+    Tecstock3= {"Phs":Phs , "Battery":Battery , "Methanation":Methanation} ## zone 3
+    Tecstock4 = {"Battery":Battery , "Phs":Phs , "Methanation":Methanation} ## zone 4
         
-    Tecdestock1= {"Battery" : Battery,"Phs" : Phs,"Methanation": Methanation,"Lake" : Lake} #zone 1
-    Tecdestock2 = {"Phs": Phs, "Battery": Battery, "Methanation" : Methanation, "Lake" : Lake} ## zone 2
-    Tecdestock3 = {"Methanation" : Methanation, "Battery" : Battery, "Phs": Phs, "Lake" : Lake} ## zone 3,4
+    Tecdestock1= {"Battery":Battery , "Phs":Phs , "Methanation":Methanation , "Lake":Lake} #zone 1
+    Tecdestock2 = {"Phs":Phs , "Battery":Battery , "Methanation":Methanation , "Lake":Lake} ## zone 2
+    Tecdestock3 = {"Methanation":Methanation , "Battery":Battery , "Phs":Phs , "Lake":Lake} ## zone 3,4
     
-    for k in np.arange(1,n):
+    for k in range(1,H):
         stock_PB = Phs.stored[k-1] + Battery.stored[k-1]
         
         # Suivant le niveau de stock, on change l'ordre de dé/stockage et on fait du power2gaz ou
@@ -304,16 +322,17 @@ def StratStockagev2(prodres,n,Phs,Battery,Methanation,Lake,Thermal,Nuclear, I0, 
             Astocker = prodres[k] + abs(nucMin)
             
             for tec in strat_stock:
-                Astocker=load(strat_stock[tec],k,Astocker)
-            Surplus[k]=Astocker
+                Astocker = load(strat_stock[tec], k, Astocker)
+
+            Surplus[k] = Astocker
 
         else:
-            Aproduire=-prodres[k]
+            Aproduire = -prodres[k]
 
             Aproduire = nucProd(Nuclear, k, Aproduire)
 
             for tec in strat_destock:
-                Aproduire=unload(strat_destock[tec],k,Aproduire, endmonthlake)
+                Aproduire = unload(strat_destock[tec], k, Aproduire, endmonthlake)
 
             # Si le nucléaire n'a pas suffi, on fait tourner les centrales thermiques
             if Aproduire > 0:
@@ -323,21 +342,14 @@ def StratStockagev2(prodres,n,Phs,Battery,Methanation,Lake,Thermal,Nuclear, I0, 
             Manque[k]=Aproduire
             
                 
-    return Surplus,Manque
+    return Surplus, Manque
 
 
 ## Etude d'Optimisation de stratégie de stockage et de déstockage du Mix énergetique 
-def mix(scenario, on, off, pvol, th, nuc):
-    Conso = scenario
-    onshore= on
-    offshore = off
+def mix(scenario, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea):
     
-    thermique = th
-    nucleaire = nuc
-    
-    pv= pvol
+    H = 8760
 
-    
     # Profils de production sur l'année 2006 pour les différentes technologies
     vre2006 = pd.read_csv("data/vre_profiles2006.csv", header=None)
     vre2006.columns = ["vre", "heure", "prod2"]
@@ -346,59 +358,56 @@ def mix(scenario, on, off, pvol, th, nuc):
     prod2006=vre2006.prod2
 
     # Production par technologie
-    N=8760
-    prod2006_offshore=prod2006[0:N]
-    prod2006_onshore=prod2006[N:2*N]
-    prod2006_pv=prod2006[2*N:3*N]
-    heures=vre2006.heure[0:N]
+    prod2006_offshore = np.array(prod2006[0:H]) * nbOff
+    prod2006_onshore = np.array(prod2006[H:2*H]) * nbOn
+    prod2006_pv = np.array(prod2006[2*H:3*H]) * nbPv
+    heures = np.array(vre2006.heure[0:H])
 
 
     # Definition des productions électriques des rivières et lacs 
     coefriv = 13
     river = pd.read_csv("data/run_of_river.csv", header=None)
     river.columns = ["heures", "prod2"]
-    rivprod=river.prod2
+    rivprod = np.array(river.prod2) * coefriv
 
     lake = pd.read_csv("data/lake_inflows.csv", header=None)
     lake.columns = ["month", "prod2"]
-    lakeprod=lake.prod2
+    lakeprod = np.array(lake.prod2)
 
     # Calcul de ce qui est stocké dans les lacs pour chaque mois
-    horlake=np.array([0,31,31+28,31+28+31,31+28+31+30,31+28+31+30+31,31+28+31+30+31+30,31+28+31+30+31+30+31\
+    horlake = np.array([0,31,31+28,31+28+31,31+28+31+30,31+28+31+30+31,31+28+31+30+31+30,31+28+31+30+31+30+31\
                 ,31+28+31+30+31+30+31+31,31+28+31+30+31+30+31+31+30,31+28+31+30+31+30+31+31+30+31\
                 ,31+28+31+30+31+30+31+31+30+31+30,31+28+31+30+31+30+31+31+30+31+30+31])*24
 
-    storedlake=np.zeros(8760)
-    endmonthlake=np.zeros(8760)
-    for k in np.arange(12):
-        storedlake[horlake[k]:horlake[k+1]]=1000*lakeprod[k]
-    for k in np.arange(12):
-        endmonthlake[horlake[k]:horlake[k+1]]=int(horlake[k+1])
+    storedlake = np.zeros(H)
+    endmonthlake = np.zeros(H)
+    for k in range(12):
+        storedlake[horlake[k]:horlake[k+1]] = 1000*lakeprod[k]
+    for k in range(12):
+        endmonthlake[horlake[k]:horlake[k+1]] = int(horlake[k+1])
 
 
     # Calcul de la production residuelle
-    prodresiduelle=np.array(prod2006_offshore)*offshore\
-                +np.array(prod2006_onshore)*onshore\
-                +np.array(prod2006_pv)*pv+coefriv*rivprod-Conso
+    prodresiduelle = prod2006_offshore + prod2006_onshore + prod2006_pv + rivprod - scenario
 
     
     # Puissance centrales territoire : 18.54 GWe répartis sur 24 centrales (EDF)
     # Rendement méca (inutile ici) : ~35% généralement (Wiki)
-    T = Techno('Centrale thermique', None, np.zeros(8760), None, 1, 0.7725*thermique, None, None)
+    T = Techno('Centrale thermique', None, np.zeros(H), None, 1, 0.7725*nbTherm, None, None)
     # Puissance : 1.08 GWe (EDF)
     # Même rendement
-    N = Techno('Réacteur nucléaire', None, np.zeros(8760), None, 1, 1.08*nucleaire, None, None)
+    N = Techno('Réacteur nucléaire', None, np.zeros(H), None, 1, 1.08*nbNuc, None, None)
     
     # Definition des differentes technologies
-    P=Techno('Phs', np.ones(8760)*90, np.zeros(8760), 0.95, 0.9, 9.3, 9.3, 180)
-    B=Techno('Battery', np.ones(8760)*37.07, np.zeros(8760), 0.9, 0.95, 20.08, 20.08, 74.14)
-    M=Techno('Methanation', np.ones(8760)*62500, np.zeros(8760), 0.59, 0.45, 32.93, 7.66, 125000)    
-    L=Techno('Lake', storedlake, np.zeros(8760), 1, 1, 10, 10, 2000)   
+    P=Techno('Phs', np.ones(H)*90, np.zeros(H), 0.95, 0.9, 9.3, 9.3, 180)
+    B=Techno('Battery', np.ones(H)*37.07, np.zeros(H), 0.9, 0.95, 20.08, 20.08, 74.14)
+    M=Techno('Methanation', np.ones(H)*62500, np.zeros(H), 0.59, 0.45, 32.93, 7.66, 125000)    
+    L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)   
 
         
     # résultats de la strat initiale
     # Renvoie Surplus,Pénurie et met à jour Phs,Battery,Methanation,Lake,Therm,Nuc
-    s,p=StratStockage(prodresiduelle,8760,P,B,M,L,T,N, endmonthlake)
+    s,p=StratStockage(prodresiduelle,H,P,B,M,L,T,N, endmonthlake)
     
     
     #############################
@@ -406,10 +415,7 @@ def mix(scenario, on, off, pvol, th, nuc):
     
     stockage_PB = np.zeros(365) ##liste qui va servir à enregister les stockages Phs + Battery à l'heure H pour tous les jours
     
-    stockmax=180+74.14 ##stockage maximum total = max total stockage Phs + max total stockage Battery
-    x = np.arange(365) ##nombre de jours sur l'année --> va de 1 à 365
-    x0 = np.arange(8760)
-    
+    stockmax = 180 + 74.14 ##stockage maximum total = max total stockage Phs + max total stockage Battery    
     
     ##listes pour écrêtage : x1 enregistre les jours où le lendemain il y a écrêtage
     ##y1 enregistre la valeur du stock Phs + Battery où le lendemain il y a écrêtage
@@ -430,49 +436,49 @@ def mix(scenario, on, off, pvol, th, nuc):
     
     
     ###############################################################################
-    ##Cetitude interval pour toutes les heures
-    certitude_interval0 = np.zeros(24)
-    certitude_interval1 = np.zeros(24)
-    certitude_interval2 = np.zeros(24)
+    ##Certitude interval pour toutes les heures
+    certitude_interval_inf = np.zeros(24)
+    certitude_interval_sup = np.zeros(24)
+    certitude_interval_med = np.zeros(24)
     
     seuils_top = np.zeros(24)
     seuils_mid = np.zeros(24)
     seuils_bot = np.zeros(24)
     
-    for h in range(24):
-    
+    for h1 in range(24):
         for jour in range(365): ##on regarde tous les jours de l'année
         
-            stockage_PB[jour]=StockPB[jour*24+h] #Au jour jour, valeur du stock Phs + Battery
+            stockage_PB[jour]=StockPB[jour*24 + h1] #Au jour jour, valeur du stock Phs + Battery
         
             ##on regarde dans les 24h qui suivent si il y a écrêtage, pénurie ou aucun des deux
-            for heure in range(24): 
-                t = (jour * 24 + h + heure) % 8760
+            for h2 in range(24): 
+                t = (jour*24 + h1 + h2) % H
                 
-                if s[t] > 0 and StockPB[t] == stockmax : ##cas écrêtage
-                    x1[jour]=jour+1 ##on note le jour précèdant jour avec écrêtage
-                    y1[jour]=stockage_PB[jour] ##on note le stock du jour précèdant jour avec écrêtage
+                if s[t] > 0 and StockPB[t] >= stockmax : ##cas écrêtage
+                    x1[jour] = jour + 1 ##on note le jour précèdant jour avec écrêtage
+                    y1[jour] = stockage_PB[jour] ##on note le stock du jour précèdant jour avec écrêtage
             
                 elif p[t] > 0 : ##cas pénurie
-                    x2[jour]=jour+1 ##mêmes explications mais pour pénurie
-                    y2[jour]=stockage_PB[jour]
+                    x2[jour] = jour + 1 ##mêmes explications mais pour pénurie
+                    y2[jour] = stockage_PB[jour]
                 
                 else : ##cas ni écrêtage, ni pénurie
-                    x3[jour]=jour+1 ##mêmes explications mais avec ni écrêtage, ni pénurie
-                    y3[jour]=stockage_PB[jour]
+                    x3[jour] = jour + 1 ##mêmes explications mais avec ni écrêtage, ni pénurie
+                    y3[jour] = stockage_PB[jour]
                 
-                if x1[jour]==x2[jour]: ##si écretage et pénurie le même jour, on considère que c'est une pénurie 
-                    x1[jour]=-1
-                    y1[jour]=-1
+                if x1[jour] == x2[jour]: ##si écretage et pénurie le même jour, on considère que c'est une pénurie 
+                    x1[jour] = -1
+                    y1[jour] = -1
             
             
-        certitude_interval0[h] = certitudeglobal(y1,y2,y3)[0]
-        certitude_interval1[h] = certitudeglobal(y1,y2,y3)[1]
-        certitude_interval2[h] = certitudeglobal(y1,y2,y3)[2]
+        int_glob = certitudeglobal(y1, y2, y3, stockmax)
+        certitude_interval_inf[h1] = int_glob[0]
+        certitude_interval_sup[h1] = int_glob[1]
+        certitude_interval_med[h1] = int_glob[2]
         
-        seuils_top[h] = seuil(y1,y2,y3, 0.02, "u")
-        seuils_bot[h] = seuil(y1,y2,y3, 0.9, "d")
-        seuils_mid[h] = (seuils_top[h] + seuils_bot[h]) / 2
+        seuils_top[h1] = seuil(y1, y2, y3, 0.02, "u")
+        seuils_bot[h1] = seuil(y1, y2, y3, 0.9, "d")
+        seuils_mid[h1] = (seuils_top[h1] + seuils_bot[h1]) / 2
         
     
         
@@ -480,20 +486,13 @@ def mix(scenario, on, off, pvol, th, nuc):
     # Renvoie Surplus,Pénurie, et met à jour les technos
     
     #Décommenter pour méthode 1 (intervalles de confiance)
-    s,p=StratStockagev2(prodresiduelle,8760,P,B,M,L,T,N,
-                                    certitude_interval0,certitude_interval2,certitude_interval1, endmonthlake)
+    s,p=StratStockagev2(prodresiduelle, H, P, B, M, L, T, N,
+                        certitude_interval_inf, certitude_interval_med, certitude_interval_sup, endmonthlake)
     
     #Décommenter pour méthode 2 (recherche itérative du meilleur seuil)
-    #s,p,P,B,M,L,T,N=StratStockagev2(prodresiduelle,N,Phs,Battery,Methanation,Lake,Thermal,Nuclear,
-    #                               seuils_bot, seuils_mid, seuils_top)
+    #s,p=StratStockagev2(prodresiduelle, H, P, B, M, L, T, N,
+    #                    seuils_bot, seuils_mid, seuils_top, endmonthlake)
     
-
-    prod_Meth=np.array(M.prod)
-    prod_Phs=np.array(P.prod)       
-    prod_Lake=np.array(L.prod)
-    prod_Battery=np.array(B.prod)
-    prod_Thermal=np.array(T.prod)
-    prod_Nuclear=np.array(N.prod)
     
     
 
@@ -505,7 +504,36 @@ def mix(scenario, on, off, pvol, th, nuc):
     # - Stocks de gaz ***
     # - Courbes de production X demande ***
     # - Prod résiduelle
+    # - CO2 ***
         
+    
+    
+
+
+    print("----------- Bilan par techno -----------\n")
+
+    prodOn = int(np.sum(prod2006_onshore))
+    prodOff = int(np.sum(prod2006_offshore))
+    prodPv = int(np.sum(prod2006_pv))
+    prodEau = int(np.sum(L.prod + rivprod))
+    prodNuc = int(np.sum(N.prod))
+    prodTherm = int(np.sum(T.prod))
+    prodMeth = int(np.sum(M.prod))
+
+    print("Eolien onshore: {} GWh produits, {} t de CO2 émises\n".format(prodOn, prodOn * 10))
+    print("Eolien offshore: {} GWh produits, {} t de CO2 émises\n".format(prodOff, prodOff * 9))
+    print("Solaire: {} GWh produits, {} t de CO2 émises\n".format(prodPv, prodPv * 55))
+    print("Hydraulique: {} GWh produits, {} t de CO2 émises\n".format(prodEau, prodEau * 10))
+    print("Nucléaire: {} GWh produits, {} t de CO2 émises\n".format(prodNuc, prodNuc * 6))
+    print("Thermique: {} GWh produits, {} t de CO2 émises\n".format(prodTherm, prodTherm * 443))
+    print("Biomasse / Methanation: {} GWh produits, {} t de CO2 émises\n\n".format(prodMeth, prodMeth * 32))
+
+
+
+    
+
+    print("----------- Bilan global -----------\n")
+
     nbS = 0
     nbP = 0
 
@@ -514,26 +542,33 @@ def mix(scenario, on, off, pvol, th, nuc):
             nbS += 1
         if p[i] > 0:
             nbP += 1
-        
-                                        
-    result = ["Delta gaz : {}".format(M.stored[8759]-M.stored[0]),
-            "Demande : {} / Production : {}".format(np.sum(Conso), np.sum(prod_Meth+prod_Phs+prod_Lake+prod_Battery+prod_Thermal+prod_Nuclear+
-                                                np.array(prod2006_offshore)*off+np.array(prod2006_onshore)*on+np.array(prod2006_pv)*pvol+rivprod*coefriv)),
-            "{} surplus, {} pénuries".format(nbS, nbP)
-            ]
+    
+    print("Demande: {} GWh".format(int(np.sum(scenario))))
+    print("Production: {} GWh".format(prodOn + prodOff + prodPv + prodEau + prodNuc + prodTherm + prodMeth))
+    print("Emissions CO2: {} t\n".format(prodOn*10 + prodOff*9 + prodPv*55 + prodEau*10 + prodNuc*6 + prodTherm*443 + prodMeth*32))
+    # a comparer avec 310 Md de tonnes au total pour la France
 
-    for r in result:
-        print(r)
+    print("{} surplus".format(nbS))    
+    print("{} pénuries\n".format(nbP))
+
+    dGaz = M.stored[8759]-M.stored[0]
+    if dGaz < 0:
+        print("Pertes de gaz : {} GWh\n".format(int(dGaz)))
+
+    else:
+        print("Gains de gaz : {} GWh\n".format(int(dGaz)))
+
 
     return 0
 
 
 
-
-def main(tour, nbOn, nbOff, nbPv, nbTherm, nbNuc):
+def main(tour, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea=""):
     initFiles()
 
-    #Definition des scenarios (Negawatt, ADEME, RTE)
+    # Definition des scenarios (Negawatt, ADEME, RTE pour 2050)
+    # Les autres scenarios sont faits mains à partir des données de Quirion
+
     ADEME = pd.read_csv("data/demand2050_ADEME.csv", header=None)
     ADEME.columns = ["heures", "demande"]
 
@@ -565,16 +600,15 @@ def main(tour, nbOn, nbOff, nbPv, nbTherm, nbNuc):
             "T4_1":T4.d2040, "T4_2":T4.d2041, "T4_3":T4.d2042, "T4_4":T4.d2043, "T4_5":T4.d2044,
             "T5_1":T5.d2045, "T5_2":T5.d2046, "T5_3":T5.d2047, "T5_4":T5.d2048, "T5_5":T5.d2049}
 
-    # Les scenarios faits mains sont basés sur les données de Quirion
 
-    
 
     # Entrée : scenario, nb technos
-    #print(mix(Scenario["T{}_1".format(tour)], nbOn, nbOff, nbPv, nbTherm, nbNuc))
-    mix(ADEME.demande, nbOn, nbOff, nbPv, nbTherm, nbNuc)
+    mix(T1.d2025, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea)
 
     return 0
 
 
+#np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
 
-main(1, 75, 13, 122, 0, 12)
+
+main(1, 150*70, 1*80, 100, 0, 56)
