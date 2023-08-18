@@ -53,7 +53,7 @@ def load(tec,k,astocker):
 
 
 def unload(tec,k,aproduire, endmonthlake, prod=True):
-    if aproduire == 0:
+    if aproduire <= 0:
         out = 0
 
     else:
@@ -346,22 +346,83 @@ def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclea
 
 
 ## Etude d'Optimisation de stratégie de stockage et de déstockage du Mix énergetique 
-def mix(scenario, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea):
-    
+def mix(scenario, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, nbNuc, nbTherm, nbBio, alea):
+
     H = 8760
 
     # Profils de production sur l'année 2006 pour les différentes technologies
-    vre2006 = pd.read_csv("data/vre_profiles2006.csv", header=None)
-    vre2006.columns = ["vre", "heure", "prod2"]
+    # vre2006 = pd.read_csv("data/vre_profiles2006.csv", header=None)
+    # vre2006.columns = ["vre", "heure", "prod2"]
+    # #Production électrique en 2006 pour toutes les technologies
+    # prod2006=vre2006.prod2
+    # # Production par technologie
+    # prod2006_offshore = np.array(prod2006[0:H]) * nbOff
+    # prod2006_onshore = np.array(prod2006[H:2*H]) * nbOn
+    # prod2006_pv = np.array(prod2006[2*H:3*H]) * nbPv
+    # heures = np.array(vre2006.heure[0:H])
 
-    #Production électrique en 2006 pour toutes les technologies
-    prod2006=vre2006.prod2
+    prod_regions = pd.read_csv("data/enr_prod_regions.csv", header=None)
+    prod_regions.columns = ["enr", "heure", "prodGlobal", "prodOcc", "prodNaq", "prodBre", "prodHdf",
+                            "prodPll", "prodAra", "prodEst", "prodNor", "prodBfc", "prodCvl", "prodPac", "prodCor", "prodIdf"]
+    
+    heures = np.array(prod_regions.heure[0:H])
+    prodOnshore = np.zeros(H)
+    prodOffshore = np.zeros(H)
+    prodPV = np.zeros(H)
 
-    # Production par technologie
-    prod2006_offshore = np.array(prod2006[0:H]) * nbOff
-    prod2006_onshore = np.array(prod2006[H:2*H]) * nbOn
-    prod2006_pv = np.array(prod2006[2*H:3*H]) * nbPv
-    heures = np.array(vre2006.heure[0:H])
+    prodOffshore += np.array(prod_regions.prodOcc[0:H]) * occ["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodOcc[H:2*H]) * occ["eolienneON"]
+    prodPV += np.array(prod_regions.prodOcc[2*H:3*H]) * occ["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodNaq[0:H]) * naq["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodNaq[H:2*H]) * naq["eolienneON"]
+    prodPV += np.array(prod_regions.prodNaq[2*H:3*H]) * naq["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodBre[0:H]) * bre["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodBre[H:2*H]) * bre["eolienneON"]
+    prodPV += np.array(prod_regions.prodBre[2*H:3*H]) * bre["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodHdf[0:H]) * hdf["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodHdf[H:2*H]) * hdf["eolienneON"]
+    prodPV += np.array(prod_regions.prodHdf[2*H:3*H]) * hdf["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodPll[0:H]) * pll["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodPll[H:2*H]) * pll["eolienneON"]
+    prodPV += np.array(prod_regions.prodPll[2*H:3*H]) * pll["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodAra[0:H]) * ara["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodAra[H:2*H]) * ara["eolienneON"]
+    prodPV += np.array(prod_regions.prodAra[2*H:3*H]) * ara["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodEst[0:H]) * est["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodEst[H:2*H]) * est["eolienneON"]
+    prodPV += np.array(prod_regions.prodEst[2*H:3*H]) * est["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodNor[0:H]) * nor["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodNor[H:2*H]) * nor["eolienneON"]
+    prodPV += np.array(prod_regions.prodNor[2*H:3*H]) * nor["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodBfc[0:H]) * bfc["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodBfc[H:2*H]) * bfc["eolienneON"]
+    prodPV += np.array(prod_regions.prodBfc[2*H:3*H]) * bfc["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodCvl[0:H]) * cvl["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodCvl[H:2*H]) * cvl["eolienneON"]
+    prodPV += np.array(prod_regions.prodCvl[2*H:3*H]) * cvl["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodPac[0:H]) * pac["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodPac[H:2*H]) * pac["eolienneON"]
+    prodPV += np.array(prod_regions.prodPac[2*H:3*H]) * pac["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodCor[0:H]) * cor["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodCor[H:2*H]) * cor["eolienneON"]
+    prodPV += np.array(prod_regions.prodCor[2*H:3*H]) * cor["panneauPV"]
+
+    prodOffshore += np.array(prod_regions.prodIdf[0:H]) * idf["eolienneOFF"]
+    prodOnshore += np.array(prod_regions.prodIdf[H:2*H]) * idf["eolienneON"]
+    prodPV += np.array(prod_regions.prodIdf[2*H:3*H]) * idf["panneauPV"]
+
+
 
 
     # Definition des productions électriques des rivières et lacs 
@@ -388,7 +449,8 @@ def mix(scenario, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea):
 
 
     # Calcul de la production residuelle
-    prodresiduelle = prod2006_offshore + prod2006_onshore + prod2006_pv + rivprod - scenario
+    # prodresiduelle = prod2006_offshore + prod2006_onshore + prod2006_pv + rivprod - scenario
+    prodresiduelle = prodOffshore + prodOnshore + prodPV + rivprod - scenario
 
     
     # Puissance centrales territoire : 18.54 GWe répartis sur 24 centrales (EDF)
@@ -401,7 +463,7 @@ def mix(scenario, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea):
     # Definition des differentes technologies
     P=Techno('Phs', np.ones(H)*90, np.zeros(H), 0.95, 0.9, 9.3, 9.3, 180)
     B=Techno('Battery', np.ones(H)*37.07, np.zeros(H), 0.9, 0.95, 20.08, 20.08, 74.14)
-    M=Techno('Methanation', np.ones(H)*62500, np.zeros(H), 0.59, 0.45, 32.93, 7.66, 125000)    
+    M=Techno('Methanation', np.ones(H)*62500, np.zeros(H), 0.59, 0.45, 32.93*(nbBio/219), 7.66*(nbBio/219), 125000)    
     L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)   
 
         
@@ -512,9 +574,9 @@ def mix(scenario, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea):
 
     print("----------- Bilan par techno -----------\n")
 
-    prodOn = int(np.sum(prod2006_onshore))
-    prodOff = int(np.sum(prod2006_offshore))
-    prodPv = int(np.sum(prod2006_pv))
+    prodOn = int(np.sum(prodOnshore))
+    prodOff = int(np.sum(prodOffshore))
+    prodPv = int(np.sum(prodPV))
     prodEau = int(np.sum(L.prod + rivprod))
     prodNuc = int(np.sum(N.prod))
     prodTherm = int(np.sum(T.prod))
@@ -545,6 +607,7 @@ def mix(scenario, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea):
     
     print("Demande: {} GWh".format(int(np.sum(scenario))))
     print("Production: {} GWh".format(prodOn + prodOff + prodPv + prodEau + prodNuc + prodTherm + prodMeth))
+    print("Résultat: {} GWh\n".format(prodOn + prodOff + prodPv + prodEau + prodNuc + prodTherm + prodMeth - int(np.sum(scenario))))
     print("Emissions CO2: {} t\n".format(prodOn*10 + prodOff*9 + prodPv*55 + prodEau*10 + prodNuc*6 + prodTherm*443 + prodMeth*32))
     # a comparer avec 310 Md de tonnes au total pour la France
 
@@ -552,18 +615,14 @@ def mix(scenario, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea):
     print("{} pénuries\n".format(nbP))
 
     dGaz = M.stored[8759]-M.stored[0]
-    if dGaz < 0:
-        print("Pertes de gaz : {} GWh\n".format(int(dGaz)))
-
-    else:
-        print("Gains de gaz : {} GWh\n".format(int(dGaz)))
+    print("Gaz : {} -> {} ({}) GWh\n".format(int(M.stored[0]), int(M.stored[8759]), int(dGaz)))
 
 
     return 0
 
 
 
-def main(tour, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea=""):
+def main(tour, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, nbNuc, nbTherm, nbBio, alea=""):
     initFiles()
 
     # Definition des scenarios (Negawatt, ADEME, RTE pour 2050)
@@ -593,6 +652,7 @@ def main(tour, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea=""):
     T5 = pd.read_csv("data/T5.csv", header=None, sep=';', decimal=',')
     T5.columns = ["heures", "d2045", "d2046", "d2047" ,"d2048", "d2049"]
 
+
     Scenario= {"RTE":RTE.demande, "ADEME":ADEME.demande, "Negawatt":Negawatt.demande,
             "T1_1":T1.d2025, "T1_2":T1.d2026, "T1_3":T1.d2027, "T1_4":T1.d2028, "T1_5":T1.d2029,
             "T2_1":T2.d2030, "T2_2":T2.d2031, "T2_3":T2.d2032, "T2_4":T2.d2033, "T2_5":T2.d2034,
@@ -603,12 +663,39 @@ def main(tour, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea=""):
 
 
     # Entrée : scenario, nb technos
-    mix(T1.d2025, nbOn, nbOff, nbPv, nbTherm, nbNuc, alea)
+    mix(T1.d2029, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, nbNuc, nbTherm, nbBio, alea)
 
     return 0
 
 
-#np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
+np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
 
 
-main(1, 150*70, 1*80, 100, 0, 56)
+reg_info = {
+    "hdf" : {"eolienneON":5, "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":6 , "biomasse":1},
+    "idf" : {"eolienneON":1 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":0 , "biomasse":0},
+    "est" : {"eolienneON":3 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":6 , "biomasse":7},
+    "nor" : {"eolienneON":1 , "eolienneOFF":1 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":8 , "biomasse":1},
+    "occ" : {"eolienneON":5 , "eolienneOFF":0 , "panneauPV":3 , "centraleTherm":0 , "centraleNuc":2 , "biomasse":3},
+    "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":4 , "centraleTherm":3 , "centraleNuc":8 , "biomasse":2},
+    "bre" : {"eolienneON":4 , "eolienneOFF":2 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":0 , "biomasse":1},
+    "cvl" : {"eolienneON":4 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":12 , "biomasse":1},
+    "pll" : {"eolienneON":3 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":2},
+    "naq" : {"eolienneON":2 , "eolienneOFF":2 , "panneauPV":2 , "centraleTherm":2 , "centraleNuc":6 , "biomasse":8},
+    "ara" : {"eolienneON":1 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":1 , "centraleNuc":6 , "biomasse":3},
+    "bfc" : {"eolienneON":1 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":2 , "biomasse":1},
+    "cor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":3 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":1}
+}
+
+nbNuc = 0
+nbTherm = 0
+nbBio = 0
+
+for k in reg_info:
+    nbNuc += reg_info[k]["centraleNuc"]
+    nbTherm += reg_info[k]["centraleTherm"]
+    nbBio += reg_info[k]["biomasse"]
+
+main(1, reg_info["hdf"], reg_info["idf"], reg_info["est"], reg_info["nor"], reg_info["occ"], 
+        reg_info["pac"], reg_info["bre"], reg_info["cvl"], reg_info["pll"], reg_info["naq"], 
+        reg_info["ara"], reg_info["bfc"], reg_info["cor"], nbNuc, nbTherm, nbBio)
