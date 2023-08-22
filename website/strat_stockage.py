@@ -10,9 +10,11 @@ import os
                                 ### TOUT EST EN GW(h) ###
                                 #########################
 
+np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
 
 
 
+# Telecharge certains fichiers de donnees necessaires au fonctionnement du programme
 def initFiles():
     # Les lignes suivantes permettent d'avoir accès à un dépôt de données de manière chiffrée
     s3_endpoint_url = 'https://object-rook-ceph.apps.math.cnrs.fr/'
@@ -24,15 +26,25 @@ def initFiles():
 
     # File DL : (key, file to dl, location)
     if not os.path.isfile('data/demand2050_negawatt.csv'):
-        s3.download_file(s3_bucket, "demand2050_negawatt.csv", "data/demand2050_negawatt.csv")
-        s3.download_file(s3_bucket, "demand2050_RTE.csv", "data/demand2050_RTE.csv")
-        s3.download_file(s3_bucket, "demand2050_ADEME.csv", "data/demand2050_ADEME.csv")
-        s3.download_file(s3_bucket, "vre_profiles2006.csv", "data/vre_profiles2006.csv")
+        # s3.download_file(s3_bucket, "demand2050_negawatt.csv", "data/demand2050_negawatt.csv")
+        # s3.download_file(s3_bucket, "demand2050_RTE.csv", "data/demand2050_RTE.csv")
+        # s3.download_file(s3_bucket, "demand2050_ADEME.csv", "data/demand2050_ADEME.csv")
+        # s3.download_file(s3_bucket, "vre_profiles2006.csv", "data/vre_profiles2006.csv")
         s3.download_file(s3_bucket, "run_of_river.csv", "data/run_of_river.csv")
         s3.download_file(s3_bucket, "lake_inflows.csv", "data/lake_inflows.csv")
 
 
-# Definition de la classe Techno
+# Classe regroupant toutes les technologies de stockage et de production pilotables
+#
+# @params
+# name (str) : nom de la techno
+# stored (array) : niveau des stocks a chaque heure
+# prod (array) : ce qui est produit chaque heure
+# etain (float) : coefficient de rendement a la charge
+# etaout (float) : coefficient de rendement a la decharge
+# Q (float) : capacite installee (flux sortant)
+# S (float) : capacite de charge (flux entrant)
+# vol (float) : capacite maximale de stockage
 class Techno:
     def __init__(self, name, stored, prod, etain, etaout, Q, S, Vol):
         self.name = name     # nom de la techno
@@ -45,8 +57,13 @@ class Techno:
         self.vol=Vol         # Capacité maximale de stockage de la techno (Volume max)
 
 
-# Definition des fonctions de charge et décharge d'une technologie
-def load(tec,k,astocker):
+# Recharge les moyens de stockage quand on a trop d'energie
+#
+# @params
+# tec : technologie de stockage a recharger (batterie, phs, ...)
+# k (int) : heure courante
+# astocker (float) : qte d'energie a stocker
+def load(tec, k, astocker):
     if astocker == 0:
         out = 0
 
@@ -58,7 +75,15 @@ def load(tec,k,astocker):
     return out
 
 
-def unload(tec,k,aproduire, endmonthlake, prod=True):
+# Decharge les moyens de stockage quand on a besoin d'energie
+#
+# @params
+# tec : technologie de stockage a utiliser pour la production (batterie, phs, ...)
+# k (int) : heure courante
+# aproduire (float) : qte d'energie a fournir
+# endmonthlake (array) : qte d'energie restante dans les lacs jusqu'a la fin du mois
+# prod (boolean) : indique si l'energie dechargee est a prendre en compte pour la production globale (faux pour les echanges internes)
+def unload(tec, k, aproduire, endmonthlake, prod=True):
     if aproduire <= 0:
         out = 0
 
@@ -71,7 +96,6 @@ def unload(tec,k,aproduire, endmonthlake, prod=True):
             tec.stored[k:] = tec.stored[k] - temp
 
         if prod:
-            # Si on veut que ça compte dans la prod totale (ce n'est pas le cas pour les échanges internes)
             tec.prod[k] = temp * tec.etaout
 
         out = aproduire - temp * tec.etaout
@@ -79,18 +103,24 @@ def unload(tec,k,aproduire, endmonthlake, prod=True):
     return out
 
 
-# Sur ATH : pas de pénurie avec 56 centrales min.
-# Sur ATL : 28 centrales min. (50%)
-# Diviser en 4 ou 8 groupes (plutôt 8 pour les besoins humains)
-# 1/8 = 0.125, 7/8 = 0.875
-# 2180, 2920, 3650, 4400, 5130, 5900, 6732, 7580
-# Tiers de 8760 : 2920(4*730), 5840, 8460
-# DANS le dernier tiers : 50% croissance linéaire min, 25% baisse de 20% prod min/max, 25% arrêt
-
-# La production nucléaire est divisée en 8 groupes, chacun a son cycle d'arrêt. 
-# Dans cette fonction, on regarde dans quel partie du cycle on est pour chaque groupe, 
-# pour calibrer la production min et max.
+# Renvoie la puissance dispo actuellement pour le nucleaire, par rapport a la puissance max
+#
+# @params
+# k (int) : heure courante
 def cycle(k):
+
+    # Sur ATH : pas de pénurie avec 56 centrales min.
+    # Sur ATL : 28 centrales min. (50%)
+    # Diviser en 4 ou 8 groupes (plutôt 8 pour les besoins humains)
+    # 1/8 = 0.125, 7/8 = 0.875
+    # 2180, 2920, 3650, 4400, 5130, 5900, 6732, 7580
+    # Tiers de 8760 : 2920(4*730), 5840, 8460
+    # DANS le dernier tiers : 50% croissance linéaire min, 25% baisse de 20% prod min/max, 25% arrêt
+
+    # La production nucléaire est divisée en 8 groupes, chacun a son cycle d'arrêt. 
+    # Dans cette fonction, on regarde dans quel partie du cycle on est pour chaque groupe, 
+    # pour calibrer la production min et max.
+
     H = 8760
     N = 8
     n = 1/N
@@ -136,8 +166,15 @@ def cycle(k):
     return (sMin, sMax)
 
 
-# Si la demande est trop faible ou nulle, on produit quand même à hauteur de 20%
+# Lance la production des centrales nucléaires
+#
+# @params
+# tec : objet à utiliser pour la production  (ici, Techno Nucleaire)
+# k (int) : heure courante
+# aproduire (float) : qte d'energie a fournir
 def nucProd(tec, k, aproduire):
+
+    # Si la demande est trop faible ou nulle, on produit quand même à hauteur de 20%
     MinMax = cycle(k)
     Pmin = MinMax[0]
     Pmax = MinMax[1]
@@ -153,7 +190,12 @@ def nucProd(tec, k, aproduire):
     return out
 
 
-# Centrales thermiques
+# Lance la production des centrales thermiques
+#
+# @params
+# tec : objet à utiliser pour la production  (ici, Techno Thermique)
+# k (int) : heure courante
+# aproduire (float) : qte d'energie a fournir
 def thermProd(tec, k, aproduire):
     temp = min(aproduire/tec.etaout, tec.Q/tec.etaout)
     tec.prod[k] = temp * tec.etaout
@@ -162,7 +204,13 @@ def thermProd(tec, k, aproduire):
     return out
 
 
-# Méthode 1 : intervalles de confiance
+# 1ere methode de calcul des seuils de stock
+#
+# @params
+# y1 (array) : heures avec surplus
+# y2 (array) : heures avec penuries
+# y3 (array) : heures sans surplus ni penurie 
+# stockmax (float) : capacite max des batteries + phs
 def certitudeglobal(y1, y2, y3, stockmax):
     certitude_interval = np.zeros(3)
     
@@ -189,11 +237,14 @@ def certitudeglobal(y1, y2, y3, stockmax):
     return certitude_interval
 
     
-# Méthode 2 : recherche itérative du meilleur seuil
-# Cette fonction regarde la proportion de pénuries parmi les points au-dessus/sous du seuil, pour chaque seuil
-# Et choisit le seuil à la proportion la plus proche du critère voulu
-
-# Ecretage / Penurie / Ok
+# 2e methode de calcul des seuils de stock
+#
+# @params
+# a (array) : heures avec surplus
+# b (array) : heures avec penuries
+# c (array) : heures sans surplus ni penurie 
+# crit (float) : critere de separation des penuries (ex: si 0.2, on garde 20% des penuries d'un cote, 80% de l'autre)
+# mode (str) : vaut 'u' ou 'd' selon qu'on veuille se placer au dessus ou en dessous du seuil
 def seuil(a, b, c, crit, mode):
         
     y1 = np.copy(a)
@@ -236,6 +287,13 @@ def seuil(a, b, c, crit, mode):
     return bestStock
 
 
+# Premiere strat de stockage naive
+#
+# @params
+# prodres (array) : production residuelle sur l'annee
+# H (int) : nombre d'heures dans l'annee
+# Battery - Nuclear : objets de la classe Techno
+# endmonthlake (array) : contient la qte d'energie restante dans les lacs jusqu'a la fin de chaque mois
 def StratStockage(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear, endmonthlake):
     Surplus=np.zeros(H)
     ##Ajout paramètre Penurie
@@ -276,6 +334,14 @@ def StratStockage(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear,
     return Surplus, Manque
 
 
+# Strat de stockage optimisee
+#
+# @params
+# prodres (array) : production residuelle sur l'annee
+# H (int) : nombre d'heures dans l'annee
+# Battery - Nuclear : objets de la classe Techno
+# I0, I1, I2 (array) : seuils de stockage dirigeant la strat de stockage, et déduits de la strat naive
+# endmonthlake (array) : contient la qte d'energie restante dans les lacs jusqu'a la fin de chaque mois
 def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear, I0, I1, I2, endmonthlake):
     Surplus=np.zeros(H)
     ##Ajout paramètre Penurie
@@ -351,8 +417,17 @@ def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclea
     return Surplus, Manque
 
 
-## Etude d'Optimisation de stratégie de stockage et de déstockage du Mix énergetique 
-def mix(scenario, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, alea):
+# Optimisation de stratégie de stockage et de déstockage du Mix énergetique
+#
+# @params
+# scenario (array) : scenario de consommation heure par heure
+# tour (int) : annee de deroulement du scenario (25, 30, 35, 40, 45, 50)
+# est - cor (dict) : contient le nombre d'installations pour la region concernee
+# nbOn - nbBio (int) : nombre de pions eoliennes onshore, offshore, ..., de biomasse
+# factStock (float) : facteur de qte de stockage, entre 0 et 1
+# alea (str) : code d'une carte alea
+def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, 
+        nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, factStock, alea):
 
     H = 8760
 
@@ -448,10 +523,9 @@ def mix(scenario, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, co
     # prodresiduelle = prod2006_offshore + prod2006_onshore + prod2006_pv + rivprod - scenario
     prodresiduelle = prodOffshore + prodOnshore + prodPV + rivprod - scenario
 
-    
     # Definition des differentes technologies
-    P=Techno('Phs', np.ones(H)*90, np.zeros(H), 0.95, 0.9, 9.3, 9.3, 180)
-    B=Techno('Battery', np.ones(H)*37.07, np.zeros(H), 0.9, 0.95, 20.08, 20.08, 74.14)
+    P=Techno('Phs', np.ones(H)*90, np.zeros(H), 0.95, 0.9, 9.3, 9.3, factStock*180)
+    B=Techno('Battery', np.ones(H)*37.07, np.zeros(H), 0.9, 0.95, 20.08, 20.08, factStock*74.14)
     M=Techno('Methanation', np.ones(H)*62500, np.zeros(H), 0.59, 0.45, 32.93*(nbBio/219), 7.66*(nbBio/219), 125000)    
     L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)
 
@@ -566,10 +640,10 @@ def mix(scenario, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, co
     # - CO2 ***
         
     
-    
 
     print("\t\t####################################")
-    print("\t\t#######   BILAN PAR TECHNO   #######")
+    print("\t\t\t     {}           ".format(titre))
+    print("\t\t\t   BILAN PAR TECHNO   ")
     print("\t\t####################################\n")
 
     prodOn = int(np.sum(prodOnshore))
@@ -579,6 +653,8 @@ def mix(scenario, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, co
     prodNuc = int(np.sum(N.prod))
     prodTherm = int(np.sum(T.prod))
     prodMeth = int(np.sum(M.prod))
+    prodPhs = int(np.sum(P.prod))
+    prodBat = int(np.sum(B.prod))
 
     print("---------------------------------------------------------------------------------------------------------")
     print("| Techno\t\t| Puissance installée (GW)\t| Production (GWh)\t| Emissions CO2 (t) \t|")
@@ -596,15 +672,19 @@ def mix(scenario, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, co
     print("---------------------------------------------------------------------------------------------------------")
     print("| Thermique\t\t| {}\t\t\t\t| {}\t\t\t| {}\t\t\t|".format(np.round(T.Q, 2), prodTherm, prodTherm * 443))
     print("---------------------------------------------------------------------------------------------------------")
-    print("| Methanation\t\t| {}\t\t\t\t| {}\t\t\t| {}\t\t\t|".format(np.round(M.Q, 2), prodMeth, prodMeth * 32))
+    print("| Methanation\t\t| {}\t\t\t\t| {}\t\t\t| {}\t\t|".format(np.round(M.Q, 2), prodMeth, prodMeth * 32))
+    print("---------------------------------------------------------------------------------------------------------")
+    print("| PHS\t\t\t| {}\t\t\t\t| {}\t\t\t| -\t\t\t|".format(np.round(P.Q, 2), prodPhs))
+    print("---------------------------------------------------------------------------------------------------------")
+    print("| Batteries\t\t| {}\t\t\t\t| {}\t\t\t| -\t\t\t|".format(np.round(B.Q, 2), prodBat))
     print("---------------------------------------------------------------------------------------------------------\n\n")
-
 
     
 
-    print("\t\t################################")
-    print("\t\t#######   BILAN GLOBAL   #######")
-    print("\t\t################################\n")
+    print("\t\t####################################")
+    print("\t\t\t     {}           ".format(titre))
+    print("\t\t\t   BILAN GLOBAL   ")
+    print("\t\t####################################\n")
 
     nbS = 0
     nbP = 0
@@ -627,58 +707,54 @@ def mix(scenario, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, co
     dGaz = M.stored[8759]-M.stored[0]
     print("Gaz : {} -> {} ({}) GWh\n".format(int(M.stored[0]), int(M.stored[8759]), int(dGaz)))
 
+    print("Capacités totales (GWh):")
+    print("Batteries:", int(B.vol))
+    print("PHS:", int(P.vol))
+    print("Gaz:", int(M.vol))
+
+    print("")
 
     return 0
 
 
 
-def main(tour, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, alea=""):
+# Fonction principale
+#
+# @params
+# scenario (str) : au choix entre ADEME, RTE et Negawatt
+# tour (int) : valeur parmi 25, 30, .., 45, 50
+# est - cor (dict) : contient le nombre d'installations pour la region concernee
+# nbOn - nbBio (int) : nombre de pions eoliennes onshore, offshore, ..., de biomasse
+# factStock (float) : facteur de qte de stockage, entre 0 et 1
+# alea (str) : code d'une carte alea
+def main(scenario, tour, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, 
+         nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, factStock, alea=""):
+
     initFiles()
 
     # Definition des scenarios (Negawatt, ADEME, RTE pour 2050)
     # Les autres scenarios sont faits mains à partir des données de Quirion
 
-    ADEME = pd.read_csv("data/demand2050_ADEME.csv", header=None)
-    ADEME.columns = ["heures", "demande"]
+    ADEME = pd.read_csv("data/ADEME_25-50.csv", header=None)
+    ADEME.columns = ["heures", "d50", "d45", "d40", "d35", "d30", "d25"]
 
-    RTE = pd.read_csv("data/demand2050_RTE.csv", header=None)
-    RTE.columns = ["heures", "demande"]
+    RTE = pd.read_csv("data/RTE_25-50.csv", header=None)
+    RTE.columns = ["heures", "d50", "d45", "d40", "d35", "d30", "d25"]
 
-    Negawatt = pd.read_csv("data/demand2050_negawatt.csv", header=None)
-    Negawatt.columns = ["heures", "demande"]
+    NEGAWATT = pd.read_csv("data/NEGAWATT_25-50.csv", header=None)
+    NEGAWATT.columns = ["heures", "d50", "d45", "d40", "d35", "d30", "d25"]
 
-    T1 = pd.read_csv("data/T1.csv", header=None, sep=';', decimal=',')
-    T1.columns = ["heures", "d2025", "d2026", "d2027" ,"d2028", "d2029"]
-
-    T2 = pd.read_csv("data/T2.csv", header=None, sep=';', decimal=',')
-    T2.columns = ["heures", "d2030", "d2031", "d2032" ,"d2033", "d2034"]
-
-    T3 = pd.read_csv("data/T3.csv", header=None, sep=';', decimal=',')
-    T3.columns = ["heures", "d2035", "d2036", "d2037" ,"d2038", "d2039"]
-
-    T4 = pd.read_csv("data/T4.csv", header=None, sep=';', decimal=',')
-    T4.columns = ["heures", "d2040", "d2041", "d2042" ,"d2043", "d2044"]
-
-    T5 = pd.read_csv("data/T5.csv", header=None, sep=';', decimal=',')
-    T5.columns = ["heures", "d2045", "d2046", "d2047" ,"d2048", "d2049"]
-
-
-    Scenario= {"RTE":RTE.demande, "ADEME":ADEME.demande, "Negawatt":Negawatt.demande,
-            "T1_1":T1.d2025, "T1_2":T1.d2026, "T1_3":T1.d2027, "T1_4":T1.d2028, "T1_5":T1.d2029,
-            "T2_1":T2.d2030, "T2_2":T2.d2031, "T2_3":T2.d2032, "T2_4":T2.d2033, "T2_5":T2.d2034,
-            "T3_1":T3.d2035, "T3_2":T3.d2036, "T3_3":T3.d2037, "T3_4":T3.d2038, "T3_5":T3.d2039,
-            "T4_1":T4.d2040, "T4_2":T4.d2041, "T4_3":T4.d2042, "T4_4":T4.d2043, "T4_5":T4.d2044,
-            "T5_1":T5.d2045, "T5_2":T5.d2046, "T5_3":T5.d2047, "T5_4":T5.d2048, "T5_5":T5.d2049}
-
-
+    ScenarList = {"ADEME":ADEME , "RTE":RTE , "NEGAWATT":NEGAWATT}
 
     # Entrée : scenario, nb technos
-    mix(T1.d2025, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, alea)
+    mix(ScenarList[scenario]["d{}".format(tour)], "{} 20{}".format(scenario,tour),
+        hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, 
+        nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, factStock, alea)
 
     return 0
 
 
-np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
+
 
 
 
@@ -691,19 +767,19 @@ np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
 # biomasse --> 1 unité = une fraction de flux E/S en méthanation
 
 reg_info = {
-    "hdf" : {"eolienneON":5, "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":6 , "biomasse":1},
-    "idf" : {"eolienneON":1 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":0 , "biomasse":0},
-    "est" : {"eolienneON":3 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":6 , "biomasse":7},
-    "nor" : {"eolienneON":1 , "eolienneOFF":1 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":8 , "biomasse":1},
-    "occ" : {"eolienneON":5 , "eolienneOFF":0 , "panneauPV":3 , "centraleTherm":0 , "centraleNuc":2 , "biomasse":3},
-    "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":4 , "centraleTherm":3 , "centraleNuc":8 , "biomasse":2},
-    "bre" : {"eolienneON":4 , "eolienneOFF":2 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":0 , "biomasse":1},
-    "cvl" : {"eolienneON":4 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":12 , "biomasse":1},
-    "pll" : {"eolienneON":3 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":2},
-    "naq" : {"eolienneON":2 , "eolienneOFF":2 , "panneauPV":2 , "centraleTherm":2 , "centraleNuc":6 , "biomasse":8},
-    "ara" : {"eolienneON":1 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":1 , "centraleNuc":6 , "biomasse":3},
-    "bfc" : {"eolienneON":1 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":2 , "biomasse":1},
-    "cor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":3 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":1}
+    "hdf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":6 , "biomasse":0},
+    "idf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":0 , "biomasse":0},
+    "est" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":6 , "biomasse":0},
+    "nor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":8 , "biomasse":0},
+    "occ" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":2 , "biomasse":0},
+    "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":8 , "biomasse":0},
+    "bre" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":0 , "biomasse":0},
+    "cvl" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":12 , "biomasse":0},
+    "pll" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":0},
+    "naq" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":6 , "biomasse":0},
+    "ara" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":1 , "centraleNuc":6 , "biomasse":0},
+    "bfc" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":2 , "biomasse":0},
+    "cor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":0}
 }
 
 nbNuc = 0
@@ -721,6 +797,10 @@ for k in reg_info:
     nbOff += reg_info[k]["eolienneOFF"]
     nbPv += reg_info[k]["panneauPV"]
 
-main(1, reg_info["hdf"], reg_info["idf"], reg_info["est"], reg_info["nor"], reg_info["occ"], 
+
+
+    
+
+main("RTE", 30, reg_info["hdf"], reg_info["idf"], reg_info["est"], reg_info["nor"], reg_info["occ"], 
         reg_info["pac"], reg_info["bre"], reg_info["cvl"], reg_info["pll"], reg_info["naq"], 
-        reg_info["ara"], reg_info["bfc"], reg_info["cor"], nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio)
+        reg_info["ara"], reg_info["bfc"], reg_info["cor"], nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, 0.2)
