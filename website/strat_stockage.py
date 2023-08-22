@@ -173,19 +173,22 @@ def cycle(k):
 # k (int) : heure courante
 # aproduire (float) : qte d'energie a fournir
 def nucProd(tec, k, aproduire):
+    if aproduire <= 0:
+        out = 0
 
-    # Si la demande est trop faible ou nulle, on produit quand même à hauteur de 20%
-    MinMax = cycle(k)
-    Pmin = MinMax[0]
-    Pmax = MinMax[1]
-    
-    if aproduire > tec.Q/tec.etaout * Pmin:
-        temp = min(aproduire/tec.etaout, tec.Q*Pmax/tec.etaout)
-        tec.prod[k] = temp * tec.etaout
     else:
-        tec.prod[k] = tec.Q / tec.etaout * Pmin
-    
-    out = aproduire - tec.prod[k]
+        # Si la demande est trop faible ou nulle, on produit quand même à hauteur de 20%
+        MinMax = cycle(k)
+        Pmin = MinMax[0]
+        Pmax = MinMax[1]
+        
+        if aproduire > tec.Q/tec.etaout * Pmin:
+            temp = min(aproduire/tec.etaout, tec.Q*Pmax/tec.etaout)
+            tec.prod[k] = temp * tec.etaout
+        else:
+            tec.prod[k] = tec.Q / tec.etaout * Pmin
+        
+        out = aproduire - tec.prod[k]
     
     return out
 
@@ -197,9 +200,13 @@ def nucProd(tec, k, aproduire):
 # k (int) : heure courante
 # aproduire (float) : qte d'energie a fournir
 def thermProd(tec, k, aproduire):
-    temp = min(aproduire/tec.etaout, tec.Q/tec.etaout)
-    tec.prod[k] = temp * tec.etaout
-    out = aproduire - tec.prod[k]
+    if aproduire <= 0:
+        out = 0
+
+    else:
+        temp = min(aproduire/tec.etaout, tec.Q/tec.etaout)
+        tec.prod[k] = temp * tec.etaout
+        out = aproduire - tec.prod[k]
     
     return out
 
@@ -356,8 +363,8 @@ def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclea
     Tecdestock2 = {"Phs":Phs , "Battery":Battery , "Methanation":Methanation , "Lake":Lake} ## zone 2
     Tecdestock3 = {"Methanation":Methanation , "Battery":Battery , "Phs":Phs , "Lake":Lake} ## zone 3,4
     
-    for k in range(1,H):
-        stock_PB = Phs.stored[k-1] + Battery.stored[k-1]
+    for k in range(H):
+        stock_PB = Phs.stored[k] + Battery.stored[k]
         
         # Suivant le niveau de stock, on change l'ordre de dé/stockage et on fait du power2gaz ou
         # gaz2power si besoin
@@ -524,8 +531,8 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodresiduelle = prodOffshore + prodOnshore + prodPV + rivprod - scenario
 
     # Definition des differentes technologies
-    P=Techno('Phs', np.ones(H)*90, np.zeros(H), 0.95, 0.9, 9.3, 9.3, factStock*180)
-    B=Techno('Battery', np.ones(H)*37.07, np.zeros(H), 0.9, 0.95, 20.08, 20.08, factStock*74.14)
+    P=Techno('Phs', np.ones(H)*16, np.zeros(H), 0.95, 0.9, factStock*9.3, factStock*9.3, factStock*180)
+    B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, factStock*20.08, factStock*20.08, factStock*74.14)
     M=Techno('Methanation', np.ones(H)*62500, np.zeros(H), 0.59, 0.45, 32.93*(nbBio/219), 7.66*(nbBio/219), 125000)    
     L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)
 
@@ -548,7 +555,7 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     
     stockage_PB = np.zeros(365) ##liste qui va servir à enregister les stockages Phs + Battery à l'heure H pour tous les jours
     
-    stockmax = 180 + 74.14 ##stockage maximum total = max total stockage Phs + max total stockage Battery    
+    stockmax = B.vol + P.vol ##stockage maximum total = max total stockage Phs + max total stockage Battery    
     
     ##listes pour écrêtage : x1 enregistre les jours où le lendemain il y a écrêtage
     ##y1 enregistre la valeur du stock Phs + Battery où le lendemain il y a écrêtage
@@ -656,6 +663,9 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodPhs = int(np.sum(P.prod))
     prodBat = int(np.sum(B.prod))
 
+    prodTotale = prodOn + prodOff + prodPv + prodEau + prodNuc + prodTherm + prodMeth + prodPhs + prodBat
+
+
     print("---------------------------------------------------------------------------------------------------------")
     print("| Techno\t\t| Puissance installée (GW)\t| Production (GWh)\t| Emissions CO2 (t) \t|")
     print("---------------------------------------------------------------------------------------------------------")
@@ -696,21 +706,22 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
             nbP += 1
     
     print("Demande: {} GWh".format(int(np.sum(scenario))))
-    print("Production: {} GWh".format(prodOn + prodOff + prodPv + prodEau + prodNuc + prodTherm + prodMeth))
-    print("Résultat: {} GWh\n".format(prodOn + prodOff + prodPv + prodEau + prodNuc + prodTherm + prodMeth - int(np.sum(scenario))))
+    print("Production: {} GWh".format(prodTotale))
+    print("Production 'reelle': {} GWh".format(int(prodTotale-np.sum(s))))
+    print("Résultat: {} GWh\n".format(int(prodTotale-np.sum(s)) - int(np.sum(scenario))))
     print("Emissions CO2: {} t\n".format(prodOn*10 + prodOff*9 + prodPv*55 + prodEau*10 + prodNuc*6 + prodTherm*443 + prodMeth*32))
     # a comparer avec 310 Md de tonnes au total pour la France
 
     print("{} surplus".format(nbS))    
-    print("{} pénuries\n".format(nbP))
+    print("{} pénuries".format(nbP), p[p>1e-10])
 
     dGaz = M.stored[8759]-M.stored[0]
     print("Gaz : {} -> {} ({}) GWh\n".format(int(M.stored[0]), int(M.stored[8759]), int(dGaz)))
 
     print("Capacités totales (GWh):")
-    print("Batteries:", int(B.vol))
-    print("PHS:", int(P.vol))
-    print("Gaz:", int(M.vol))
+    print("   Batteries:", int(B.vol))
+    print("   PHS:", int(P.vol))
+    print("   Gaz:", int(M.vol))
 
     print("")
 
@@ -767,17 +778,17 @@ def main(scenario, tour, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 # biomasse --> 1 unité = une fraction de flux E/S en méthanation
 
 reg_info = {
-    "hdf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":6 , "biomasse":0},
+    "hdf" : {"eolienneON":0 , "eolienneOFF":1, "panneauPV":0 , "centraleTherm":3 , "centraleNuc":6 , "biomasse":0},
     "idf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":0 , "biomasse":0},
-    "est" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":6 , "biomasse":0},
-    "nor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":8 , "biomasse":0},
+    "est" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":4 , "centraleNuc":5 , "biomasse":0},
+    "nor" : {"eolienneON":0 , "eolienneOFF":1 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":8 , "biomasse":0},
     "occ" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":2 , "biomasse":0},
-    "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":8 , "biomasse":0},
+    "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":5 , "centraleTherm":3 , "centraleNuc":8 , "biomasse":0},
     "bre" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":3 , "centraleNuc":0 , "biomasse":0},
-    "cvl" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":12 , "biomasse":0},
-    "pll" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":0},
+    "cvl" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":7 , "biomasse":0},
+    "pll" : {"eolienneON":3 , "eolienneOFF":1 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":0},
     "naq" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":6 , "biomasse":0},
-    "ara" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":1 , "centraleNuc":6 , "biomasse":0},
+    "ara" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":1 , "centraleTherm":1 , "centraleNuc":3 , "biomasse":0},
     "bfc" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":2 , "biomasse":0},
     "cor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":2 , "centraleNuc":0 , "biomasse":0}
 }
@@ -799,8 +810,8 @@ for k in reg_info:
 
 
 
-    
+
 
 main("RTE", 30, reg_info["hdf"], reg_info["idf"], reg_info["est"], reg_info["nor"], reg_info["occ"], 
         reg_info["pac"], reg_info["bre"], reg_info["cvl"], reg_info["pll"], reg_info["naq"], 
-        reg_info["ara"], reg_info["bfc"], reg_info["cor"], nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, 0.2)
+        reg_info["ara"], reg_info["bfc"], reg_info["cor"], nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, 0.3)
