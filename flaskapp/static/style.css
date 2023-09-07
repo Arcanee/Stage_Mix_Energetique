@@ -1,0 +1,14 @@
+.map{
+    overflow : hidden;
+}
+
+.map__image {
+    width : 50%;
+    float : left;
+}  
+
+.map__image path{
+    stroke: #FFF;
+    stroke-width: 1px;
+    transition : fill 0.3s; 
+}

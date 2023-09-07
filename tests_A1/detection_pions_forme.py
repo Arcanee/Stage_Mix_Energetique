@@ -4,6 +4,7 @@ import cv2 as cv
 import sys
 from math import sqrt
 import json
+import imutils
 
 
 # Affichage de fenetre
@@ -15,37 +16,33 @@ def display(title, img):
 
 # Localise la region
 def locateMap(box, pion, result, forme):
-    locImg = cv.imread("img/proto-regions.png")
+    locImg = cv.imread("img/proto-REF.png")
     hsv = cv.cvtColor(locImg, cv.COLOR_BGR2HSV)
     x = box[0][0]
     y = box[0][1]
 
     # Couleur par region
     regions = {"hdf" : (hsv[100][700] - np.array([2, 20, 20]), hsv[100][700] + np.array([2, 20, 20])),
-           "idf" : (hsv[200][700] - np.array([2, 20, 20]), hsv[200][700] + np.array([2, 20, 20])),
-           "bre" : (hsv[300][300] - np.array([2, 20, 20]), hsv[300][300] + np.array([2, 20, 20])),
-           "pll" : (hsv[400][400] - np.array([2, 20, 20]), hsv[400][400] + np.array([2, 20, 20])),
-           "cvl" : (hsv[400][700] - np.array([2, 20, 20]), hsv[400][700] + np.array([2, 20, 20])),
-           "bfc" : (hsv[400][900] - np.array([2, 20, 20]), hsv[400][900] + np.array([2, 20, 20])),
-           "pac" : (hsv[900][900] - np.array([2, 20, 20]), hsv[900][900] + np.array([2, 20, 20])),
-           "occ" : (hsv[700][700] - np.array([2, 20, 20]), hsv[700][700] + np.array([2, 20, 20])),
-           "naq" : (hsv[500][500] - np.array([2, 20, 20]), hsv[500][500] + np.array([2, 20, 20])),
-           "est" : (hsv[200][900] - np.array([2, 20, 20]), hsv[200][900] + np.array([2, 20, 20])),
-           "ara" : (hsv[600][900] - np.array([2, 20, 20]), hsv[600][900] + np.array([2, 20, 20])),
-           "nor" : (hsv[100][500] - np.array([2, 20, 20]), hsv[100][500] + np.array([2, 20, 20])),
-           "cor" : (hsv[900][1100] - np.array([2, 20, 20]), hsv[900][1100] + np.array([2, 20, 20]))}
+                "idf" : (hsv[300][700] - np.array([2, 20, 20]), hsv[300][700] + np.array([2, 20, 20])),
+                "bre" : (hsv[300][300] - np.array([2, 20, 20]), hsv[300][300] + np.array([2, 20, 20])),
+                "pll" : (hsv[500][400] - np.array([2, 20, 20]), hsv[500][400] + np.array([2, 20, 20])),
+                "cvl" : (hsv[400][700] - np.array([2, 20, 20]), hsv[400][700] + np.array([2, 20, 20])),
+                "bfc" : (hsv[400][900] - np.array([2, 20, 20]), hsv[400][900] + np.array([2, 20, 20])),
+                "pac" : (hsv[900][900] - np.array([2, 20, 20]), hsv[900][900] + np.array([2, 20, 20])),
+                "occ" : (hsv[800][700] - np.array([2, 20, 20]), hsv[800][700] + np.array([2, 20, 20])),
+                "naq" : (hsv[600][500] - np.array([2, 20, 20]), hsv[600][500] + np.array([2, 20, 20])),
+                "est" : (hsv[200][900] - np.array([2, 20, 20]), hsv[200][900] + np.array([2, 20, 20])),
+                "ara" : (hsv[600][900] - np.array([2, 20, 20]), hsv[600][900] + np.array([2, 20, 20])),
+                "nor" : (hsv[100][500] - np.array([2, 20, 20]), hsv[100][500] + np.array([2, 20, 20])),
+                "cor" : (hsv[900][1100] - np.array([2, 20, 20]), hsv[900][1100] + np.array([2, 20, 20]))}
 
     
     val = [1, 3, 5]
-    valBis = [2, 4, 6]
     
     for reg in regions:
         if (hsv[y][x] >= regions[reg][0]).all() and (hsv[y][x] <= regions[reg][1]).all():
             print("[PION] {} en region {}".format(pion, reg))
-            if pion == "centraleNuc":
-                result[reg][pion] += valBis[forme]
-            else:
-                result[reg][pion] += val[forme]
+            result[reg][pion] += val[forme]
 
 
 # Recupere le niveau de stock
@@ -103,16 +100,16 @@ def locateTime(box, result):
 
 # Renvoie vrai si fait partie de la légende
 def whichPart(box):
-    if (205 <= box[0][0] and box[1][0] < 1190):
+    if (170 <= box[0][0] and box[1][0] < 1190):
         out = "map"
 
     elif (box[0][0] >= 1190) and (box[2][1] < 100):
         out = "palette"
 
-    elif (box[0][0] >= 1190) and (box[0][1] > 415) and (box[2][1] < 480):
+    elif (box[0][0] >= 1190) and (box[0][1] > 120) and (box[2][1] < 400):
         out = "stock"
 
-    elif (box[0][0] >= 1190) and (box[0][1] > 590):
+    elif (box[0][0] >= 1190) and (box[0][1] > 730):
         out = "time"
 
     else:
@@ -174,7 +171,7 @@ def getBoardCorners(img, result):
 
 # Detecte les pions grace a leur couleur
 def detColor(img, result):
-    # display("Image d'origine", img)
+    display("Image d'origine", img)
 
     # On recupere les coins
     boardCorners = getBoardCorners(img, result)
@@ -184,31 +181,28 @@ def detColor(img, result):
     pts2 = np.float32([[5,5], [1395,5], [1395,995], [5,995]])
     M = cv.getPerspectiveTransform(pts1,pts2)
     img = cv.warpPerspective(img,M,(1400,1000))
-
-    # cv.imwrite("tests_A1/img/ref_triangle.png", img)
-    # sys.exit(0)
     
 
     # On recupere les nouveaux coins
     boardCorners = getBoardCorners(img, result)
-    # display("Perspective corrigee", img)
+    display("Perspective corrigee", img)
 
     # Contours du plateau
     cv.polylines(img, np.array([boardCorners]), True, (255,255,255), 2)
-    # display("Detection du plateau", img)
+    display("Detection du plateau", img)
 
 
 
     # Etalonnage
     hsv = cv.imread("img/proto-REF.png")
     hsv = cv.cvtColor(hsv, cv.COLOR_BGR2HSV)
-    pions = {"centraleNuc" : (hsv[30][1290] - np.array([3, 40, 60]), hsv[30][1290] + np.array([3, 40, 60])),
+    pions = {"centraleNuc" : (hsv[65][1290] - np.array([3, 40, 60]), hsv[65][1290] + np.array([3, 40, 60])),
            "biomasse" : (hsv[30][1210] - np.array([5, 40, 60]), hsv[30][1210] + np.array([5, 40, 60])),
-           "eolienneON" : (hsv[60][1290] - np.array([5, 40, 60]), hsv[60][1290] + np.array([5, 40, 60])),
+           "eolienneON" : (hsv[30][1250] - np.array([5, 35, 50]), hsv[30][1250] + np.array([5, 35, 50])),
           # "foret" : (hsv[60][1250] - np.array([5, 40, 60]), hsv[60][1250] + np.array([5, 40, 60])),
-           "eolienneOFF" : (hsv[60][1210] - np.array([5, 40, 60]), hsv[60][1210] + np.array([5, 40, 60])),
-           "panneauPV" : (hsv[30][1250] - np.array([5, 40, 60]), hsv[30][1250] + np.array([5, 40, 60])),
-           "centraleTherm" : (hsv[30][1315] - np.array([5, 40, 60]), hsv[30][1315] + np.array([5, 40, 60]))
+           "eolienneOFF" : (hsv[65][1210] - np.array([5, 40, 60]), hsv[65][1210] + np.array([5, 40, 60])),
+           "panneauPV" : (hsv[25][1290] - np.array([5, 20, 40]), hsv[25][1290] + np.array([5, 20, 40])),
+           "centraleTherm" : (hsv[20][1320] - np.array([5, 40, 60]), hsv[20][1320] + np.array([5, 40, 60]))
            }
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
 
@@ -216,16 +210,16 @@ def detColor(img, result):
     # Pour chaque couleur : application de masque + detection de contours
     for p in pions:
         thresh = cv.inRange(hsv, pions[p][0], pions[p][1])
-        # display(p+" mask", thresh)
+        display(p+" mask", thresh)
 
         # Reduction bruit hors contours puis dans contours
         kernel = cv.getStructuringElement(cv.MORPH_RECT, (5,5))
-        close = cv.morphologyEx(thresh, cv.MORPH_CLOSE, kernel)
-        # display(p+" close", close)
+        close = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel)
+        display(p+" close", close)
 
         kernel = cv.getStructuringElement(cv.MORPH_RECT, (5,5))
-        open = cv.morphologyEx(close, cv.MORPH_OPEN, kernel)
-        # display(p+" open", open)
+        open = cv.morphologyEx(close, cv.MORPH_CLOSE, kernel)
+        display(p+" open", open)
 
         contours = cv.findContours(open, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
         contours = contours[0]
@@ -258,13 +252,13 @@ def detColor(img, result):
                     locateTime(box, result)
 
 
-        # display("contours", sketch)
+        display("contours", sketch)
 
 
 # [Developpement] Cree une image avec perspective corrigee pour travailler dessus
 def createRef(img):
     # On recupere les coins
-    boardCorners = getBoardCorners(img)
+    boardCorners = getBoardCorners(img, {})
 
     # Correction de la perspective
     pts1 = np.float32(boardCorners)
@@ -298,7 +292,7 @@ def main():
 
 
     # Pour boucler sur toutes les images
-    dictImg =  {0: "img/proto-3.jpg"} 
+    dictImg =  {0: "img/proto-5.jpg"} 
 
 
 
@@ -308,6 +302,7 @@ def main():
 
         img = cv.imread(dictImg[k]) # Lecture de img
         print(dictImg[k])
+
         print("")
 
         detColor(img, result)
@@ -317,10 +312,11 @@ def main():
         json.dump(result, f)
 
 
+    print(result)
     print("")    
 
 
-# img = cv.imread("img/proto-2.jpg")
+# img = cv.imread("img/proto-4.jpg")
 # createRef(img)
 
 main()

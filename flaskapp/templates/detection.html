@@ -18,10 +18,103 @@
     </head>
     <body>
 
+        <!--Pop-Up d'erreur-->
+        <div class="modal fade" id="errModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+            
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Oups...</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            
+                <!-- Modal body -->
+                <div class="modal-body" id="errorMsg"></div>
+            
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            
+                </div>
+            </div>
+        </div>
+
         <h1 id="titre" class="container-fluid pt-2 pb-4 text-center">Interface du jeu de mix énergétique</h1>
 
-        <!--Div remplie dynamiquement (fonction init())-->
-        <div id="validation" class="container pt-5" style="display: none;"></div>
+        <div id="top" class="container mt-2" style="display: none;">
+
+            <div class="container text-center mb-5">
+                <button class="btn btn-outline-secondary backHome" type="button">Retour à l'accueil</button>
+            </div>
+
+            <h2 class="container-fluid pb-5 text-center">Vérifiez les informations de votre plateau</h2>
+
+            <!--Choix de la carte, de l'annee, du stock, de l'alea-->
+            <div class="row justify-content-evenly bg-success bg-opacity-50 rounded pb-2 mb-4">
+                <div class="col-3 mt-2 h2 text-center">Carte</div>
+                <div class="form-outline col-5 mt-2">
+                    <form>
+                        <select name="carte" id="carte" class="form-select form-select-lg">
+                            <option value="default">Choisir une carte...</option>
+                            <option value="France">France</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row justify-content-evenly bg-success bg-opacity-50 rounded pb-2 mb-4">
+                <div class="col-3 mt-2 h2 text-center">Année</div>
+                <div class="form-outline col-5 mt-2">
+                    <form>
+                        <select name="annee" id="annee" class="form-select form-select-lg">
+                            <option value="default">Choisir une année...</option>
+                            <option value="2030">2030</option>
+                            <option value="2035">2035</option>
+                            <option value="2040">2040</option>
+                            <option value="2045">2045</option>
+                            <option value="2050">2050</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row justify-content-evenly bg-success bg-opacity-50 rounded pb-2 mb-4">
+                <div class="col-3 mt-2 h2 text-center">Stock de batteries</div>
+                <div class="form-outline col-5 mt-2">
+                    <input value="1" min="1" max="10" type="number" id="stock" class="form-control"/>
+                </div>
+            </div>
+
+            <div class="row justify-content-evenly bg-success bg-opacity-50 rounded pb-2 mb-4">
+                <div class="col-3 mt-3 h2 text-center">Aléa</div>
+                <div class="col-5">
+                    <div class="form-floating mt-2">
+                        <input type="text" class="form-control" id="alea" placeholder="Code aléa" name="alea">
+                        <label for="alea">Code aléa</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+            
+
+        <!--Partie créée dynamiquement-->
+        <div id="mid" class="container mt-2" style="display: none;"></div>
+
+
+        <div id="bot" style="display: none;">
+            <div class="mb-5" style="visibility: hidden;">SPACING</div>
+
+            <div class="text-center pt-5 my-5">  
+                <div class="row justify-content-evenly">
+                    <button class="btn btn-danger col-4 backHome" type="button">Reprendre une photo</button>
+                    <button class="btn btn-success col-4" type="button" id="computeResults">Valider</button>
+                </div>
+            </div>
+
+        </div>
         
     </body>
 </html>

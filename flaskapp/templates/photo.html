@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="utf-8">
+        <meta name="author" content="Aymeric Shinawi">
+        <meta name="description" content="Jeu Mix Energétique pour l'INSA Toulouse">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>Détection photo - Jeu mix énergétique</title>
+
+        <link rel="icon" type="image/x-icon" href="static/img/favicon.ico">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+        <script type="text/javascript" src="static/script.js"></script>
+        
+    </head>
+    <body>
+
+        <!--Pop-Up d'erreur-->
+        <div class="modal fade" id="errModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+            
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Oups...</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            
+                <!-- Modal body -->
+                <div class="modal-body" id="errorMsg"></div>
+            
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            
+                </div>
+            </div>
+        </div>
+        
+        
+       
+        <h1 id="titre" class="container-fluid pt-2 pb-5 text-center">Interface du jeu de mix énergétique</h1>
+        
+        
+        <div id="sous-titre" class="pt-5" style="display: none;">
+            <h3 class="container-fluid text-center pt-5 pb-3">Prenez votre plateau de jeu en photo !</h3>
+                
+            <div class="input-group container pt-4">
+                <input type="file" accept="image/*" class="form-control" id="imgInput">
+                <button class="btn btn-primary" type="button" id="imgOutput">Envoyer</button>
+            </div>
+        </div>
+
+
+
+        <div class="mb-5" style="visibility: hidden;">SPACING</div>        
+
+        <div class="container text-center mb-5" id="noPhoto" style="display: none;">
+            <button class="btn btn-outline-secondary mt-5" type="button" id="noPhotoBtn">Je préfère entrer manuellement mes données</button>
+        </div>
+
+
+    </body>
+</html>

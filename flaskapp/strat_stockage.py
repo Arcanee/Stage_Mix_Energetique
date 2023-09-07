@@ -3,7 +3,6 @@ from collections import Counter
 import sys
 import json
 import pandas as pd
-#import boto3
 import os
 import datetime
 
@@ -13,27 +12,12 @@ import datetime
 
 np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
 
-
-
-# Telecharge certains fichiers de donnees necessaires au fonctionnement du programme
-def initFiles():
-    # Les lignes suivantes permettent d'avoir accès à un dépôt de données de manière chiffrée
-    # s3_endpoint_url = 'https://object-rook-ceph.apps.math.cnrs.fr/'
-    # s3_access_key_id = '26R58AYH5Z1X4IUNF1NQ' # le contenu de secrets/dossal
-    # s3_secret_access_key = 'ODX7fukdCQTZ67n8fKLPwrup9OcQVU45RtnxfFHT' # le contenu de secrets/dossal
-    # s3_bucket = 'dossal-enr2050'
-    # s3 = boto3.client('s3','',endpoint_url = s3_endpoint_url,aws_access_key_id = s3_access_key_id,
-    #                 aws_secret_access_key = s3_secret_access_key)
-
-    # # File DL : (key, file to dl, location)
-    # if not os.path.isfile('mix_data/run_of_river.csv'):
-    #     # s3.download_file(s3_bucket, "demand2050_negawatt.csv", "data/demand2050_negawatt.csv")
-    #     # s3.download_file(s3_bucket, "demand2050_RTE.csv", "data/demand2050_RTE.csv")
-    #     # s3.download_file(s3_bucket, "demand2050_ADEME.csv", "data/demand2050_ADEME.csv")
-    #     # s3.download_file(s3_bucket, "vre_profiles2006.csv", "data/vre_profiles2006.csv")
-    #     s3.download_file(s3_bucket, "run_of_river.csv", "mix_data/run_of_river.csv")
-    #     s3.download_file(s3_bucket, "lake_inflows.csv", "mix_data/lake_inflows.csv")
-    pass
+# Fonction qui pour un nombre donné renvoie 0 s'il est négatif, et le nombre en question sinon
+# 
+# @params
+# x (float) : nombre à tester
+def indic(x):
+    return x if x > 0 else 0
 
 
 # Classe regroupant toutes les technologies de stockage et de production pilotables
@@ -101,6 +85,7 @@ def unload(tec, k, aproduire, endmonthlake, prod=True):
             tec.prod[k] = temp * tec.etaout
 
         out = aproduire - temp * tec.etaout
+
     
     return out
 
@@ -303,15 +288,15 @@ def seuil(a, b, c, crit, mode):
 # H (int) : nombre d'heures dans l'annee
 # Battery - Nuclear : objets de la classe Techno
 # endmonthlake (array) : contient la qte d'energie restante dans les lacs jusqu'a la fin de chaque mois
-def StratStockage(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear, endmonthlake):
+def StratStockage(prodres, H, Phs, Battery, Gas, Lake, Nuclear, endmonthlake):
     Surplus=np.zeros(H)
     ##Ajout paramètre Penurie
     Manque = np.zeros(H)
     #Definition d'un ordre sur les differentes technologies de stockage et destockage
-    Tecstock= {"Phs":Phs , "Battery":Battery , "Methanation":Methanation}
-    Tecstock2= {"Methanation":Methanation , "Phs":Phs , "Battery":Battery}
+    Tecstock= {"Phs":Phs , "Battery":Battery , "Gas":Gas}
+    Tecstock2= {"Gas":Gas , "Phs":Phs , "Battery":Battery}
         
-    Tecdestock= {"Battery":Battery , "Phs":Phs , "Methanation":Methanation , "Lake":Lake}
+    Tecdestock= {"Battery":Battery , "Phs":Phs , "Gas":Gas , "Lake":Lake}
     
     for k in range(1,H):
         if prodres[k]>0:
@@ -333,10 +318,6 @@ def StratStockage(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear,
             for tec in Tecdestock:
                 Aproduire = unload(Tecdestock[tec], k, Aproduire, endmonthlake)
                 
-            # Si le nucléaire n'a pas suffi, on fait tourner les centrales thermiques
-            if Aproduire > 0:
-                Aproduire = thermProd(Thermal, k, Aproduire)
-                
             ##liste penurie --> pour savoir si il y a pénurie dans la production d'électricité 
             Manque[k] = Aproduire
                 
@@ -351,19 +332,19 @@ def StratStockage(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear,
 # Battery - Nuclear : objets de la classe Techno
 # I0, I1, I2 (array) : seuils de stockage dirigeant la strat de stockage, et déduits de la strat naive
 # endmonthlake (array) : contient la qte d'energie restante dans les lacs jusqu'a la fin de chaque mois
-def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclear, I0, I1, I2, endmonthlake):
+def StratStockagev2(prodres, H, Phs, Battery, Gas, Lake, Nuclear, I0, I1, I2, endmonthlake):
     Surplus=np.zeros(H)
     ##Ajout paramètre Penurie
     Manque = np.zeros(H)
     
     #Definition d'un ordre sur les differentes technologies de stockage et destockage
-    Tecstock2= {"Methanation":Methanation , "Phs":Phs , "Battery":Battery} ##on stocke du gaz zone 1,2
-    Tecstock3= {"Phs":Phs , "Battery":Battery , "Methanation":Methanation} ## zone 3
-    Tecstock4 = {"Battery":Battery , "Phs":Phs , "Methanation":Methanation} ## zone 4
+    Tecstock2= {"Gas":Gas , "Phs":Phs , "Battery":Battery} ##on stocke du gaz zone 1,2
+    Tecstock3= {"Phs":Phs , "Battery":Battery , "Gas":Gas} ## zone 3
+    Tecstock4 = {"Battery":Battery , "Phs":Phs , "Gas":Gas} ## zone 4
         
-    Tecdestock1= {"Battery":Battery , "Phs":Phs , "Methanation":Methanation , "Lake":Lake} #zone 1
-    Tecdestock2 = {"Phs":Phs , "Battery":Battery , "Methanation":Methanation , "Lake":Lake} ## zone 2
-    Tecdestock3 = {"Methanation":Methanation , "Battery":Battery , "Phs":Phs , "Lake":Lake} ## zone 3,4
+    Tecdestock1= {"Battery":Battery , "Phs":Phs , "Gas":Gas , "Lake":Lake} #zone 1
+    Tecdestock2 = {"Phs":Phs , "Battery":Battery , "Gas":Gas , "Lake":Lake} ## zone 2
+    Tecdestock3 = {"Gas":Gas , "Battery":Battery , "Phs":Phs , "Lake":Lake} ## zone 3,4
     
     for k in range(H):
         stock_PB = Phs.stored[k] + Battery.stored[k]
@@ -374,8 +355,8 @@ def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclea
         if 0 <= stock_PB < I0[k%24] :
             strat_stock = Tecstock4
             strat_destock = Tecdestock3
-            qteInit = min(Methanation.Q, Phs.S+Battery.S)
-            reste = unload(Methanation, k, qteInit, endmonthlake, prod=False)
+            qteInit = min(Gas.Q, Phs.S+Battery.S)
+            reste = unload(Gas, k, qteInit, endmonthlake, prod=False)
             reste = load(Battery, k, qteInit-reste)
             load(Phs, k, reste)
             
@@ -390,10 +371,10 @@ def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclea
         else :
             strat_stock = Tecstock2
             strat_destock = Tecdestock1
-            qteInit = min(Phs.Q+Battery.Q, Methanation.S)
+            qteInit = min(Phs.Q+Battery.Q, Gas.S)
             reste = unload(Battery, k, qteInit, endmonthlake, prod=False)
             reste = unload(Phs, k, reste, endmonthlake, prod=False)
-            load(Methanation, k, qteInit-reste)
+            load(Gas, k, qteInit-reste)
             
             
         
@@ -414,10 +395,6 @@ def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclea
 
             for tec in strat_destock:
                 Aproduire = unload(strat_destock[tec], k, Aproduire, endmonthlake)
-
-            # Si le nucléaire n'a pas suffi, on fait tourner les centrales thermiques
-            if Aproduire > 0:
-                Aproduire = thermProd(Thermal, k, Aproduire)
             
             ##liste penurie --> pour savoir si il y a pénurie dans la production d'électricité 
             Manque[k]=Aproduire
@@ -454,7 +431,8 @@ def StratStockagev2(prodres, H, Phs, Battery, Methanation, Lake, Thermal, Nuclea
 #eei (int): nombre d'équipements électroniques intermédiaires neufs achetés par an par une personne
 #geel (int) : nombre de gros équipements électroniques neufs achetés par an par une personne
 
-def Usages(tour, agr, mob, bat, ind, voit, pl, avi, vos, voe, tra, vel, met, bus, bue, voli, vole, volin, pm, gm, pee, gee, smart, eei, geel):
+def Usages(tour, agr, mob, bat, ind, voit, pl, avi, vos, voe, tra, vel, met, bus, 
+            bue, voli, vole, volin, pm, gm, pee, gee, smart, eei, geel):
 
     demande = 0 #(en TWh)
     emission = 0 #(en tonnes de CO2)
@@ -534,39 +512,84 @@ def Usages(tour, agr, mob, bat, ind, voit, pl, avi, vos, voe, tra, vel, met, bus
 # factStock (float) : facteur de qte de stockage, entre 0 et 1
 # cout (int) : cout cumulé des tours précédent
 # alea (str) : code d'une carte alea
-def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, 
-        nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, factStock, alea, jeu):
+def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, 
+        nbOn, nbOff, nbPv, nbNuc, nbMeth, nbBio, factStock, alea, save, carte, group):
 
     H = 8760
 
-    #actualisation : pour chaque technologie --> nombre posé à ce tour (titre)
-    jeu[0]["nbeolON"] = nbOn - jeu[0]["nbeolON"]
-    jeu[0]["nbeolOFF"] = nbOff - jeu[0]["nbeolOFF"]
-    jeu[0]["nbPV"] = nbPv - jeu[0]["nbPV"]
-    
-    jeu[0]["nbNuc"] = nbNuc - jeu[0]["nbNuc"] - 47
-    jeu[0]["nbTherm"] = nbTherm - jeu[0]["nbTherm"] - 22
-    jeu[0]["nbBio"] = nbBio - jeu[0]["nbBio"]
+    save["carte"] = carte
+    save["annee"] = annee + 5
+    save["stock"] = factStock
 
-    #carte alea MECS (lancé 3)
-    if alea == "MECS3":
-        jeu[0]["nbNuc"] = 0
+    #actualisation : pour chaque technologie --> nombre posé à ce tour (titre)
+    save["nvPions"]["nbeolON"] = nbOn - save["pions"]["nbeolON"]
+    save["nvPions"]["nbeolOFF"] = nbOff - save["pions"]["nbeolOFF"]
+    save["nvPions"]["nbPV"] = nbPv - save["pions"]["nbPV"]
+    save["nvPions"]["nbNuc"] = indic(nbNuc - save["pionsInit"]["nbNuc"] - save["pions"]["nbNuc"])
+    save["nvPions"]["nbMeth"] = nbMeth - save["pions"]["nbMeth"]
+    save["nvPions"]["nbBio"] = nbBio - save["pions"]["nbBio"]
+
+    save["pions"]["nbeolON"] = nbOn
+    save["pions"]["nbeolOFF"] = nbOff
+    save["pions"]["nbPV"] = nbPv
+    save["pions"]["nbNuc"] = indic(nbNuc - save["pionsInit"]["nbNuc"])
+    save["pions"]["nbMeth"] = nbMeth
+    save["pions"]["nbBio"] = nbBio
+
+    save["nvPionsParReg"]["hdf"]["Nucleaire"] = indic(hdf["centraleNuc"] - save["pionsParReg"]["hdf"]["Nucleaire"] - save["pionsParRegInit"]["hdf"]["Nucleaire"])
+    save["nvPionsParReg"]["idf"]["Nucleaire"] = indic(idf["centraleNuc"] - save["pionsParReg"]["idf"]["Nucleaire"] - save["pionsParRegInit"]["idf"]["Nucleaire"])
+    save["nvPionsParReg"]["occ"]["Nucleaire"] = indic(occ["centraleNuc"] - save["pionsParReg"]["occ"]["Nucleaire"] - save["pionsParRegInit"]["occ"]["Nucleaire"])
+    save["nvPionsParReg"]["naq"]["Nucleaire"] = indic(naq["centraleNuc"] - save["pionsParReg"]["naq"]["Nucleaire"] - save["pionsParRegInit"]["naq"]["Nucleaire"])
+    save["nvPionsParReg"]["est"]["Nucleaire"] = indic(est["centraleNuc"] - save["pionsParReg"]["est"]["Nucleaire"] - save["pionsParRegInit"]["est"]["Nucleaire"])
+    save["nvPionsParReg"]["nor"]["Nucleaire"] = indic(nor["centraleNuc"] - save["pionsParReg"]["nor"]["Nucleaire"] - save["pionsParRegInit"]["nor"]["Nucleaire"])
+    save["nvPionsParReg"]["bre"]["Nucleaire"] = indic(bre["centraleNuc"] - save["pionsParReg"]["bre"]["Nucleaire"] - save["pionsParRegInit"]["bre"]["Nucleaire"])
+    save["nvPionsParReg"]["ara"]["Nucleaire"] = indic(ara["centraleNuc"] - save["pionsParReg"]["ara"]["Nucleaire"] - save["pionsParRegInit"]["ara"]["Nucleaire"])
+    save["nvPionsParReg"]["bfc"]["Nucleaire"] = indic(bfc["centraleNuc"] - save["pionsParReg"]["bfc"]["Nucleaire"] - save["pionsParRegInit"]["bfc"]["Nucleaire"])
+    save["nvPionsParReg"]["pll"]["Nucleaire"] = indic(pll["centraleNuc"] - save["pionsParReg"]["pll"]["Nucleaire"] - save["pionsParRegInit"]["pll"]["Nucleaire"])
+    save["nvPionsParReg"]["cvl"]["Nucleaire"] = indic(cvl["centraleNuc"] - save["pionsParReg"]["cvl"]["Nucleaire"] - save["pionsParRegInit"]["cvl"]["Nucleaire"])
+    save["nvPionsParReg"]["cor"]["Nucleaire"] = indic(cor["centraleNuc"] - save["pionsParReg"]["cor"]["Nucleaire"] - save["pionsParRegInit"]["cor"]["Nucleaire"])
+    save["nvPionsParReg"]["pac"]["Nucleaire"] = indic(pac["centraleNuc"] - save["pionsParReg"]["pac"]["Nucleaire"] - save["pionsParRegInit"]["pac"]["Nucleaire"])
+
+    save["pionsParReg"]["hdf"]["Nucleaire"] = indic(hdf["centraleNuc"] - save["pionsParRegInit"]["hdf"]["Nucleaire"])
+    save["pionsParReg"]["idf"]["Nucleaire"] = indic(idf["centraleNuc"] - save["pionsParRegInit"]["idf"]["Nucleaire"])
+    save["pionsParReg"]["occ"]["Nucleaire"] = indic(occ["centraleNuc"] - save["pionsParRegInit"]["occ"]["Nucleaire"])
+    save["pionsParReg"]["naq"]["Nucleaire"] = indic(naq["centraleNuc"] - save["pionsParRegInit"]["naq"]["Nucleaire"])
+    save["pionsParReg"]["est"]["Nucleaire"] = indic(est["centraleNuc"] - save["pionsParRegInit"]["est"]["Nucleaire"])
+    save["pionsParReg"]["nor"]["Nucleaire"] = indic(nor["centraleNuc"] - save["pionsParRegInit"]["nor"]["Nucleaire"])
+    save["pionsParReg"]["bre"]["Nucleaire"] = indic(bre["centraleNuc"] - save["pionsParRegInit"]["bre"]["Nucleaire"])
+    save["pionsParReg"]["ara"]["Nucleaire"] = indic(ara["centraleNuc"] - save["pionsParRegInit"]["ara"]["Nucleaire"])
+    save["pionsParReg"]["bfc"]["Nucleaire"] = indic(bfc["centraleNuc"] - save["pionsParRegInit"]["bfc"]["Nucleaire"])
+    save["pionsParReg"]["pll"]["Nucleaire"] = indic(pll["centraleNuc"] - save["pionsParRegInit"]["pll"]["Nucleaire"])
+    save["pionsParReg"]["cvl"]["Nucleaire"] = indic(cvl["centraleNuc"] - save["pionsParRegInit"]["cvl"]["Nucleaire"])
+    save["pionsParReg"]["cor"]["Nucleaire"] = indic(cor["centraleNuc"] - save["pionsParRegInit"]["cor"]["Nucleaire"])
+    save["pionsParReg"]["pac"]["Nucleaire"] = indic(pac["centraleNuc"] - save["pionsParRegInit"]["pac"]["Nucleaire"])
+
+
+    #actualisation des nouvelles technologies renouvelables posées dans chaque région
+
+    
+    save["nvPionsParReg"]["pac"]["panneauPV"] = pac["panneauPV"] - save["pionsParReg"]["pac"]["panneauPV"]
+    save["pionsParReg"]["pac"]["panneauPV"] = pac["panneauPV"]
+
+    save["nvPionsParReg"]["pll"]["eolienneOFF"] = pll["eolienneOFF"] - save["pionsParReg"]["pll"]["eolienneOFF"]
+    save["pionsParReg"]["pll"]["eolienneOFF"] = pll["eolienneOFF"]
+
 
     #carte aléa MEVUAPV  (lancé dé 1 / 2)
     if alea == "MEVUAPV1" or alea == "MEVUAPV2" or alea == "MEVUPV3": 
-        jeu[1] = 9e4
+        save["consoVE"] = 9e4
         scenario += np.ones(H) * (9e4/H)
     
     if alea == "MEVUAPV2" or alea == "MEVUAPV3":
-        jeu[2] = 0.15
+        save["innovPV"] = 0.15
 
     #carte aléa MEMDA (lancé 3)
     if alea == "MEMDA3":
         scenario = 0.95 * scenario
 
-    fdc_on = pd.read_csv("mix_data/fdc_on.csv")
-    fdc_off = pd.read_csv("mix_data/fdc_off.csv")
-    fdc_pv = pd.read_csv("mix_data/fdc_pv.csv")
+    fdc_on = pd.read_csv("/var/www/html/flaskapp/mix_data/fdc_on.csv")
+    fdc_off = pd.read_csv("/var/www/html/flaskapp/mix_data/fdc_off.csv")
+    fdc_pv = pd.read_csv("/var/www/html/flaskapp/mix_data/fdc_pv.csv")
     
     prodOnshore = np.zeros(H)
     prodOffshore = np.zeros(H)
@@ -629,16 +652,18 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodOnshore += np.array(fdc_on.idf) * idf["eolienneON"] * powOnshore
     prodPV += np.array(fdc_pv.idf) * idf["panneauPV"] * powPV
 
+    # Aléa +15% prod PV
+    prodPV += save["innovPV"] * prodPV
 
 
 
     # Definition des productions électriques des rivières et lacs 
     coefriv = 13
-    river = pd.read_csv("mix_data/run_of_river.csv", header=None)
+    river = pd.read_csv("/var/www/html/flaskapp/mix_data/run_of_river.csv", header=None)
     river.columns = ["heures", "prod2"]
     rivprod = np.array(river.prod2) * coefriv
 
-    lake = pd.read_csv("mix_data/lake_inflows.csv", header=None)
+    lake = pd.read_csv("/var/www/html/flaskapp/mix_data/lake_inflows.csv", header=None)
     lake.columns = ["month", "prod2"]
     lakeprod = np.array(lake.prod2)
 
@@ -659,26 +684,41 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     # prodresiduelle = prod2006_offshore + prod2006_onshore + prod2006_pv + rivprod - scenario
     prodresiduelle = prodOffshore + prodOnshore + prodPV + rivprod - scenario
 
+
+    # Techno params : name, stored, prod, etain, etaout, Q, S, vol
+
+    initGaz = 80000
+    gazBiomasse = nbBio * 2 * 0.1 * 0.71 * 6200
+
+    #carte aléa MEMFDC (lancé 2 / 3)
+    if alea == "MEMFDC2" or alea == "MEMFDC3":
+        gazBio -= 0
+
     # Definition des differentes technologies
-    P=Techno('Phs', np.ones(H)*16, np.zeros(H), 0.95, 0.9, factStock*9.3, factStock*9.3, factStock*180)
-    B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, factStock*20.08, factStock*20.08, factStock*74.14)
-    M=Techno('Methanation', np.ones(H)*62500, np.zeros(H), 0.59, 0.45, 32.93*(nbBio/219), 7.66*(nbBio/219), 125000)    
+    # Methanation : 1 pion = 10 unités de 100 MW = 1 GW
+    P=Techno('Phs', np.ones(H)*16, np.zeros(H), 0.95, 0.9, 9.3, 9.3, 180)
+    B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, factStock/10*20.08, factStock/10*20.08, factStock/10*74.14)
+    G=Techno('Gaz', np.ones(H)*(initGaz+gazBiomasse), np.zeros(H), 0.59, 0.45, 34.44, 1*nbMeth, 125000)    
     L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)
 
     # Puissance centrales territoire : 18.54 GWe répartis sur 24 centrales (EDF)
     # Rendement méca (inutile ici) : ~35% généralement (Wiki)
-    T = Techno('Centrale thermique', None, np.zeros(H), None, 1, 0.7725*nbTherm, None, None)
+    # T = Techno('Centrale thermique', None, np.zeros(H), None, 1, 0.7725*nbTherm, None, None)
     
     # Puissance : 1.08 GWe (EDF)
     # Même rendement
     #réacteurs nucléaires effectifs qu'après 1 tour
-    nbprodNuc = (nbNuc-jeu[0]["nbNuc"])
+    nbprodNuc = (nbNuc-save["nvPions"]["nbNuc"])
     N = Techno('Réacteur nucléaire', None, np.zeros(H), None, 1, 1.08*nbprodNuc, None, None)
+    
+    
+    if alea == "MEMFDC3" :
+        N.Q *= 45 / 60
 
         
     # résultats de la strat initiale
     # Renvoie Surplus,Pénurie et met à jour Phs,Battery,Methanation,Lake,Therm,Nuc
-    s,p=StratStockage(prodresiduelle,H,P,B,M,L,T,N, endmonthlake)
+    s, p = StratStockage(prodresiduelle, H, P, B, G, L, N, endmonthlake)
     
     
     #############################
@@ -757,7 +797,7 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     # Renvoie Surplus,Pénurie, et met à jour les technos
     
     #Décommenter pour méthode 1 (intervalles de confiance)
-    s,p=StratStockagev2(prodresiduelle, H, P, B, M, L, T, N,
+    s, p = StratStockagev2(prodresiduelle, H, P, B, G, L, N,
                         certitude_interval_inf, certitude_interval_med, certitude_interval_sup, endmonthlake)
     
     #Décommenter pour méthode 2 (recherche itérative du meilleur seuil)
@@ -787,107 +827,253 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     # - Courbes de production X demande ***
     # - Prod résiduelle
     # - CO2 ***
-        
-    
-
-    print("\t\t####################################")
-    print("\t\t\t     {}           ".format(titre))
-    print("\t\t\t   BILAN PAR TECHNO   ")
-    print("\t\t####################################\n")
 
     prodOn = int(np.sum(prodOnshore))
     prodOff = int(np.sum(prodOffshore))
-    prodPv = int(np.sum(prodPV+jeu[2]*prodPV))
+    prodPv = int(np.sum(prodPV))
     prodEau = int(np.sum(L.prod + rivprod))
     prodNuc = int(np.sum(N.prod))
-    prodTherm = int(np.sum(T.prod))
-    prodMeth = int(np.sum(M.prod))
+    prodGaz = int(np.sum(G.prod))
     prodPhs = int(np.sum(P.prod))
     prodBat = int(np.sum(B.prod))
 
-    #carte aléa MEMFDC (lancé 2 / 3)
-    if alea == "MEMFDC2" or alea == "MEMFDC3":
-        prodMeth -= (prodMeth * naq["biomasse"]/nbBio)/5
-    
-    if alea == "MEMFDC3" :
-        prodNuc = prodNuc*45/60
-
-
-    prodTotale = prodOn + prodOff + prodPv + prodEau + prodNuc + prodTherm + prodMeth + prodPhs + prodBat
-
-
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Techno\t\t| Puissance installée (GW)\t| Production (GWh)\t| Emissions CO2 (t) \t|")
-    print("---------------------------------------------------------------------------------------------------------")
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Eolien onshore\t| {}\t\t\t\t| {}\t\t\t| {}\t\t|".format(np.round(nbOn*powOnshore, 2), prodOn, prodOn * 10))
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Eolien offshore\t| {}\t\t\t\t| {}\t\t\t| {}\t\t|".format(np.round(nbOff*powOffshore, 2), prodOff, prodOff * 9))
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Solaire\t\t| {}\t\t\t\t| {}\t\t\t| {}\t\t|".format(np.round(nbPv*powPV, 2), prodPv, prodPv * 55))
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Hydraulique\t\t| -\t\t\t\t| {}\t\t\t| {}\t\t|".format(prodEau, prodEau * 10))
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Nucléaire\t\t| {}\t\t\t\t| {}\t\t| {}\t\t|".format(np.round(N.Q, 2), prodNuc, prodNuc * 6))
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Thermique\t\t| {}\t\t\t\t| {}\t\t\t| {}\t\t\t|".format(np.round(T.Q, 2), prodTherm, prodTherm * 443))
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Methanation\t\t| {}\t\t\t\t| {}\t\t\t| {}\t\t|".format(np.round(M.Q, 2), prodMeth, prodMeth * 32))
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| PHS\t\t\t| {}\t\t\t\t| {}\t\t\t| -\t\t\t|".format(np.round(P.Q, 2), prodPhs))
-    print("---------------------------------------------------------------------------------------------------------")
-    print("| Batteries\t\t| {}\t\t\t\t| {}\t\t\t| -\t\t\t|".format(np.round(B.Q, 2), prodBat))
-    print("---------------------------------------------------------------------------------------------------------\n\n")
-
     
 
-    print("\t\t####################################")
-    print("\t\t\t     {}           ".format(titre))
-    print("\t\t\t   BILAN GLOBAL   ")
-    print("\t\t####################################\n")
+
+    prodTotale = prodOn + prodOff + prodPv + prodEau + prodNuc + prodGaz + prodPhs + prodBat
+
+
+    ##calcul des productions par région
+    nbTherm = 20
+
+    ##Occitanie
+    popOCC = 0.09 ##pourcentage population
+    prodOCC = (np.array(fdc_off.occ)*occ["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.occ)*occ["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.occ)*occ["panneauPV"]*powPV + 
+                (occ["centraleNuc"]-save["nvPionsParReg"]["occ"]["Nucleaire"]) *prodNuc/nbprodNuc +
+                save["pionsParRegInit"]["occ"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Nouvelle-Aquitaine
+    popNA = 0.09
+    prodNA = (np.array(fdc_off.naq)*naq["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.naq)*naq["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.naq)*naq["panneauPV"]*powPV + 
+                (naq["centraleNuc"]-save["nvPionsParReg"]["naq"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["naq"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Bretagne
+    popBRE = 0.05
+    prodBRE = (np.array(fdc_off.bre)*bre["eolienneOFF"]*powOffshore +
+                np.array(fdc_on.bre)*bre["eolienneON"]*powOnshore +
+                np.array(fdc_pv.bre)*bre["panneauPV"]*powPV + 
+                (bre["centraleNuc"]-save["nvPionsParReg"]["bre"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["bre"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Haut-de-France
+    popHDF = 0.09
+    prodHDF = (np.array(fdc_off.hdf)*hdf["eolienneOFF"]*powOffshore +
+                np.array(fdc_on.hdf)*hdf["eolienneON"]*powOnshore +
+                np.array(fdc_pv.hdf)*hdf["panneauPV"]*powPV + 
+                (hdf["centraleNuc"]-save["nvPionsParReg"]["hdf"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["hdf"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Pays de la Loire
+    popPDL = 0.06
+    prodPDL = (np.array(fdc_off.pll)*pll["eolienneOFF"]*powOffshore +
+                np.array(fdc_on.pll)*pll["eolienneON"]*powOnshore +
+                np.array(fdc_pv.pll)*pll["panneauPV"]*powPV + 
+                (pll["centraleNuc"]-save["nvPionsParReg"]["pll"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["pll"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Auvergne-Rhône-Alpes
+    popARA = 0.12
+    prodARA = (np.array(fdc_on.ara)*ara["eolienneON"]*powOnshore +
+                np.array(fdc_pv.ara)*ara["panneauPV"]*powPV +
+                (ara["centraleNuc"]-save["nvPionsParReg"]["ara"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["ara"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Grand Est
+    popGE = 0.08
+    prodGE = (np.array(fdc_on.est)*est["eolienneON"]*powOnshore +
+                np.array(fdc_pv.est)*est["panneauPV"]*powPV +
+                (est["centraleNuc"]-save["nvPionsParReg"]["est"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["est"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Normandie
+    popNOR = 0.05
+    prodNOR = (np.array(fdc_off.naq)*nor["eolienneOFF"]*powOffshore +
+                np.array(fdc_on.nor)*nor["eolienneON"]*powOnshore +
+                np.array(fdc_pv.nor)*nor["panneauPV"]*powPV + 
+                (nor["centraleNuc"]-save["nvPionsParReg"]["nor"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["nor"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Bourgogne-Franche-Comté
+    popBFC = 0.04
+    prodBFC = (np.array(fdc_on.bfc)*bfc["eolienneON"]*powOnshore +
+                np.array(fdc_pv.bfc)*bfc["panneauPV"]*powPV +
+                (bfc["centraleNuc"]-save["nvPionsParReg"]["bfc"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["bfc"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Centre Val de Loire
+    popCVL = 0.04
+    prodCVL = (np.array(fdc_on.cvl)*cvl["eolienneON"]*powOnshore +
+                np.array(fdc_pv.cvl)*cvl["panneauPV"]*powPV +
+                (cvl["centraleNuc"]-save["nvPionsParReg"]["cvl"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["cvl"]["Thermique"] * prodGaz / nbTherm)
+
+    ##PACA
+    popPAC = 0.08
+    prodPAC = (np.array(fdc_off.pac)*pac["eolienneOFF"]*powOffshore +
+                np.array(fdc_on.pac)*pac["eolienneON"]*powOnshore +
+                np.array(fdc_pv.pac)*pac["panneauPV"]*powPV + 
+                (pac["centraleNuc"]-save["nvPionsParReg"]["pac"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["pac"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Ile-de-France
+    popIDF = 0.19
+    prodIDF = (np.array(fdc_on.idf)*idf["eolienneON"]*powOnshore +
+                np.array(fdc_pv.idf)*idf["panneauPV"]*powPV +
+                (idf["centraleNuc"]-save["nvPionsParReg"]["idf"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["idf"]["Thermique"] * prodGaz / nbTherm)
+
+    ##Corse
+    popCOR = 0.005
+    prodCOR = (np.array(fdc_off.cor)*cor["eolienneOFF"]*powOffshore +
+                np.array(fdc_on.cor)*cor["eolienneON"]*powOnshore +
+                np.array(fdc_pv.cor)*cor["panneauPV"]*powPV + 
+                (cor["centraleNuc"]-save["nvPionsParReg"]["cor"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                save["pionsParRegInit"]["cor"]["Thermique"] * prodGaz / nbTherm)
+
+    ##production totale sur le territoire
+    prod = prodOCC + prodNA + prodBRE + prodHDF + prodPDL + prodARA + prodGE + prodNOR + prodBFC + prodCVL + prodPAC + prodIDF + prodCOR
+
+    ##calcul des ratios (prod de la région/pros totale --> heure par heure)
+    ratioOCC = np.zeros(H)
+    ratioNA = np.zeros(H)
+    ratioBRE = np.zeros(H)
+    ratioHDF = np.zeros(H)
+    ratioPDL = np.zeros(H)
+    ratioARA = np.zeros(H)
+    ratioGE = np.zeros(H)
+    ratioNOR = np.zeros(H)
+    ratioBFC = np.zeros(H)
+    ratioCVL = np.zeros(H)
+    ratioPAC = np.zeros(H)
+    ratioIDF = np.zeros(H)
+    ratioCOR = np.zeros(H)
+
+    for i in range(H):
+        ratioOCC[i] = prodOCC[i]/prod[i]
+        ratioNA[i] = prodNA[i]/prod[i]
+        ratioBRE[i] = prodBRE[i]/prod[i]
+        ratioHDF[i] = prodHDF[i]/prod[i]
+        ratioPDL[i] = prodPDL[i]/prod[i]
+        ratioARA[i] = prodARA[i]/prod[i]
+        ratioGE[i] = prodGE[i]/prod[i]
+        ratioNOR[i] = prodNOR[i]/prod[i]
+        ratioBFC[i] = prodBFC[i]/prod[i]
+        ratioCVL[i] = prodCVL[i]/prod[i]
+        ratioPAC[i] = prodPAC[i]/prod[i]
+        ratioIDF[i] = prodIDF[i]/prod[i]
+        ratioCOR[i] = prodCOR[i]/prod[i]
+    
+    # print(ratioOCC)
+    ##différence des rations prod et ratios pop régions par régions
+    
+    diffOCC = np.zeros(H)
+    diffNA = np.zeros(H)
+    diffBRE = np.zeros(H)
+    diffHDF = np.zeros(H)
+    diffPDL = np.zeros(H)
+    diffARA = np.zeros(H)
+    diffGE = np.zeros(H)
+    diffNOR = np.zeros(H)
+    diffBFC = np.zeros(H)
+    diffCVL = np.zeros(H)
+    diffPAC = np.zeros(H)
+    diffIDF = np.zeros(H)
+    diffCOR = np.zeros(H)
+
+    diffOCC = ratioOCC - popOCC*np.ones(H)
+    diffNA = ratioNA - popNA*np.ones(H)
+    diffBRE = ratioBRE - popBRE*np.ones(H)
+    diffHDF = ratioHDF - popHDF*np.ones(H)
+    diffPDL = ratioPDL - popPDL*np.ones(H)
+    diffARA = ratioARA - popARA*np.ones(H)
+    diffGE= ratioGE - popGE*np.ones(H)
+    diffNOR = ratioNOR - popNOR*np.ones(H)
+    diffBFC = ratioBFC - popBFC*np.ones(H)
+    diffCVL = ratioCVL - popCVL*np.ones(H)
+    diffPAC = ratioPAC - popPAC*np.ones(H)
+    diffIDF = ratioIDF - popIDF*np.ones(H)
+    diffCOR = ratioCOR - popCOR*np.ones(H)
+
+    ##moyenne sur les heures de l'année des différences
+    moyOCC = np.sum(diffOCC)/8760*100
+    moyNA = np.sum(diffNA)/8760*100
+    moyBRE = np.sum(diffBRE)/8760*100
+    moyHDF = np.sum(diffHDF)/8760*100
+    moyPDL = np.sum(diffPDL)/8760*100
+    moyARA = np.sum(diffARA)/8760*100
+    moyGE = np.sum(diffGE)/8760*100
+    moyNOR = np.sum(diffNOR)/8760*100
+    moyBFC = np.sum(diffBFC)/8760*100
+    moyCVL = np.sum(diffCVL)/8760*100
+    moyPAC = np.sum(diffPAC)/8760*100
+    moyIDF = np.sum(diffIDF)/8760*100
+    moyCOR = np.sum(diffCOR)/8760*100
+
+    moyAbsOCC = np.sum(np.abs(diffOCC))/8760*100
+    moyAbsNA = np.sum(np.abs(diffNA))/8760*100
+    moyAbsBRE = np.sum(np.abs(diffBRE))/8760*100
+    moyAbsHDF = np.sum(np.abs(diffHDF))/8760*100
+    moyAbsPDL = np.sum(np.abs(diffPDL))/8760*100
+    moyAbsARA = np.sum(np.abs(diffARA))/8760*100
+    moyAbsGE = np.sum(np.abs(diffGE))/8760*100
+    moyAbsNOR = np.sum(np.abs(diffNOR))/8760*100
+    moyAbsBFC = np.sum(np.abs(diffBFC))/8760*100
+    moyAbsCVL = np.sum(np.abs(diffCVL))/8760*100
+    moyAbsPAC = np.sum(np.abs(diffPAC))/8760*100
+    moyAbsIDF = np.sum(np.abs(diffIDF))/8760*100
+    moyAbsCOR = np.sum(np.abs(diffCOR))/8760*100
+
+
 
     nbS = 0
     nbP = 0
 
+    listeSurplusQuotidien = [0] * 365
+    listeSurplusHoraire = [0] * 24
+
+    listePenuriesQuotidien = [0] * 365
+    listePenuriesHoraire = [0] * 24
+
     for i in range(len(s)):
         if s[i] > 0:
             nbS += 1
+            listeSurplusQuotidien[i//24] += 1
+            listeSurplusHoraire[i%24] += 1
         if p[i] > 0:
             nbP += 1
+            listePenuriesQuotidien[i//24] += 1
+            listePenuriesHoraire[i%24] += 1
 
 
-    
-    EmissionCO2 = prodOn*10 + prodOff*9 + prodPv*55 + prodEau*10 + prodNuc*6 + prodTherm*443 + prodMeth*32 #variable EmissionCO2
+    consoGaz = G.stored[0] - G.stored[8759]
+    prodGazFossile = 0 if consoGaz < gazBiomasse else (consoGaz-gazBiomasse)*G.etaout
+
+    EmissionCO2 = prodOn*10 + prodOff*9 + prodPv*55 + prodEau*10 + prodNuc*6 + prodGazFossile*443 #variable EmissionCO2
+    save["co2"].append(EmissionCO2)
     demande = np.sum(scenario) #variable demande
-
     
 
-    print("Demande : {} GWh".format(int(demande)))
-    print("Production : {} GWh".format(prodTotale))
-    print("Résultat : {} GWh\n".format(prodTotale - int(np.sum(scenario))))
-
-    print("Emissions CO2 : {} tonnes".format(EmissionCO2))
-    print("Part des émissions CO2 dûes au mix énergétique: {0: .4f} %\n".format(((EmissionCO2/310e9)*100)))
-    # a comparer avec 310 Md de tonnes au total pour la France
-
-    print("{} surplus".format(nbS))    
-    print("{} pénuries".format(nbP))
-
-    dGaz = M.stored[8759]-M.stored[0]
-    print("Gaz : {} -> {} ({}) GWh\n".format(int(M.stored[0]), int(M.stored[8759]), int(dGaz)))
-
-    print("Capacités totales (GWh):")
-    print("   Batteries:", int(B.vol))
-    print("   PHS:", int(P.vol))
-    print("   Gaz:", int(M.vol))
-    print("\n")
-
-    prixgazchar = 324.6e-6 #prix de l'électricité produite à partir du gaz/charbon --> moyenne des deux (35€ le MWh)
+    prixGaz = 324.6e-6 #prix de l'électricité produite à partir du gaz/charbon --> moyenne des deux (35€ le MWh)
     prixNuc = 7.6e-6 #part du combustible dans le prix de l'électricité nucléaire (7.6€ le MWh)
 
     #carte alea MEGC (lancé 1 / 3)
     if alea == "MEGC1" or alea == "MEGC2" or alea == "MEGC3":
-        prixgazchar *= 1.5 #alea1
+        prixGaz *= 1.5 #alea1
     
     
     if alea == "MEGC3":
@@ -896,19 +1082,20 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 
     #carte alea MEMP (lancé 3)
     if alea == "MEMP3":
-        prixgazchar *= 1.3
+        prixGaz *= 1.3
         prixNuc *= 1.2
 
     #variable cout (Md€) --> pour le tour titre
-    cout = (jeu[0]["nbeolON"] * 3.5 + 
-            jeu[0]["nbeolOFF"] * 1.2 + 
-            jeu[0]["nbPV"] * 3.6 + 
-            jeu[0]["nbNuc"] * 8.6 +
-            jeu[0]["nbBio"] * 0.12 +
+    cout = (save["nvPions"]["nbeolON"] * 3.5 + 
+            save["nvPions"]["nbeolOFF"] * 1.2 + 
+            save["nvPions"]["nbPV"] * 3.6 + 
+            save["nvPions"]["nbNuc"] * 8.6 +
+            save["nvPions"]["nbBio"] * 0.12 +
+            (G.S * 0.004825) +
             (B.Q * 0.0012) / 0.003 + 
             (P.Q * 0.455) / 0.91 + 
             (prodNuc * prixNuc) +
-            (prodTherm * prixgazchar))
+            (prodGazFossile * prixGaz))
 
 
     #budget à chaque tour sauf si carte évènement bouleverse les choses
@@ -927,167 +1114,121 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     
     #carte MEGDT : lancé 1 / 3
     if alea == "MEGDT1" or alea == "MEGDT2" or alea == "MEGDT3":
-        cout += 1/3*jeu[4]["pac"]["panneauPV"]*3.6
+        cout += 1/3*save["nvPionsParReg"]["pac"]["panneauPV"]*3.6
 
     if alea == "MEGDT3":
-        cout += jeu[4]["pll"]["eolienneOFF"]*1.2
+        cout += save["nvPionsParReg"]["pll"]["eolienneOFF"]*1.2
 
     
-
-    print("Budget dépensé l'année {} : {} Md €".format(titre ,cout)) #affiche le montant dépensé au tour titre
-    print("Etat des comptes {} :".format(budget - cout)) #affiche si il y a un déficit vis à vis du budget attribué en début de tour 
-    print("\n")
-
     Sol = nbOn*300 + nbOff*400 + nbPv*26 + nbNuc*1.5 + nbBio*0.8 #occupation au sol de toutes les technologies (km2)
 
-    #affiche la part du territoire fançais occupé par les technologies 
-    print("Empreinte au sol vis à vis de la France : {} %".format((Sol/551695)*100)) 
-    print("\n")
 
-
-    Uranium = jeu[3]["Uranium"] #disponibilité Uranium initiale
+    Uranium = save["scores"]["Uranium"] #disponibilité Uranium initiale
     if nbNuc > 0:
         Uranium -= 10 #à chaque tour où on maintient des technos nucléaires
-    if jeu[0]["nbNuc"] > 0:
-        Uranium -= 5*jeu[0]["nbNuc"]/2 #à chaque paire de réacteurs posées sur le territoire
+    if save["nvPions"]["nbNuc"] > 0:
+        Uranium -= 5*save["nvPions"]["nbNuc"]/2 #à chaque paire de réacteurs posées sur le territoire
     #carte aléa MEGC (lancé 2)
     if alea == "MEGC2" or alea == "MEGC3":
         Uranium -= 10 
     
-    jeu[3]["Uranium"] = Uranium #actualisation du score Uranium
+    save["scores"]["Uranium"] = Uranium #actualisation du score Uranium
 
-    print("Score Uranium : {}".format(Uranium)) #affichage du score Uranium
 
-    Hydro = jeu[3]["Hydro"]#disponibilité Hydrocarbures et Charbon
-    if nbTherm>0:
-        Hydro -= 20 #à chaque tour où on maintient des technos Hydros/Charbon
+    Hydro = save["scores"]["Hydro"]#disponibilité Hydrocarbures et Charbon
+    if prodGazFossile > 0:
+        Hydro -= 20 #à chaque tour où on consomme du gaz fossile
     
     #carte aléa MEMP (lancé 2)
     if alea == "MEMP2" or alea == "MEMP3":
         Hydro -= 20
 
-    jeu[3]["Hydro"] = Hydro #actualisation du score Hydro
+    save["scores"]["Hydro"] = Hydro #actualisation du score Hydro
     
-    print("Score HydroCarbures/Charbon : {}".format(Hydro)) #affichage du score Hydrocarbures/Charbon
 
-    Bois = jeu[3]["Bois"]#disponibilité Bois
+    Bois = save["scores"]["Bois"]#disponibilité Bois
     if nbBio > 0:
         Bois -= nbBio + 1/2*Bois #au nombre de centrales Biomasse on enlève 1 quantité de bois --> au tour suivant 1/2 des stocks sont récupérés
     #carte aléa MEMP (lancé 1)
     if alea == "MEMP1" or alea == "MEMP2" or alea == "MEMP3":
         Bois -= 20
 
-    jeu[3]["Bois"] = Bois #actualisation du score Bois
+    save["scores"]["Bois"] = Bois #actualisation du score Bois
         
-    print("Score Bois : {}".format(Bois)) #affichage du score Bois
 
-    dechet = jeu[3]["Dechet"]
-    dechet += nbTherm*2 + nbNuc*1 #déchets générés par les technologies Nucléaires et Thermiques
-    print("Score déchets : {}".format(dechet)) #affichage du score déchet
-    print("\n")
-    jeu[3]["Dechet"] = dechet
+    dechet = save["scores"]["Dechet"]
+    # dechet += nbTherm*2 + nbNuc*1 #déchets générés par les technologies Nucléaires et Thermiques
+    dechet += nbNuc
+    save["scores"]["Dechet"] = dechet
 
-    capmax_info = jeu[5]
+    capmax_info = save["capacite"]
     #carte alea MECS (lancé 1 / 2)
     if alea == "MECS1" or alea == "MECS2" or alea == "MECS3":
         for k in capmax_info:
-            capmax_info[k]["eolienneON"] = 0.4*capmax_info[k]["eolienneON"]
+            capmax_info[k]["eolienneON"] = int(capmax_info[k]["eolienneON"] * 0.4)
 
     if alea == "MECS2" or alea == "MECS3":
-        capmax_info["occ"]["eolienneON"]= 2*capmax_info["occ"]["eolienneON"]
-        capmax_info["occ"]["panneauPV"]= 2*capmax_info["occ"]["panneauPV"]
+        capmax_info["occ"]["eolienneON"] *= 2
+        capmax_info["occ"]["panneauPV"] *= 2
 
     #carte alea MEGDT (lancé 2)
     if alea == "MEGDT2" or alea == "MEGDT3":
-        capmax_info["naq"]["eolienneOFF"]+=1
-        capmax_info["pac"]["eolienneOFF"]+=1
+        capmax_info["naq"]["eolienneOFF"] += 1
+        capmax_info["pac"]["eolienneOFF"] += 1
     
-    jeu[5]=capmax_info
+    save["capacite"] = capmax_info
 
     for k in capmax_info : 
-        if nbOn > capmax_info[k]["eolienneON"] or nbOff > capmax_info[k]["eolienneOFF"] or nbPv > capmax_info[k]["panneauPV"]-11*nbOn or nbBio > capmax_info[k]["biomasse"]-33*nbOn-3*nbPv :
-            print("vous empiétez sur des territoires agricoles ou des surfaces maritimes --> mécontentement de la population : ATTENTION !!!")
-
-    print("")
-
-    #actualisation des nouvelles technologies renouvelables posées dans chaque région
-
-    jeu[4]["hdf"]["eolienneON"] = hdf["eolienneON"] - jeu[4]["hdf"]["eolienneON"]
-    jeu[4]["hdf"]["eolienneOFF"] = hdf["eolienneOFF"] - jeu[4]["hdf"]["eolienneOFF"]
-    jeu[4]["hdf"]["panneauPV"] = hdf["panneauPV"] - jeu[4]["hdf"]["panneauPV"]
-
-    jeu[4]["idf"]["eolienneON"] = idf["eolienneON"] - jeu[4]["idf"]["eolienneON"]
-    jeu[4]["idf"]["eolienneOFF"] = idf["eolienneOFF"] - jeu[4]["idf"]["eolienneOFF"]
-    jeu[4]["idf"]["panneauPV"] = idf["panneauPV"] - jeu[4]["idf"]["panneauPV"]
-
-    jeu[4]["est"]["eolienneON"] = est["eolienneON"] - jeu[4]["est"]["eolienneON"]
-    jeu[4]["est"]["eolienneOFF"] = est["eolienneOFF"] - jeu[4]["est"]["eolienneOFF"]
-    jeu[4]["est"]["panneauPV"] = est["panneauPV"] - jeu[4]["est"]["panneauPV"]
-
-    jeu[4]["nor"]["eolienneON"] = nor["eolienneON"] - jeu[4]["nor"]["eolienneON"]
-    jeu[4]["nor"]["eolienneOFF"] = nor["eolienneOFF"] - jeu[4]["nor"]["eolienneOFF"]
-    jeu[4]["nor"]["panneauPV"] = nor["panneauPV"] - jeu[4]["nor"]["panneauPV"]
-
-    jeu[4]["occ"]["eolienneON"] = occ["eolienneON"] - jeu[4]["occ"]["eolienneON"]
-    jeu[4]["occ"]["eolienneOFF"] = occ["eolienneOFF"] - jeu[4]["occ"]["eolienneOFF"]
-    jeu[4]["occ"]["panneauPV"] = occ["panneauPV"] - jeu[4]["occ"]["panneauPV"]
-
-    jeu[4]["pac"]["eolienneON"] = pac["eolienneON"] - jeu[4]["pac"]["eolienneON"]
-    jeu[4]["pac"]["eolienneOFF"] = pac["eolienneOFF"] - jeu[4]["pac"]["eolienneOFF"]
-    jeu[4]["pac"]["panneauPV"] = pac["panneauPV"] - jeu[4]["pac"]["panneauPV"]
-
-    jeu[4]["bre"]["eolienneON"] = bre["eolienneON"] - jeu[4]["bre"]["eolienneON"]
-    jeu[4]["bre"]["eolienneOFF"] = bre["eolienneOFF"] - jeu[4]["bre"]["eolienneOFF"]
-    jeu[4]["bre"]["panneauPV"] = bre["panneauPV"] - jeu[4]["bre"]["panneauPV"]
-
-    jeu[4]["cvl"]["eolienneON"] = cvl["eolienneON"] - jeu[4]["cvl"]["eolienneON"]
-    jeu[4]["cvl"]["eolienneOFF"] = cvl["eolienneOFF"] - jeu[4]["cvl"]["eolienneOFF"]
-    jeu[4]["cvl"]["panneauPV"] = cvl["panneauPV"] - jeu[4]["cvl"]["panneauPV"]
-
-    jeu[4]["pll"]["eolienneON"] = pll["eolienneON"] - jeu[4]["pll"]["eolienneON"]
-    jeu[4]["pll"]["eolienneOFF"] = pll["eolienneOFF"] - jeu[4]["pll"]["eolienneOFF"]
-    jeu[4]["pll"]["panneauPV"] = pll["panneauPV"] - jeu[4]["pll"]["panneauPV"]
-
-    jeu[4]["naq"]["eolienneON"] = naq["eolienneON"] - jeu[4]["naq"]["eolienneON"]
-    jeu[4]["naq"]["eolienneOFF"] = naq["eolienneOFF"] - jeu[4]["naq"]["eolienneOFF"]
-    jeu[4]["naq"]["panneauPV"] = naq["panneauPV"] - jeu[4]["naq"]["panneauPV"]
-
-    jeu[4]["ara"]["eolienneON"] = ara["eolienneON"] - jeu[4]["ara"]["eolienneON"]
-    jeu[4]["ara"]["eolienneOFF"] = ara["eolienneOFF"] - jeu[4]["ara"]["eolienneOFF"]
-    jeu[4]["ara"]["panneauPV"] = ara["panneauPV"] - jeu[4]["ara"]["panneauPV"]
-
-    jeu[4]["bfc"]["eolienneON"] = bfc["eolienneON"] - jeu[4]["bfc"]["eolienneON"]
-    jeu[4]["bfc"]["eolienneOFF"] = bfc["eolienneOFF"] - jeu[4]["bfc"]["eolienneOFF"]
-    jeu[4]["bfc"]["panneauPV"] = bfc["panneauPV"] - jeu[4]["bfc"]["panneauPV"]
-
-    jeu[4]["cor"]["eolienneON"] = cor["eolienneON"] - jeu[4]["cor"]["eolienneON"]
-    jeu[4]["cor"]["eolienneOFF"] = cor["eolienneOFF"] - jeu[4]["cor"]["eolienneOFF"]
-    jeu[4]["cor"]["panneauPV"] = cor["panneauPV"] - jeu[4]["cor"]["panneauPV"]
-
-    #modification du fichier savedata
-    with open("game_data/savedata.json", "w") as output:
-        json.dump(jeu, output)
+        if (nbOn > capmax_info[k]["eolienneON"] 
+            or nbOff > capmax_info[k]["eolienneOFF"] 
+            or nbPv > capmax_info[k]["panneauPV"]-11*nbOn
+            or nbBio > capmax_info[k]["biomasse"]-33*nbOn-3*nbPv) :
+            print("vous empiétez sur des territoires agricoles ou surfaces maritimes --> mécontentement de la population !!!")
 
 
-    result = {"eolienON":{"capa":round(nbOn*powOnshore, 2), "prod":prodOn, "CO2":prodOn*10},
-                "eolienOFF":{"capa":round(nbOff*powOffshore, 2), "prod":prodOff, "CO2":prodOff*9},
-                "solaire":{"capa":round(nbPv*powPV, 2), "prod":prodPv, "CO2":prodPv*55},
-                "hydraulique":{"capa":"", "prod":prodEau, "CO2":prodEau*10},
-                "nucleaire":{"capa":round(N.Q, 2), "prod":prodNuc, "CO2":prodNuc*6},
-                "thermique":{"capa":round(T.Q, 2), "prod":prodTherm, "CO2":prodTherm*443},
-                "methanation":{"capa":round(M.Q, 2), "prod":prodMeth, "CO2":prodMeth*32},
-                "phs":{"capa":round(P.Q, 2), "prod":prodPhs, "CO2":""},
-                "batterie":{"capa":round(B.Q, 2), "prod":prodBat, "CO2":""},
 
-                "demande":int(demande), "production":prodTotale, "resultat":prodTotale-int(demande),
-                "emissions":EmissionCO2, "partEmissions":round(EmissionCO2/310e9*100, 2),
+    #modification du fichier save
+    with open("/var/www/html/flaskapp/game_data/groupe{}/save_tmp.json".format(group), "w") as output:
+        json.dump(save, output)
 
-                "surplus":nbS, "penuries":nbP,
 
-                "cout":round(cout), "sol":round(Sol/551695*100, 2),
-
-                "scores":{"uranium":Uranium, "hydro":Hydro, "bois":Bois, "dechets":dechet}
+    result = {"carte":carte, 
+                "annee":annee, 
+                "alea":alea, 
+                "cout":round(cout), 
+                "sol":round(Sol/551695*100, 2),
+                "stockGaz":list(G.stored),
+                "biogaz":gazBiomasse,
+                "demande":int(demande), "production":prodTotale,
+                "scoreUranium":Uranium, "scoreHydro":Hydro, "scoreBois":Bois, "scoreDechets":dechet,
+                "prodEolienneON":prodOn, "puissanceEolienneON":round(nbOn*powOnshore, 2),
+                "prodEolienneOFF":prodOff, "puissanceEolienneOFF":round(nbOff*powOffshore, 2),
+                "prodPV":prodPv, "puissancePV":round(nbPv*powPV, 2),
+                "prodHydraulique":prodEau,
+                "prodNucleaire":prodNuc, "puissanceNucleaire":round(N.Q, 2),
+                "prodGaz":prodGaz, "puissanceGaz":round(G.Q, 2),
+                "prodPhs":prodPhs, "puissancePhs":round(P.Q, 2),
+                "prodBatterie":prodBat, "puissanceBatterie":round(B.Q, 2),
+                "co2":save["co2"],
+                "nbSurplus":nbS, "nbPenuries":nbP,
+                "surplusQuotidien":listeSurplusQuotidien, "surplusHoraire":listeSurplusHoraire,
+                "penuriesQuotidien":listePenuriesQuotidien, "penuriesHoraire":listePenuriesHoraire,
+                "transfert":{"occ":int(round(moyOCC)),
+                                "naq":int(round(moyNA)),
+                                "bre":int(round(moyBRE)),
+                                "hdf":int(round(moyHDF)),
+                                "pll":int(round(moyPDL)),
+                                "ara":int(round(moyARA)),
+                                "est":int(round(moyGE)),
+                                "nor":int(round(moyNOR)),
+                                "bfc":int(round(moyBFC)),
+                                "cvl":int(round(moyCVL)),
+                                "pac":int(round(moyPAC)),
+                                "idf":int(round(moyIDF)),
+                                "cor":int(round(moyCOR))
                 }
+    }
+
 
     return result
 
@@ -1102,9 +1243,9 @@ def mix(scenario, titre, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 # nbOn - nbBio (int) : nombre de pions eoliennes onshore, offshore, ..., de biomasse
 # factStock (float) : facteur de qte de stockage, entre 0 et 1
 # alea (str) : code d'une carte alea        
-def strat_stockage_main(data):
+def strat_stockage_main(data, group):
     nbNuc = 0
-    nbTherm = 0
+    nbMeth = 0
     nbBio = 0
     nbOn = 0
     nbOff = 0
@@ -1121,63 +1262,42 @@ def strat_stockage_main(data):
     for k in data:
         if k!="annee" and k!="alea" and k!="stock" and k!="carte":
             nbNuc += data[k]["centraleNuc"]
-            nbTherm += data[k]["centraleTherm"]
+            nbMeth += data[k]["methanation"]
             nbBio += data[k]["biomasse"]
             nbOn += data[k]["eolienneON"]
             nbOff += data[k]["eolienneOFF"]
             nbPv += data[k]["panneauPV"]
 
-    initFiles()
 
     # Definition des scenarios (Negawatt, ADEME, RTE pour 2050)
     # Les autres scenarios sont faits mains à partir des données de Quirion
 
-    ADEME = pd.read_csv("mix_data/ADEME_25-50.csv", header=None)
+    ADEME = pd.read_csv("/var/www/html/flaskapp/mix_data/ADEME_25-50.csv", header=None)
     ADEME.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
-    RTE = pd.read_csv("mix_data/RTE_25-50.csv", header=None)
+    RTE = pd.read_csv("/var/www/html/flaskapp/mix_data/RTE_25-50.csv", header=None)
     RTE.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
-    NEGAWATT = pd.read_csv("mix_data/NEGAWATT_25-50.csv", header=None)
+    NEGAWATT = pd.read_csv("/var/www/html/flaskapp/mix_data/NEGAWATT_25-50.csv", header=None)
     NEGAWATT.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
     ScenarList = {"ADEME":ADEME , "RTE":RTE , "NEGAWATT":NEGAWATT}
 
-    #lecture du fichier savedata.json qui lit les données du tour précédent
+    #lecture du fichier save.json qui lit les données du tour précédent
     if data["annee"] == 2030:
-        jeu = [{"nbeolON": 0, "nbeolOFF": 0, "nbPV": 0, "nbTherm": 0, "nbNuc": 0, "nbBio": 0}, 0, 0, 
-                {"Uranium": 100, "Hydro": 100, "Bois": 100, "Dechet" : 0}, 
-                {"hdf": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, "idf": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, 
-                "est": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, "nor": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, 
-                "occ": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, "pac": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, 
-                "bre": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, "cvl": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, 
-                "pll": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, "naq": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, 
-                "ara": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, "bfc": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}, 
-                "cor": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0}}, 
-                {"hdf": {"eolienneON": 4, "eolienneOFF": 2, "panneauPV": 24, "biomasse": 27}, 
-                "idf": {"eolienneON": 2, "eolienneOFF": 0, "panneauPV": 9, "biomasse": 7}, 
-                "est": {"eolienneON": 8, "eolienneOFF": 0, "panneauPV": 44, "biomasse": 38}, 
-                "nor": {"eolienneON": 4, "eolienneOFF": 5, "panneauPV": 23, "biomasse": 26}, 
-                "occ": {"eolienneON": 10, "eolienneOFF": 4, "panneauPV": 56, "biomasse": 44}, 
-                "pac": {"eolienneON": 4, "eolienneOFF": 3, "panneauPV": 24, "biomasse": 9}, 
-                "bre": {"eolienneON": 4, "eolienneOFF": 12, "panneauPV": 21, "biomasse": 21}, 
-                "cvl": {"eolienneON": 5, "eolienneOFF": 0, "panneauPV": 30, "biomasse": 30}, 
-                "pll": {"eolienneON": 4, "eolienneOFF": 4, "panneauPV": 25, "biomasse": 27}, 
-                "naq": {"eolienneON": 11, "eolienneOFF": 12, "panneauPV": 65, "biomasse": 53}, 
-                "ara": {"eolienneON": 9, "eolienneOFF": 0, "panneauPV": 54, "biomasse": 38}, 
-                "bfc": {"eolienneON": 6, "eolienneOFF": 0, "panneauPV": 37, "biomasse": 32}, 
-                "cor": {"eolienneON": 1, "eolienneOFF": 3, "panneauPV": 7, "biomasse": 4}}]
+        with open('/var/www/html/flaskapp/game_data/save_template.json', 'r') as f:
+            save = json.load(f)
     
     else:
-        with open('game_data/savedata.json', 'r') as readOutput:
-            jeu = json.load(readOutput)
+        with open('/var/www/html/flaskapp/game_data/groupe{}/save.json'.format(group), 'r') as f:
+            save = json.load(f)
 
     # Entrée : scenario, nb technos
-    result = mix(RTE["d{}".format(data["annee"])],
-            "RTE {}".format(data["annee"]),
+    result = mix(ADEME["d{}".format(data["annee"])],
+            data["annee"],
             data["hdf"], data["idf"], data["est"], data["nor"], data["occ"], data["pac"], data["bre"], 
             data["cvl"], data["pll"], data["naq"], data["ara"], data["bfc"], data["cor"], 
-            nbOn, nbOff, nbPv, nbNuc, nbTherm, nbBio, data["stock"]/10, data["alea"], jeu)
+            nbOn, nbOff, nbPv, nbNuc, nbMeth, nbBio, data["stock"], data["alea"], save, data["carte"], group)
 
-    with open('game_data/production_output.json', 'w') as f:
+    with open('/var/www/html/flaskapp/game_data/groupe{}/production_output.json'.format(group), 'w') as f:
             json.dump(result, f)
