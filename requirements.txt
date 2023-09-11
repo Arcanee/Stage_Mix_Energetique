@@ -3,3 +3,5 @@ flask_cors
 numpy
 opencv-contrib-python
 pandas
+sphynx
+myst-parser
