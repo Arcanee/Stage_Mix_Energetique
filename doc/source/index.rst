@@ -9,9 +9,9 @@ Welcome to Mix NRJ's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
+	     
+   modules
    doc_howto
-
    
 Indices and tables
 ==================

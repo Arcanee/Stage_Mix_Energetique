@@ -1,3 +1,6 @@
+""" Module de détection dans l'image des actions
+
+"""
 import numpy as np
 from collections import Counter
 import cv2 as cv
@@ -8,6 +11,14 @@ import json
 
 # Localise la region
 def locateMap(box, pion, result, forme):
+    """Localise les 4 marqueurs des coins de la carte.
+    
+    :param box: gniagniagnia TODO
+    :param pion:
+    :param result:
+    :param forme:
+    :return:
+    """
     locImg = cv.imread("/var/www/html/flaskapp/static/img/proto-REF.png")
     hsv = cv.cvtColor(locImg, cv.COLOR_BGR2HSV)
     x = box[0][0]

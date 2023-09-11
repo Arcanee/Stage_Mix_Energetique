@@ -1,3 +1,13 @@
+"""Module principal de l'application web (server flask )
+
+Ce fichier est exécuté sur le serveur ou en local.
+Il lance flask qui va servir l'application web
+  - soit sur "http://insa-toulouse.fr"
+  - soit en local (suivre le lien affiché)
+
+Author: Aymeric et Marion
+"""
+
 from flask import Flask, request, jsonify, render_template, redirect, make_response
 from flask_cors import CORS, cross_origin
 import detection
@@ -23,6 +33,11 @@ CORS(app, support_credentials=True)
 @app.route('/')
 @cross_origin(support_credentials=True)
 def home_html():
+    """
+    fonction appelée par flask pour une route vers "/"
+    :return:  le "render" du fichier "templates/index.html"
+    TODO:
+    """
     return render_template("index.html")
 
 
