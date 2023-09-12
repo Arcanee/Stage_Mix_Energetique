@@ -14,13 +14,6 @@ from constantes import *
 
 np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
 
-# Fonction qui pour un nombre donné renvoie 0 s'il est négatif, et le nombre en question sinon
-# 
-# @params
-# x (float) : nombre à tester
-def indic(x):
-    return x if x > 0 else 0
-
 
 # Classe regroupant toutes les technologies de stockage et de production pilotables
 #
@@ -405,105 +398,6 @@ def StratStockagev2(prodres, H, Phs, Battery, Gas, Lake, Nuclear, I0, I1, I2, en
     return Surplus, Manque
 
 
-#Quantification des émissions de CO2 et de la consommation d'électricité dues aux usages
-#tour (int): tour de jeu : 1,2,3,4,5
-#agr (char): réponse A,B,C,D ou "" à la question sur le type d'alimentation/agriculture
-#mob (char): réponse A,B,C,D ou "" à la question sur le type de mobilités
-#bat (char): réponse A,B,C,D ou "" à la question sur le type de bâtiment
-#ind (char): réponse A,B,C,D ou "" à la question sur le type d'industrie/biens de consommation
-#voit (char): réponse A,B,C ou "" à la question catégorie voiture
-#pl (char): réponse A ou "" à la question catégorie poids lourds
-#avi (char): réponse A,B,C,D ou "" à la question catégorie avion
-
-#vos (int): nombre de kilomètres effectués par une personne dans une année en voiture essence
-#voe (int): nombre de kilomètres effectués par une personne dans une année en voiture électrique
-#tra (int): nombre de kilomètres effectués par une personne dans une année en train
-#vel (int): nombre de kilomètres effectués par une personne dans une année en vélo électrique
-#met (int): nombre de kilomètres effectués par une personne dans une année en métro
-#bus (int): nombre de kilomètres effectués par une personne dans une année en bus
-#bue (int): nombre de kilomètres effectués par une personne dans une année en bus électrique
-#voli (int): nombre de vols intérieurs effectués par une personne dans une année
-#vole (int): nombre de vols en europe effectués par une personne dans une année
-#volin (int): nombre de vols internationnaux effectués par une personne dans une année
-#pm (int): nombre de petits meubles neufs achetés par an par une personne
-#gm (int): nombre de gros meubles neufs achetés par an par une personne
-#pee (int) : nombre de petits équipements électroménagers neufs achetés par an par une personne
-#gee (int): nombre de gros équipements électroménagers neufs achetés par an par une personne
-#smart (int): nombre de smartphones neufs achetés par an par une personne
-#eei (int): nombre d'équipements électroniques intermédiaires neufs achetés par an par une personne
-#geel (int) : nombre de gros équipements électroniques neufs achetés par an par une personne
-
-def Usages(tour, agr, mob, bat, ind, voit, pl, avi, vos, voe, tra, vel, met, bus, 
-            bue, voli, vole, volin, pm, gm, pee, gee, smart, eei, geel):
-
-    demande = 0 #(en TWh)
-    emission = 0 #(en tonnes de CO2)
-
-    #réponse 1 : agr 
-    if agr == "A":
-        demande += 10
-        emission +=0.72
-    if agr == "B":
-        demande += 29
-        emission += 0.89
-    if agr == "C":
-        demande += 62
-        emission += 1.24
-    if agr == "D":
-        demande += 72
-        emission += 1.4
-    
-    #réponse 2 : mob 
-    if mob == "A":
-        demande += 150
-    if mob == "B":
-        demande += 150
-    if mob == "C":
-        demande += 200
-    if mob == "D":
-        demande += 225
-    
-     #réponse 3 : bat 
-    if bat == "A":
-        demande += 220
-    if bat == "B":
-        demande += 250
-    if bat == "C":
-        demande += 300
-    if bat == "D":
-        demande += 375
-    
-     #réponse 3 : ind 
-    if ind == "A":
-        demande += 250
-    if ind == "B":
-        demande += 250
-    if ind == "C":
-        demande += 300
-    if ind == "D":
-        demande += 400
-
-    #réponse voit
-    if voit == "A":
-        demande += 66
-    if ind == "B":
-        demande += 90
-   
-   #réponse pl
-    if voit == "A":
-        demande += 4.92
- 
-    #réponse avi
-    if avi == "D":
-        demande += 2.450
-
-    emission += vos*2e-4 + voe*1e-4 + vel*1e-5 + bus*1e-4 + voli*0.26 + vole*0.47 + volin*1.82 + pm*0.1 + gm*0.3 + pee*0.04 + gee*0.25 + smart*0.03 + eei*0.1 + geel*0.4
-    demande += vel*5.3136e-6*(660000)*(tour) + met*1.5e-3 + bue*1.3e-9
-
-    return demande, emission
-
-
-
 # Optimisation de stratégie de stockage et de déstockage du Mix énergetique
 #
 # @params
@@ -514,67 +408,13 @@ def Usages(tour, agr, mob, bat, ind, voit, pl, avi, vos, voe, tra, vel, met, bus
 # factStock (float) : facteur de qte de stockage, entre 0 et 1
 # cout (int) : cout cumulé des tours précédent
 # alea (str) : code d'une carte alea
-def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, bfc, cor, 
-        nbOn, nbOff, nbPv, nbNuc, nbMeth, nbBio, factStock, alea, save, carte, group):
+def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
 
     H = 8760
 
-    save["carte"] = carte
-    save["annee"] = annee + 5
-    save["stock"] = factStock
-
-    #actualisation : pour chaque technologie --> nombre posé à ce tour (titre)
-    save["nvPions"]["nbeolON"] = nbOn - save["pions"]["nbeolON"]
-    save["nvPions"]["nbeolOFF"] = nbOff - save["pions"]["nbeolOFF"]
-    save["nvPions"]["nbPV"] = nbPv - save["pions"]["nbPV"]
-    save["nvPions"]["nbNuc"] = indic(nbNuc - save["pionsInit"]["nbNuc"] - save["pions"]["nbNuc"])
-    save["nvPions"]["nbMeth"] = nbMeth - save["pions"]["nbMeth"]
-    save["nvPions"]["nbBio"] = nbBio - save["pions"]["nbBio"]
-
-    save["pions"]["nbeolON"] = nbOn
-    save["pions"]["nbeolOFF"] = nbOff
-    save["pions"]["nbPV"] = nbPv
-    save["pions"]["nbNuc"] = indic(nbNuc - save["pionsInit"]["nbNuc"])
-    save["pions"]["nbMeth"] = nbMeth
-    save["pions"]["nbBio"] = nbBio
-
-    save["nvPionsParReg"]["hdf"]["Nucleaire"] = indic(hdf["centraleNuc"] - save["pionsParReg"]["hdf"]["Nucleaire"] - save["pionsParRegInit"]["hdf"]["Nucleaire"])
-    save["nvPionsParReg"]["idf"]["Nucleaire"] = indic(idf["centraleNuc"] - save["pionsParReg"]["idf"]["Nucleaire"] - save["pionsParRegInit"]["idf"]["Nucleaire"])
-    save["nvPionsParReg"]["occ"]["Nucleaire"] = indic(occ["centraleNuc"] - save["pionsParReg"]["occ"]["Nucleaire"] - save["pionsParRegInit"]["occ"]["Nucleaire"])
-    save["nvPionsParReg"]["naq"]["Nucleaire"] = indic(naq["centraleNuc"] - save["pionsParReg"]["naq"]["Nucleaire"] - save["pionsParRegInit"]["naq"]["Nucleaire"])
-    save["nvPionsParReg"]["est"]["Nucleaire"] = indic(est["centraleNuc"] - save["pionsParReg"]["est"]["Nucleaire"] - save["pionsParRegInit"]["est"]["Nucleaire"])
-    save["nvPionsParReg"]["nor"]["Nucleaire"] = indic(nor["centraleNuc"] - save["pionsParReg"]["nor"]["Nucleaire"] - save["pionsParRegInit"]["nor"]["Nucleaire"])
-    save["nvPionsParReg"]["bre"]["Nucleaire"] = indic(bre["centraleNuc"] - save["pionsParReg"]["bre"]["Nucleaire"] - save["pionsParRegInit"]["bre"]["Nucleaire"])
-    save["nvPionsParReg"]["ara"]["Nucleaire"] = indic(ara["centraleNuc"] - save["pionsParReg"]["ara"]["Nucleaire"] - save["pionsParRegInit"]["ara"]["Nucleaire"])
-    save["nvPionsParReg"]["bfc"]["Nucleaire"] = indic(bfc["centraleNuc"] - save["pionsParReg"]["bfc"]["Nucleaire"] - save["pionsParRegInit"]["bfc"]["Nucleaire"])
-    save["nvPionsParReg"]["pll"]["Nucleaire"] = indic(pll["centraleNuc"] - save["pionsParReg"]["pll"]["Nucleaire"] - save["pionsParRegInit"]["pll"]["Nucleaire"])
-    save["nvPionsParReg"]["cvl"]["Nucleaire"] = indic(cvl["centraleNuc"] - save["pionsParReg"]["cvl"]["Nucleaire"] - save["pionsParRegInit"]["cvl"]["Nucleaire"])
-    save["nvPionsParReg"]["cor"]["Nucleaire"] = indic(cor["centraleNuc"] - save["pionsParReg"]["cor"]["Nucleaire"] - save["pionsParRegInit"]["cor"]["Nucleaire"])
-    save["nvPionsParReg"]["pac"]["Nucleaire"] = indic(pac["centraleNuc"] - save["pionsParReg"]["pac"]["Nucleaire"] - save["pionsParRegInit"]["pac"]["Nucleaire"])
-
-    save["pionsParReg"]["hdf"]["Nucleaire"] = indic(hdf["centraleNuc"] - save["pionsParRegInit"]["hdf"]["Nucleaire"])
-    save["pionsParReg"]["idf"]["Nucleaire"] = indic(idf["centraleNuc"] - save["pionsParRegInit"]["idf"]["Nucleaire"])
-    save["pionsParReg"]["occ"]["Nucleaire"] = indic(occ["centraleNuc"] - save["pionsParRegInit"]["occ"]["Nucleaire"])
-    save["pionsParReg"]["naq"]["Nucleaire"] = indic(naq["centraleNuc"] - save["pionsParRegInit"]["naq"]["Nucleaire"])
-    save["pionsParReg"]["est"]["Nucleaire"] = indic(est["centraleNuc"] - save["pionsParRegInit"]["est"]["Nucleaire"])
-    save["pionsParReg"]["nor"]["Nucleaire"] = indic(nor["centraleNuc"] - save["pionsParRegInit"]["nor"]["Nucleaire"])
-    save["pionsParReg"]["bre"]["Nucleaire"] = indic(bre["centraleNuc"] - save["pionsParRegInit"]["bre"]["Nucleaire"])
-    save["pionsParReg"]["ara"]["Nucleaire"] = indic(ara["centraleNuc"] - save["pionsParRegInit"]["ara"]["Nucleaire"])
-    save["pionsParReg"]["bfc"]["Nucleaire"] = indic(bfc["centraleNuc"] - save["pionsParRegInit"]["bfc"]["Nucleaire"])
-    save["pionsParReg"]["pll"]["Nucleaire"] = indic(pll["centraleNuc"] - save["pionsParRegInit"]["pll"]["Nucleaire"])
-    save["pionsParReg"]["cvl"]["Nucleaire"] = indic(cvl["centraleNuc"] - save["pionsParRegInit"]["cvl"]["Nucleaire"])
-    save["pionsParReg"]["cor"]["Nucleaire"] = indic(cor["centraleNuc"] - save["pionsParRegInit"]["cor"]["Nucleaire"])
-    save["pionsParReg"]["pac"]["Nucleaire"] = indic(pac["centraleNuc"] - save["pionsParRegInit"]["pac"]["Nucleaire"])
-
-
-    #actualisation des nouvelles technologies renouvelables posées dans chaque région
-
-    
-    save["nvPionsParReg"]["pac"]["panneauPV"] = pac["panneauPV"] - save["pionsParReg"]["pac"]["panneauPV"]
-    save["pionsParReg"]["pac"]["panneauPV"] = pac["panneauPV"]
-
-    save["nvPionsParReg"]["pll"]["eolienneOFF"] = pll["eolienneOFF"] - save["pionsParReg"]["pll"]["eolienneOFF"]
-    save["pionsParReg"]["pll"]["eolienneOFF"] = pll["eolienneOFF"]
+    save["carte"] = mix["carte"]
+    save["annee"] += 5
+    save["stock"] = mix["stock"]
 
 
     #carte aléa MEVUAPV  (lancé dé 1 / 2)
@@ -603,56 +443,18 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     powPV = 3
 
     # On fait la somme des prods par region pour chaque techno (FacteurDeCharge * NbPions * PuissanceParPion)
-    prodOffshore += np.array(fdc_off.occ) * occ["eolienneOFF"] * powOffshore
-    prodOnshore += np.array(fdc_on.occ) * occ["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.occ) * occ["panneauPV"] * powPV
 
-    prodOffshore += np.array(fdc_off.naq) * naq["eolienneOFF"] * powOffshore
-    prodOnshore += np.array(fdc_on.naq) * naq["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.naq) * naq["panneauPV"] * powPV
+    for reg in save[capacite]:
+        prodOnshore += np.array(fdc_on[reg]) * mix[reg]["eolienneON"] * powOnshore
+        prodPV += np.array(fdc_pv[reg]) * mix[reg]["panneauPV"] * powPV
+        if reg!="bfc" or reg!="ara" or reg!="cvl" or reg!="idf" or reg!="est":
+            prodOffshore += np.array(fdc_off[reg]) * mix[reg]["eolienneOFF"] * powOffshore
 
-    prodOffshore += np.array(fdc_off.bre) * bre["eolienneOFF"] * powOffshore
-    prodOnshore += np.array(fdc_on.bre) * bre["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.bre) * bre["panneauPV"] * powPV
-
-    prodOffshore += np.array(fdc_off.hdf) * hdf["eolienneOFF"] * powOffshore
-    prodOnshore += np.array(fdc_on.hdf) * hdf["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.hdf) * hdf["panneauPV"] * powPV
-
-    prodOffshore += np.array(fdc_off.pll) * pll["eolienneOFF"] * powOffshore
-    prodOnshore += np.array(fdc_on.pll) * pll["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.pll) * pll["panneauPV"] * powPV
-
-    prodOnshore += np.array(fdc_on.ara) * ara["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.ara) * ara["panneauPV"] * powPV
-
-    prodOnshore += np.array(fdc_on.est) * est["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.est) * est["panneauPV"] * powPV
-
-    prodOffshore += np.array(fdc_off.nor) * nor["eolienneOFF"] * powOffshore
-    prodOnshore += np.array(fdc_on.nor) * nor["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.nor) * nor["panneauPV"] * powPV
-
-    prodOnshore += np.array(fdc_on.bfc) * bfc["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.bfc) * bfc["panneauPV"] * powPV
-
+    
     #carte aléa MEMFDC (lancé 1)
     if alea == "MEMFDC1" or alea == "MEMFDC2" or alea == "MEMFDC3":
-        prodOnshore += (np.array(fdc_on.cvl) * cvl["eolienneON"] * powOnshore) * 54/60
-    else:
-        prodOnshore += np.array(fdc_on.cvl) * cvl["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.cvl) * cvl["panneauPV"] * powPV
-
-    prodOffshore += np.array(fdc_off.pac) * pac["eolienneOFF"] * powOffshore
-    prodOnshore += np.array(fdc_on.pac) * pac["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.pac) * pac["panneauPV"] * powPV
-
-    prodOffshore += np.array(fdc_off.cor) * cor["eolienneOFF"] * powOffshore
-    prodOnshore += np.array(fdc_on.cor) * cor["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.cor) * cor["panneauPV"] * powPV
-
-    prodOnshore += np.array(fdc_on.idf) * idf["eolienneON"] * powOnshore
-    prodPV += np.array(fdc_pv.idf) * idf["panneauPV"] * powPV
+        prodOnshore -= (np.array(fdc_on["cvl"]) * mix["cvl"]["eolienneON"] * powOnshore) * 0.1
+        
 
     # Aléa +15% prod PV
     prodPV += save["innovPV"] * prodPV
@@ -1248,13 +1050,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 # nbOn - nbBio (int) : nombre de pions eoliennes onshore, offshore, ..., de biomasse
 # factStock (float) : facteur de qte de stockage, entre 0 et 1
 # alea (str) : code d'une carte alea        
-def strat_stockage_main(data, group, team):
-    nbNuc = 0
-    nbMeth = 0
-    nbBio = 0
-    nbOn = 0
-    nbOff = 0
-    nbPv = 0
+def strat_stockage_main(mix, save, nvPions, nvPionsReg, group, team):
 
     # Infos sur les unités de data :
     # eolienneON --> 1 unité = 10 parcs = 700 eoliennes
@@ -1264,15 +1060,6 @@ def strat_stockage_main(data, group, team):
     # centraleNuc --> 1 unité = 1 réacteur
     # biomasse --> 1 unité = une fraction de flux E/S en méthanation
 
-    for k in data:
-        if k!="annee" and k!="alea" and k!="stock" and k!="carte":
-            nbNuc += data[k]["centraleNuc"]
-            nbMeth += data[k]["methanation"]
-            nbBio += data[k]["biomasse"]
-            nbOn += data[k]["eolienneON"]
-            nbOff += data[k]["eolienneOFF"]
-            nbPv += data[k]["panneauPV"]
-
 
     # Definition des scenarios (Negawatt, ADEME, RTE pour 2050)
     # Les autres scenarios sont faits mains à partir des données de Quirion
@@ -1280,27 +1067,20 @@ def strat_stockage_main(data, group, team):
     ADEME = pd.read_csv(dataPath+"mix_data/ADEME_25-50.csv", header=None)
     ADEME.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
-    RTE = pd.read_csv(dataPath+"mix_data/RTE_25-50.csv", header=None)
-    RTE.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
+    # # RTE = pd.read_csv(dataPath+"mix_data/RTE_25-50.csv", header=None)
+    # # RTE.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
-    NEGAWATT = pd.read_csv(dataPath+"mix_data/NEGAWATT_25-50.csv", header=None)
-    NEGAWATT.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
+    # # NEGAWATT = pd.read_csv(dataPath+"mix_data/NEGAWATT_25-50.csv", header=None)
+    # # NEGAWATT.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
-    ScenarList = {"ADEME":ADEME , "RTE":RTE , "NEGAWATT":NEGAWATT}
 
-    #lecture du fichier save.json qui lit les données du tour précédent
+    result = simulation(ADEME["d{}".format(mix["annee"])], mix, save, nvPions, nvPionsReg, group, team)
 
-    with open(dataPath+'game_data/{}/{}/save.json'.format(group, team), 'r') as f:
-        save = json.load(f)
 
-    # Entrée : scenario, nb technos
-    result = mix(ADEME["d{}".format(data["annee"])],
-            data["annee"],
-            data["hdf"], data["idf"], data["est"], data["nor"], data["occ"], data["pac"], data["bre"], 
-            data["cvl"], data["pll"], data["naq"], data["ara"], data["bfc"], data["cor"], 
-            nbOn, nbOff, nbPv, nbNuc, nbMeth, nbBio, data["stock"], data["alea"], save, data["carte"], group, team)
+    with open(dataPath+'game_data/{}/{}/resultats.json'.format(group, team), 'r') as src:
+        resultatGlobal = json.load(src)
 
-    with open(dataPath+'game_data/{}/{}/resultats.json'.format(group, team), 'wr') as f:
-        resultatGlobal = json.load(f)
-        resultatGlobal[str(data["annee"])] = result
-        json.dump(resultatGlobal, f)
+    resultatGlobal[str(data["annee"])] = result
+
+    with open(dataPath+'game_data/{}/{}/resultats.json'.format(group, team), 'r') as dst:
+        json.dump(resultatGlobal, dst)

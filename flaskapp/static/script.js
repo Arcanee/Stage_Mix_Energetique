@@ -261,7 +261,7 @@ $(function() {
                     msg = `Vous avez placé trop de ${details[1]} en ${details[0]} (maximum: ${details[2]}).`;
                     break;
                 case "errNuc":
-                    msg = `La crise sociale en cours vous empêche de placer plus de réacteurs nucléaires (maximum: ${details}).`;
+                    msg = `La crise sociale en cours vous empêche de placer plus de réacteurs nucléaires (vous en avez ajouté ${details}).`;
                     break;
                 default:
                     break;
@@ -511,7 +511,7 @@ $(function() {
                     msg = `Vous avez placé trop de ${details[1]} en ${details[0]} (maximum: ${details[2]}).`;
                     break;
                 case "errNuc":
-                    msg = `La crise sociale en cours vous empêche de placer plus de réacteurs nucléaires (maximum: ${details}).`;
+                    msg = `La crise sociale en cours vous empêche de placer plus de réacteurs nucléaires (vous en avez ajouté ${details}).`;
                     break;
                 default:
                     break;

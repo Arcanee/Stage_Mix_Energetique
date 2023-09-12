@@ -264,35 +264,100 @@ def prodCompute():
         with open(dataPath+"game_data/{}/{}/save.json".format(group, team), "r") as f:
             save = json.load(f)
 
-            if data["annee"] != save["annee"]:
-                errDetails = save["annee"]
-                raise exc.errAnnee
+        
+        
+        # VERIF ANNEE / STOCK / CARTE / CAPACITE LEGITIMES
+        if data["annee"] != save["annee"]:
+            errDetails = save["annee"]
+            raise exc.errAnnee
 
-            if data["stock"] < save["stock"]:
-                errDetails = save["stock"]
-                raise exc.errStock
+        if data["stock"] < save["stock"]:
+            errDetails = save["stock"]
+            raise exc.errStock
+            
+        if data["annee"] != 2030 and data["carte"] != save["carte"]:
+            errDetails = save["carte"]
+            raise exc.errCarte
+        
+        for reg in save["capacite"]:
+            for p in save["capacite"][reg]:
+                if data[reg][p] > save["capacite"][reg][p]:
+                    errDetails = [reg, p, save["capacite"][reg][p]]
+                    raise exc.errSol
+
+
+
+
+        # CALCUL NOMBRE DE NOUVEAU PIONS A CE TOUR
+        nvPionsReg = {
+            "hdf": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "idf": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "est": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "nor": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "occ": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "pac": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "bre": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "cvl": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "pll": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "naq": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "ara": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "bfc": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
+            "cor": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}
+        }
+
+        nvPions = {
+            "eolienneON": 0,
+            "eolienneOFF": 0,
+            "panneauPV": 0,
+            "methanation": 0,
+            "centraleNuc": 0,
+            "biomasse": 0
+        }
+
+        for reg in save["capacite"]:
+            for p in data[reg]:
+                nvPionsReg[reg][p] = data[reg][p] - len(save[reg][p])
+                nvPions[p] += data[reg][p] - len(save[reg][p])
                 
-            if data["annee"] != 2030 and data["carte"] != save["carte"]:
-                errDetails = save["carte"]
-                raise exc.errCarte
-            
-            for reg in save["capacite"]:
-                for p in save["capacite"][reg]:
-                    if data[reg][p] > save["capacite"][reg][p]:
-                        errDetails = [reg, p, save["capacite"][reg][p]]
-                        raise exc.errSol
-            
-            if data["alea"] == "MECS3":
-                nbNuc = 0
-                for reg in data:
-                    if reg!="annee" and reg!="alea" and reg!="stock" and reg!="carte":
-                        nbNuc += data[reg]["centraleNuc"]
-                if nbNuc > save["pions"]["nbNuc"] + save["pionsInit"]["nbNuc"]:
-                    errDetails = save["pions"]["nbNuc"] + save["pionsInit"]["nbNuc"]
-                    raise exc.errNuc
+                for i in range(nvPionsReg[reg][p]):
+                    save[reg][p].append(data["annee"])
+        
+
+        # TRAITEMENT SUPPLEMENTAIRE POUR LE NUCLEAIRE AU 1ER TOUR
+        if data["annee"] == 2030:
+            nvPions["centraleNuc"] -= 47
+            nvPionsReg["hdf"]["centraleNuc"] -= 6
+            nvPionsReg["idf"]["centraleNuc"] -= 0
+            nvPionsReg["occ"]["centraleNuc"] -= 2
+            nvPionsReg["naq"]["centraleNuc"] -= 6
+            nvPionsReg["pac"]["centraleNuc"] -= 8
+            nvPionsReg["cor"]["centraleNuc"] -= 0
+            nvPionsReg["cvl"]["centraleNuc"] -= 7
+            nvPionsReg["pll"]["centraleNuc"] -= 0
+            nvPionsReg["bre"]["centraleNuc"] -= 0
+            nvPionsReg["bfc"]["centraleNuc"] -= 2
+            nvPionsReg["est"]["centraleNuc"] -= 5
+            nvPionsReg["ara"]["centraleNuc"] -= 3
+            nvPionsReg["nor"]["centraleNuc"] -= 8
+
+            save["hdf"]["centraleNuc"][0:6] = [1995,1995,1995,1995,1995,1995]
+            save["occ"]["centraleNuc"][0:2] = [2015,2015]
+            save["naq"]["centraleNuc"][0:6] = [1995,1995,1995,1995,1995,1995]
+            save["pac"]["centraleNuc"][0:8] = [1995,2000,2000,2000,2000,2000,2000,2000]
+            save["cvl"]["centraleNuc"][0:7] = [2000,2000,2000,2000,2000,2000,2000]
+            save["bfc"]["centraleNuc"][0:2] = [2000,2000]
+            save["est"]["centraleNuc"][0:5] = [2005,2005,2005,2005,2005]
+            save["ara"]["centraleNuc"][0:3] = [2005,2005,2005]
+            save["nor"]["centraleNuc"][0:8] = [2005,2005,2005,2005,2005,2005,2005,2005]
+
+        
+        if data["alea"] == "MECS3":
+            if nvPions["centraleNuc"] > 0:
+                errDetails = nvPions["centraleNuc"]
+                raise exc.errNuc
                 
 
-        strat_stockage.strat_stockage_main(data, group, team)
+        strat_stockage.strat_stockage_main(data, save, nvPions, nvPionsReg, group, team)
         resp = ["success"]
 
 
