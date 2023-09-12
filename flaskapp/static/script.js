@@ -47,14 +47,10 @@ $(function() {
 
             switch (reason) {
                 case "input":
-                    msg = "Veuillez choisir votre groupe.";
+                    msg = "Veuillez choisir votre groupe et votre équipe.";
                     break;
 
-                case "httpOutput":
-                    msg = "Le serveur n'a pas su interpréter cette requête.";
-                    break;
-
-                case "httpRuntime":
+                case "http":
                     msg = "Une erreur est survenue avec le serveur.";
                     break;
 
@@ -67,25 +63,24 @@ $(function() {
         }
 
         $(".logInBtn").click((e) => {
-            console.log("youhouu");
-            const data = [$("#grpInput").val(), e.target.id];
+            const data = [$("#grpInput").val(), $("#teamInput").val(), e.target.id];
 
-            if (data[0] != "default") {
+            if (data[0] != "default" && data[1] != "default") {
                 $.ajax({
-                    url: "http://apps-gei.insa-toulouse.fr/set_group",
+                    url: "/set_group",
                     type: "POST",
                     data: JSON.stringify(data),
                     contentType: "application/json; charset=utf-8",
                     dataType: "json",
                     success: function (data, textStatus, jqXHR) {
                         if (data[0] == "log_in_success") {
-                            location.href = "http://apps-gei.insa-toulouse.fr/photo";
+                            location.href = "/photo";
                         } else {
-                            displayError("httpOutput");
+                            displayError("http");
                         }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        displayError("httpRuntime");
+                        displayError("http");
                     }
                     });
 
@@ -136,29 +131,12 @@ $(function() {
         }
 
 
-        function toBase64 (url, callback){
-            const img = document.createElement('img');
-            canvas = document.createElement('canvas');
-            ctx = canvas.getContext('2d');
-            data = '';
-        
-            img.crossOrigin = 'Anonymous';
-        
-            img.onload = function(){
-                canvas.height = this.height;
-                canvas.width = this.width;
-                ctx.drawImage(this, 0, 0);
-                data = canvas.toDataURL();
-                callback(data)
-            };
-
-            img.src = url;
-        };
-
-
-        function sendImg(img) {
+        function sendImg(img) {            
+            processing = true;
+            $('#imgOutput').html('<span class="spinner-border spinner-border-sm"></span>&nbsp;&nbsp;Chargement...');
+            
             $.ajax({
-            url: "http://apps-gei.insa-toulouse.fr/detector",
+            url: "/detector",
             type: "POST",
             data: JSON.stringify({image: img}),
             contentType: "application/json; charset=utf-8",
@@ -166,9 +144,8 @@ $(function() {
             success: function (data, textStatus, jqXHR) {
                 $('#imgOutput').html('Envoyer');
                 processing = false;
-                if (data[0] == "detection_success") {
-                    sessionStorage.setItem("photoDetection", JSON.stringify(data[1]));
-                    location.href = "http://apps-gei.insa-toulouse.fr/detection";
+                if (data[0] == "success") {
+                    location.href = "/detection";
                 } else {
                     displayError("img");
                 }
@@ -180,30 +157,27 @@ $(function() {
             }
             });
         }
-        
-
-        $('#imgInput').change(() => {
-            const file = imgInput.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imgData.src = e.target.result;
-            }
-
-            reader.readAsDataURL(file);           
-        });
+       
         
         $('#imgOutput').click(() => {
-            if (imgData.src && !processing) {
-                processing = true;
-                $('#imgOutput').html('<span class="spinner-border spinner-border-sm"></span>&nbsp;&nbsp;Chargement...');
-                toBase64(imgData.src, function(data){sendImg(data);})
-            } else if (!processing) {
-                displayError("input");
+            if (!processing) {
+                const fichier = document.getElementById("imgInput").files[0];
+                if (fichier) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        sendImg(reader.result);
+                    }
+                    reader.readAsDataURL(fichier);
+                } 
+                
+                else {
+                    displayError("input");
+                }
             }
         });
 
         $('#noPhotoBtn').click(() => {
-            location.href = "http://apps-gei.insa-toulouse.fr/manual";
+            location.href = "/manual";
         });
     
     }
@@ -211,6 +185,9 @@ $(function() {
 
 
     if (document.title == "Vérification - Jeu mix énergétique") {
+
+        let detectionData = null;
+        let mixData = null;
 
         function btnCallbacks(plus, minus, nb) {
             minus.click(() => {
@@ -272,7 +249,7 @@ $(function() {
                     msg = "Une erreur est survenue avec le serveur.";
                     break;
                 case "errAnnee":
-                    msg = `L'année sélectionnée ne correpond pas au tour actuel (valeur attendue: ${details}).`;
+                    msg = `L'année sélectionnée ne correspond pas au tour actuel (valeur attendue: ${details}).`;
                     break;
                 case "errStock":
                     msg = `Vous ne pouvez pas enlever de batteries (valeur minimale: ${details}).`;
@@ -318,6 +295,7 @@ $(function() {
                 err = 1;
 
             } else {
+                data["actif"] = true;
                 data["carte"] = $("#carte").val();
                 data["annee"] = parseInt($("#annee").val());
                 data["stock"] = parseInt($("#stock").val());
@@ -337,78 +315,118 @@ $(function() {
                     }
                 }
             }
-            console.log(data);
 
             result = err ? false : JSON.stringify(data);
             return result;
         }
 
-        function initCallbacks() {
-            $("#carte").change(() => {
-                const val = $("#carte").val();
-                if (val != "default") {
-                    initContent(val);
-                    $("#mid").hide();
-                    $("#bot").hide();
-                    $("#mid").fadeIn();
-                    $("#bot").fadeIn();
-                }
-            });
-    
-            $('#computeResults').click(() => {
-                const dataProd = saveData();
-    
-                if (dataProd != false) {
-                    $('#computeResults').html('<span class="spinner-border spinner-border-sm"></span>&nbsp;&nbsp;Chargement...');
-                    exitConfirm = false;
-                    $.ajax({
-                        url: "http://apps-gei.insa-toulouse.fr/production",
-                        type: "POST",
-                        data: dataProd,
-                        contentType: "application/json; charset=utf-8",
-                        dataType: "json",
-                        success: function (data, textStatus, jqXHR) {
-                            if (data[0] == "success") {
-                                $('#computeResults').html('Valider');
-                                sessionStorage.setItem("prodInput", JSON.stringify(data[1]));
-                                location.href = "http://apps-gei.insa-toulouse.fr/results";
-                            } else {
-                                $('#computeResults').html('Valider');
-                                displayError(data[0], data[1]);
-                            }
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            $('#computeResults').html('Valider');
-                            displayError("http", null);
+        function fillPage() {
+            if (!mixData.actif) {
+                $('#carte').val(detectionData.carte);
+                $("#stock").val(detectionData.stock.toString());
+                $("#annee").val(detectionData.annee.toString());
+
+                // Squelette de la page pour la carte qui a été détectée
+                initContent(detectionData.carte);
+
+                // Remplissage de la page avec les valeurs récupérées
+                for (const reg in detectionData) {
+                    if (reg!="carte" && reg!="annee" && reg!="stock") {
+                        for (const p in detectionData[reg]) {
+                            $(`#${reg}_${p}`).val(detectionData[reg][p]);
                         }
-                    });
+                    }
                 }
-            });
+            }
+
+            else {
+                $("#carte").val(mixData.carte);
+                $("#annee").val(mixData.annee.toString());
+                $("#stock").val(mixData.stock.toString());
+                $("#alea").val(mixData.alea);
+                initContent(mixData.carte);
     
-            $(".backHome").click(() => {
-                location.href = "http://apps-gei.insa-toulouse.fr/photo";
-            });
-        }
-
-        const data = JSON.parse(sessionStorage.getItem("photoDetection"));
-        $('#carte').val(data.carte);
-        $("#stock").val(data.stock.toString());
-        $("#annee").val(data.annee.toString());
-
-        // Squelette de la page pour la carte qui a été détectée
-        initContent(data.carte);
-
-        // Remplissage de la page avec les valeurs récupérées
-        for (const reg in data) {
-            if (reg!="carte" && reg!="annee" && reg!="stock") {
-                for (const p in data[reg]) {
-                    $(`#${reg}_${p}`).val(data[reg][p]);
+                for (const reg of maps[mixData.carte]) {
+                    for (const pion of pions) {
+                        $(`#${reg[0]}_${pion[0]}`).val(mixData[reg[0]][pion[0]]);
+                    }
                 }
             }
         }
 
-        // Init évènements
-        initCallbacks();
+
+        $("#carte").change(() => {
+            const val = $("#carte").val();
+            if (val != "default") {
+                initContent(val);
+                $("#mid").hide();
+                $("#bot").hide();
+                $("#mid").fadeIn();
+                $("#bot").fadeIn();
+            }
+        });
+
+        $('#computeResults').click(() => {
+            const dataProd = saveData();
+
+            if (dataProd != false) {
+                $('#computeResults').html('<span class="spinner-border spinner-border-sm"></span>&nbsp;&nbsp;Chargement...');
+                exitConfirm = false;
+                $.ajax({
+                    url: "/production",
+                    type: "POST",
+                    data: dataProd,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data, textStatus, jqXHR) {
+                        $('#computeResults').html('Valider');
+                        if (data[0] == "success") {
+                            location.href = "/results";
+                        } else {
+                            displayError(data[0], data[1]);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        $('#computeResults').html('Valider');
+                        displayError("http", null);
+                    }
+                });
+            }
+        });
+
+        $(".backHome").click(() => {
+            location.href = "/photo";
+        });
+
+
+
+        // DEBUT EXECUTION PAGE
+
+        $.ajax({
+            url: "/get_detection",
+            type: "GET",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                detectionData = data;
+                $.ajax({
+                    url: "/get_mix",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (data, textStatus, jqXHR) {
+                        mixData = data;
+                        fillPage();
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        displayError("http");
+                    }
+                });
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                displayError("http");
+            }
+        });
+
+        
 
         $("#top").fadeIn();
         $("#mid").fadeIn();
@@ -418,6 +436,8 @@ $(function() {
 
 
     if (document.title == "Entrée manuelle - Jeu mix énergétique") {
+
+        let mixData = null;
 
         function btnCallbacks(plus, minus, nb) {
             minus.click(() => {
@@ -525,6 +545,7 @@ $(function() {
                 err = 1;
 
             } else {
+                data["actif"] = true;
                 data["carte"] = $("#carte").val();
                 data["annee"] = parseInt($("#annee").val());
                 data["stock"] = parseInt($("#stock").val());
@@ -548,59 +569,94 @@ $(function() {
             return result;
         }
 
-        function initCallbacks() {
-            $("#carte").change(() => {
-                const val = $("#carte").val();
-                if (val != "default") {
-                    initContent(val);
-                    $("#mid").hide();
-                    $("#bot").hide();
-                    $("#mid").fadeIn();
-                    $("#bot").fadeIn();
+        function fillPage() {
+            if (!mixData.actif) {
+                $("#carte").val("default");
+                $("#annee").val("default");
+                $("#stock").val("1");
+                $("#alea").val("");
+            } 
+            
+            else {
+                $("#carte").val(mixData.carte);
+                $("#annee").val(mixData.annee.toString());
+                $("#stock").val(mixData.stock.toString());
+                $("#alea").val(mixData.alea);
+                initContent(mixData.carte);
+    
+                for (const reg of maps[mixData.carte]) {
+                    for (const pion of pions) {
+                        $(`#${reg[0]}_${pion[0]}`).val(mixData[reg[0]][pion[0]]);
+                    }
                 }
-            });
-    
-            $('.backHome').click(() => {
-                location.href = "http://apps-gei.insa-toulouse.fr/photo";
-            });
-    
-            $('#computeResults').click(() => {
-                const dataProd = saveData();
-    
-                if (dataProd != false) {
-                    $('#computeResults').html('<span class="spinner-border spinner-border-sm"></span>&nbsp;&nbsp;Chargement...');
-                    exitConfirm = false;
-                    $.ajax({
-                        url: "http://apps-gei.insa-toulouse.fr/production",
-                        type: "POST",
-                        data: dataProd,
-                        contentType: "application/json; charset=utf-8",
-                        dataType: "json",
-                        success: function (data, textStatus, jqXHR) {
-                            if (data[0] == "success") {
-                                $('#computeResults').html('Valider');
-                                sessionStorage.setItem("prodInput", JSON.stringify(data[1]));
-                                location.href = "http://apps-gei.insa-toulouse.fr/results";
-                            } else {
-                                $('#computeResults').html('Valider');
-                                displayError(data[0], data[1]);
-                            }
-                        },
-                        error: function(jqXHR, textStatus, errorThrown) {
-                            $('#computeResults').html('Valider');
-                            displayError("http", null);
-                        }
-                    });
-                }
-            });
+
+                $("#mid").hide();
+                $("#bot").hide();
+                $("#mid").fadeIn();
+                $("#bot").fadeIn();
+            }
         }
 
-        $("#carte").val("default");
-        $("#annee").val("default");
-        $("#stock").val("1");
-        $("#alea").val("");
+        $("#carte").change(() => {
+            const val = $("#carte").val();
+            if (val != "default") {
+                initContent(val);
+                $("#mid").hide();
+                $("#bot").hide();
+                $("#mid").fadeIn();
+                $("#bot").fadeIn();
+            }
+        });
 
-        initCallbacks();
+        $('.backHome').click(() => {
+            location.href = "/photo";
+        });
+
+        $('#computeResults').click(() => {
+            const dataProd = saveData();
+
+            if (dataProd != false) {
+                $('#computeResults').html('<span class="spinner-border spinner-border-sm"></span>&nbsp;&nbsp;Chargement...');
+                exitConfirm = false;
+                $.ajax({
+                    url: "/production",
+                    type: "POST",
+                    data: dataProd,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function (data, textStatus, jqXHR) {
+                        $('#computeResults').html('Valider');
+                        if (data[0] == "success") {
+                            location.href = "/results";
+                        } else {
+                            displayError(data[0], data[1]);
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        $('#computeResults').html('Valider');
+                        displayError("http", null);
+                    }
+                });
+            }
+        });
+    
+
+
+        // DEBUT EXECUTION PAGE
+
+        $.ajax({
+            url: "/get_mix",
+            type: "GET",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                mixData = data;
+                fillPage();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                displayError("http");
+            }
+        });
+
         $("#top").fadeIn();
     }
 
@@ -608,43 +664,46 @@ $(function() {
 
     if (document.title == "Résultats - Jeu mix énergétique") {
         
-        const data = JSON.parse(sessionStorage.getItem("prodInput"));
-        console.log(data);
+        let resultsData = null;
+        let resultsHistory = null;
+        let mixData = null;
 
+        function displayError(reason) {
+            let msg;
+            const modal = new bootstrap.Modal($("#errModal"));
 
-        google.charts.load('current', {'packages':['table']});
-        google.charts.load('current', {'packages': ['corechart']});
-        google.charts.load('current', {'packages':['geochart']}, {mapsApiKey: 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'});
+            switch (reason) {
+                case "http":
+                    msg = "Une erreur est survenue avec le serveur.";
+                    break;
+                default:
+                    break;
+            }
 
-        google.charts.setOnLoadCallback(PuissanceInst);
-        google.charts.setOnLoadCallback(Prod);
-        google.charts.setOnLoadCallback(EmCO2);
-        google.charts.setOnLoadCallback(PenSurBar1);
-        google.charts.setOnLoadCallback(PenSurBar2);
-        google.charts.setOnLoadCallback(Resultats);
-        google.charts.setOnLoadCallback(Score);
-        // google.charts.setOnLoadCallback(Regions);
+            $("#errorMsg").html(msg);
+            modal.toggle();
+        }
 
-        // Puissance installée
+        
         function PuissanceInst() {
             // Define the chart to be drawn.
-            const TotalP = (data.puissanceBatterie +
-                            data.puissanceEolienneOFF +
-                            data.puissanceEolienneON +
-                            data.puissanceGaz +
-                            data.puissanceNucleaire +
-                            data.puissancePV +
-                            data.puissancePhs);
+            const TotalP = (resultsData.puissanceBatterie +
+                            resultsData.puissanceEolienneOFF +
+                            resultsData.puissanceEolienneON +
+                            resultsData.puissanceGaz +
+                            resultsData.puissanceNucleaire +
+                            resultsData.puissancePV +
+                            resultsData.puissancePhs);
 
 
             let result1 = google.visualization.arrayToDataTable([['Technologie', 'Pourcentage'],
-                ['EON', data.puissanceEolienneON/TotalP],
-                ['EOFF', data.puissanceEolienneOFF/TotalP],
-                ['Batterie', data.puissanceBatterie/TotalP],
-                ['Nucléaire', data.puissanceNucleaire/TotalP],
-                ['PV', data.puissancePV/TotalP],
-                ['Phs', data.puissancePhs/TotalP],
-                ['Gaz', data.puissanceGaz/TotalP]
+                ['EON', resultsData.puissanceEolienneON/TotalP],
+                ['EOFF', resultsData.puissanceEolienneOFF/TotalP],
+                ['Batterie', resultsData.puissanceBatterie/TotalP],
+                ['Nucléaire', resultsData.puissanceNucleaire/TotalP],
+                ['PV', resultsData.puissancePV/TotalP],
+                ['Phs', resultsData.puissancePhs/TotalP],
+                ['Gaz', resultsData.puissanceGaz/TotalP]
             ]);
 
             let options = {
@@ -660,20 +719,17 @@ $(function() {
             let chart = new google.visualization.PieChart(document.getElementById('Chart_div'));
             chart.draw(result1, options);
         }
-
-
-        // Production
         function Prod(){
             let result2 = google.visualization.arrayToDataTable([
                 ['Technologie', 'Production'],
-                ['EON', data.prodEolienneON],            // RGB value
-                ['EOFF', data.EolienneOFF],            // English color name
-                ['Batterie', data.prodBatterie],
-                ['Hydraulique', data.prodHydraulique], 
-                ['Gaz', data.prodGaz],
-                ['Nucléaire', data.prodNucleaire,],
-                ['PV', data.prodPV],
-                ['Phs', data.prodPhs],
+                ['EON', resultsData.prodEolienneON],            // RGB value
+                ['EOFF', resultsData.prodEolienneOFF],            // English color name
+                ['Batterie', resultsData.prodBatterie],
+                ['Hydraulique', resultsData.prodHydraulique], 
+                ['Gaz', resultsData.prodGaz],
+                ['Nucléaire', resultsData.prodNucleaire,],
+                ['PV', resultsData.prodPV],
+                ['Phs', resultsData.prodPhs],
                 // CSS-style declaration
             ]);
 
@@ -685,12 +741,10 @@ $(function() {
             let chart = new google.visualization.ColumnChart(document.getElementById("Bar_div"));
             chart.draw(result2, options);
         }
-
-        //Emission CO2
         function EmCO2() {
             let co2Array = [];
             for (let i = 0; i < 5; i++) {
-                co2Array.push((data.co2[i]===undefined) ? 0 : data.co2[i]);
+                co2Array.push((resultsData.co2[i]===undefined) ? 0 : resultsData.co2[i]);
             }
 
             let result3 = google.visualization.arrayToDataTable([
@@ -714,34 +768,33 @@ $(function() {
 
 
         }
-
         function PenSurBar1() {
             let result4 = new google.visualization.arrayToDataTable([
                 ['Heures', 'nombre de pénuries', 'nombre de surplus'],
-                [{v: [0, 0, 0], f: '0 am'}, data.penuriesHoraire[0], data.surplusHoraire[0]],
-                [{v: [1, 0, 0], f: '1 am'}, data.penuriesHoraire[1], data.surplusHoraire[1]],
-                [{v: [2, 0, 0], f: '2 am'}, data.penuriesHoraire[2], data.surplusHoraire[2]],
-                [{v: [3, 0, 0], f: '3 am'}, data.penuriesHoraire[3], data.surplusHoraire[3]],
-                [{v: [4, 0, 0], f: '4 am'}, data.penuriesHoraire[4], data.surplusHoraire[4]],
-                [{v: [5, 0, 0], f: '5 am'}, data.penuriesHoraire[5], data.surplusHoraire[5]],
-                [{v: [6, 0, 0], f: '6 am'}, data.penuriesHoraire[6], data.surplusHoraire[6]],
-                [{v: [7, 0, 0], f: '7 am'}, data.penuriesHoraire[7], data.surplusHoraire[7]],
-                [{v: [8, 0, 0], f: '8 am'}, data.penuriesHoraire[8], data.surplusHoraire[8]],
-                [{v: [9, 0, 0], f: '9 am'}, data.penuriesHoraire[9], data.surplusHoraire[9]],
-                [{v: [10, 0, 0], f: '10 am'}, data.penuriesHoraire[10], data.surplusHoraire[10]],
-                [{v: [11, 0, 0], f: '11 am'}, data.penuriesHoraire[11], data.surplusHoraire[11]], 
-                [{v: [12, 0, 0], f: '12 am'}, data.penuriesHoraire[12], data.surplusHoraire[12]],
-                [{v: [13, 0, 0], f: '1 pm'}, data.penuriesHoraire[13], data.surplusHoraire[13]],
-                [{v: [14, 0, 0], f: '2 pm'}, data.penuriesHoraire[14], data.surplusHoraire[14]],
-                [{v: [15, 0, 0], f: '3 pm'}, data.penuriesHoraire[15], data.surplusHoraire[15]],
-                [{v: [16, 0, 0], f: '4 pm'}, data.penuriesHoraire[16], data.surplusHoraire[16]],
-                [{v: [17, 0, 0], f: '5 pm'}, data.penuriesHoraire[17], data.surplusHoraire[17]],
-                [{v: [18, 0, 0], f: '6 pm'}, data.penuriesHoraire[18], data.surplusHoraire[18]],
-                [{v: [19, 0, 0], f: '7 pm'}, data.penuriesHoraire[19], data.surplusHoraire[19]],
-                [{v: [20, 0, 0], f: '8 pm'}, data.penuriesHoraire[20], data.surplusHoraire[20]],
-                [{v: [21, 0, 0], f: '9 pm'}, data.penuriesHoraire[21], data.surplusHoraire[21]],
-                [{v: [22, 0, 0], f: '10 pm'}, data.penuriesHoraire[22], data.surplusHoraire[22]],
-                [{v: [23, 0, 0], f: '11 pm'}, data.penuriesHoraire[23], data.surplusHoraire[23]]
+                [{v: [0, 0, 0], f: '0 am'}, resultsData.penuriesHoraire[0], resultsData.surplusHoraire[0]],
+                [{v: [1, 0, 0], f: '1 am'}, resultsData.penuriesHoraire[1], resultsData.surplusHoraire[1]],
+                [{v: [2, 0, 0], f: '2 am'}, resultsData.penuriesHoraire[2], resultsData.surplusHoraire[2]],
+                [{v: [3, 0, 0], f: '3 am'}, resultsData.penuriesHoraire[3], resultsData.surplusHoraire[3]],
+                [{v: [4, 0, 0], f: '4 am'}, resultsData.penuriesHoraire[4], resultsData.surplusHoraire[4]],
+                [{v: [5, 0, 0], f: '5 am'}, resultsData.penuriesHoraire[5], resultsData.surplusHoraire[5]],
+                [{v: [6, 0, 0], f: '6 am'}, resultsData.penuriesHoraire[6], resultsData.surplusHoraire[6]],
+                [{v: [7, 0, 0], f: '7 am'}, resultsData.penuriesHoraire[7], resultsData.surplusHoraire[7]],
+                [{v: [8, 0, 0], f: '8 am'}, resultsData.penuriesHoraire[8], resultsData.surplusHoraire[8]],
+                [{v: [9, 0, 0], f: '9 am'}, resultsData.penuriesHoraire[9], resultsData.surplusHoraire[9]],
+                [{v: [10, 0, 0], f: '10 am'}, resultsData.penuriesHoraire[10], resultsData.surplusHoraire[10]],
+                [{v: [11, 0, 0], f: '11 am'}, resultsData.penuriesHoraire[11], resultsData.surplusHoraire[11]], 
+                [{v: [12, 0, 0], f: '12 am'}, resultsData.penuriesHoraire[12], resultsData.surplusHoraire[12]],
+                [{v: [13, 0, 0], f: '1 pm'}, resultsData.penuriesHoraire[13], resultsData.surplusHoraire[13]],
+                [{v: [14, 0, 0], f: '2 pm'}, resultsData.penuriesHoraire[14], resultsData.surplusHoraire[14]],
+                [{v: [15, 0, 0], f: '3 pm'}, resultsData.penuriesHoraire[15], resultsData.surplusHoraire[15]],
+                [{v: [16, 0, 0], f: '4 pm'}, resultsData.penuriesHoraire[16], resultsData.surplusHoraire[16]],
+                [{v: [17, 0, 0], f: '5 pm'}, resultsData.penuriesHoraire[17], resultsData.surplusHoraire[17]],
+                [{v: [18, 0, 0], f: '6 pm'}, resultsData.penuriesHoraire[18], resultsData.surplusHoraire[18]],
+                [{v: [19, 0, 0], f: '7 pm'}, resultsData.penuriesHoraire[19], resultsData.surplusHoraire[19]],
+                [{v: [20, 0, 0], f: '8 pm'}, resultsData.penuriesHoraire[20], resultsData.surplusHoraire[20]],
+                [{v: [21, 0, 0], f: '9 pm'}, resultsData.penuriesHoraire[21], resultsData.surplusHoraire[21]],
+                [{v: [22, 0, 0], f: '10 pm'}, resultsData.penuriesHoraire[22], resultsData.surplusHoraire[22]],
+                [{v: [23, 0, 0], f: '11 pm'}, resultsData.penuriesHoraire[23], resultsData.surplusHoraire[23]]
             ]);
 
             let options = {
@@ -763,7 +816,6 @@ $(function() {
             chart.draw(result4, options);
             
         }
-
         function PenSurBar2() {           
             let result5 = new google.visualization.arrayToDataTable([]);
             result5.addColumn('number', "Jours de l'année");
@@ -771,7 +823,7 @@ $(function() {
             result5.addColumn('number', 'nombre de surplus');
 
             for (let i = 0; i < 365; i++) {
-                result5.addRow([i+1, data.penuriesQuotidien[i], data.surplusQuotidien[i]]);
+                result5.addRow([i+1, resultsData.penuriesQuotidien[i], resultsData.surplusQuotidien[i]]);
             }
 
             let options = {
@@ -793,34 +845,31 @@ $(function() {
             chart.draw(result5, options);
             
         }
-
-
         function Resultats() {
             let result6 = new google.visualization.arrayToDataTable([]);
             result6.addColumn('string', 'Bilan');
             result6.addColumn('number', '');
             result6.addRows([
-                ['Dépense (en Md€)',  {v :data.cout, f : data.cout + ' €'}],
-                ['Demande',   {v:data.demande,   f: data.demande + ' Gwh'}],
-                ['Production', {v: data.production, f: data.production + ' GWh'}],
-                ['Production - Demande',   {v: data.production - data.demande,  f: data.production - data.demande + ' GWh'}],
-                ['Nb Pénuries', {v : data.nbPenuries}], 
-                ['Nb Surplus', {v : data.nbSurplus}], 
-                ['Stock Gaz (fin - debut)', {v : data.stockGaz[8759]-data.stockGaz[0]}],
-                ['Biogaz généré', {v: data.biogaz}]
+                ['Dépense (en Md€)',  {v :resultsData.cout, f : resultsData.cout + ' €'}],
+                ['Demande',   {v:resultsData.demande,   f: resultsData.demande + ' Gwh'}],
+                ['Production', {v: resultsData.production, f: resultsData.production + ' GWh'}],
+                ['Production - Demande',   {v: resultsData.production - resultsData.demande,  f: resultsData.production - resultsData.demande + ' GWh'}],
+                ['Nb Pénuries', {v : resultsData.nbPenuries}], 
+                ['Nb Surplus', {v : resultsData.nbSurplus}], 
+                ['Stock Gaz (fin - debut)', {v : resultsData.stockGaz[8759]-resultsData.stockGaz[0]}],
+                ['Biogaz généré', {v: resultsData.biogaz}]
             ]);
 
             let table = new google.visualization.Table(document.getElementById('table_div'));
             table.draw(result6, {showRowNumber: true, width: '100%', height: '100%'});
         }
-
         function Score(){
             let result7 = google.visualization.arrayToDataTable([
                 ['Matières Premières', 'Score', {role : 'style' }],
-                ['Uranium', data.scoreUranium, 'gold'],            // RGB value
-                ['Hydrocarburants/Gaz', data.scoreHydro, 'silver'],            // English color name
-                ['Bois', data.scoreBois, '#33ac71'],
-                ['Déchets', data.scoreDechets, 'color : brown'],
+                ['Uranium', resultsData.scoreUranium, 'gold'],            // RGB value
+                ['Hydrocarburants/Gaz', resultsData.scoreHydro, 'silver'],            // English color name
+                ['Bois', resultsData.scoreBois, '#33ac71'],
+                ['Déchets', resultsData.scoreDechets, 'color : brown'],
                 // CSS-style declaration
             ]);
 
@@ -833,65 +882,115 @@ $(function() {
             chart.draw(result7, options);
         }
 
-        let map = document.querySelector('#map')
+        
 
-        let paths = map.querySelectorAll('.map__image a')
+        function fillPage() {
+            google.charts.load('current', {'packages':['table']});
+            google.charts.load('current', {'packages': ['corechart']});
+            google.charts.load('current', {'packages':['geochart']}, {mapsApiKey: 'AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY'});
+
+            google.charts.setOnLoadCallback(PuissanceInst);
+            google.charts.setOnLoadCallback(Prod);
+            google.charts.setOnLoadCallback(EmCO2);
+            google.charts.setOnLoadCallback(PenSurBar1);
+            google.charts.setOnLoadCallback(PenSurBar2);
+            google.charts.setOnLoadCallback(Resultats);
+            google.charts.setOnLoadCallback(Score);
+
+            let map = document.querySelector('#map')
+
+            let paths = map.querySelectorAll('.map__image a')
 
 
-        //POlyfill du foreach
-        if (NodeList.prototype.forEach === undefined) {
-            NodeList.prototype.forEach = function (callback) {
-                [].forEach.call(this, callback);
-            };
-        } 
+            //POlyfill du foreach
+            if (NodeList.prototype.forEach === undefined) {
+                NodeList.prototype.forEach = function (callback) {
+                    [].forEach.call(this, callback);
+                };
+            } 
 
-        let activeArea = function (id) {
-            map.querySelectorAll('.is-active').forEach(function (item){
-                item.classList.remove('is-active');
-            });
+            let activeArea = function (id) {
+                map.querySelectorAll('.is-active').forEach(function (item){
+                    item.classList.remove('is-active');
+                });
 
-            if (id !== undefined){
-                document.querySelector("#"+id).classList.add('is-active');
+                if (id !== undefined){
+                    document.querySelector("#"+id).classList.add('is-active');
+                }
             }
-        }
 
-        paths.forEach(function (path){
-            path.addEventListener('mouseenter', function () {
-                activeArea(this.id);
+            paths.forEach(function (path){
+                path.addEventListener('mouseenter', function () {
+                    activeArea(this.id);
+                });
             });
-        });
 
-       
-        map.addEventListener('mouseover', function() {
-            activeArea();
-        });
-
-
-        let listeTransfert = [];
-        let couleurs = ["#ffffcc", "#d9f0a3", "#addd8e", "#78c679", "#5ace7d", "#5b8615"];
-        for (const k in data.transfert) {
-            listeTransfert.push(data.transfert[k]);
-        }
-        let min = Math.min(...listeTransfert);
-        let max = Math.max(...listeTransfert);
-        let coeff = (max-min)/6;
+        
+            map.addEventListener('mouseover', function() {
+                activeArea();
+            });
 
 
-        for (const k in data.transfert) {
-            let v = data.transfert[k];
+            let listeTransfert = [];
+            let couleurs = ["#ffffcc", "#d9f0a3", "#addd8e", "#78c679", "#5ace7d", "#5b8615"];
+            for (const k in resultsData.transfert) {
+                listeTransfert.push(resultsData.transfert[k]);
+            }
+            let min = Math.min(...listeTransfert);
+            let max = Math.max(...listeTransfert);
+            let coeff = (max-min)/6;
 
-            for (let i = 0; i < 6; i++) {
-                if (v >= min + i*coeff && v <= min + (i+1)*coeff) {
-                    $(`#${k}`).css("fill", couleurs[i]);
+
+            for (const k in resultsData.transfert) {
+                let v = resultsData.transfert[k];
+
+                for (let i = 0; i < 6; i++) {
+                    if (v >= min + i*coeff && v <= min + (i+1)*coeff) {
+                        $(`#${k}`).css("fill", couleurs[i]);
+                    }
                 }
             }
         }
 
 
         $('#commitResults').click(() => {
-            location.href = "http://apps-gei.insa-toulouse.fr/commit";
+            $.ajax({
+                url: "/commit",
+                type: "GET",
+                error: function(jqXHR, textStatus, errorThrown) {
+                    displayError("http");
+                }
+            });
         });
 
+
+
+        // DEBUT EXECUTION PAGE
+
+        $.ajax({
+            url: "/get_mix",
+            type: "GET",
+            dataType: "json",
+            success: function (data, textStatus, jqXHR) {
+                mixData = data;
+                $.ajax({
+                    url: "/get_results",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (data, textStatus, jqXHR) {
+                        resultsHistory = data;
+                        resultsData = data[mixData.annee.toString()];
+                        fillPage();
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        displayError("http");
+                    }
+                });
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                displayError("http");
+            }
+        });
 
         $("#results").fadeIn();
     }

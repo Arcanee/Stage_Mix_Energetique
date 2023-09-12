@@ -128,7 +128,7 @@ def getBoardCorners(img, result):
 
     # On garde les coordonnees des Aruco dont l'id est 0
     for i in range(len(ids)):
-        if ids[i][0] == 0:
+        if ids[i][0] == 1 or ids[i][0] == 0:
             corners.append(pts[i][0].astype(int))
             result["carte"] = "france"
 
@@ -171,7 +171,9 @@ def getBoardCorners(img, result):
 
 # Detecte les pions grace a leur couleur
 def detColor(img, result):
-    display("Image d'origine", img)
+
+    res = cv.resize(img, (1400,1000), interpolation = cv.INTER_AREA)
+    display(" img Taille reduite", res)
 
     # On recupere les coins
     boardCorners = getBoardCorners(img, result)
@@ -181,30 +183,40 @@ def detColor(img, result):
     pts2 = np.float32([[5,5], [1395,5], [1395,995], [5,995]])
     M = cv.getPerspectiveTransform(pts1,pts2)
     img = cv.warpPerspective(img,M,(1400,1000))
+
+    
     
 
     # On recupere les nouveaux coins
     boardCorners = getBoardCorners(img, result)
     display("Perspective corrigee", img)
 
+    
+
     # Contours du plateau
     cv.polylines(img, np.array([boardCorners]), True, (255,255,255), 2)
     display("Detection du plateau", img)
 
+    # # convert from RGB color-space to YCrCb
+    # ycrcb_img = cv.cvtColor(img, cv.COLOR_BGR2YUV)
+    # # equalize the histogram of the Y channel
+    # ycrcb_img[:, :, 0] = cv.equalizeHist(ycrcb_img[:, :, 0])
+    # # convert back to RGB color-space from YCrCb
+    # img = cv.cvtColor(ycrcb_img, cv.COLOR_YUV2BGR)
+    # display('equalized_img', img)
+
 
 
     # Etalonnage
-    hsv = cv.imread("img/proto-REF.png")
-    hsv = cv.cvtColor(hsv, cv.COLOR_BGR2HSV)
+    hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     pions = {"centraleNuc" : (hsv[65][1290] - np.array([3, 40, 60]), hsv[65][1290] + np.array([3, 40, 60])),
            "biomasse" : (hsv[30][1210] - np.array([5, 40, 60]), hsv[30][1210] + np.array([5, 40, 60])),
            "eolienneON" : (hsv[30][1250] - np.array([5, 35, 50]), hsv[30][1250] + np.array([5, 35, 50])),
-          # "foret" : (hsv[60][1250] - np.array([5, 40, 60]), hsv[60][1250] + np.array([5, 40, 60])),
+          "methanation" : (hsv[60][1250] - np.array([5, 40, 60]), hsv[60][1250] + np.array([5, 40, 60])), #vert foret
            "eolienneOFF" : (hsv[65][1210] - np.array([5, 40, 60]), hsv[65][1210] + np.array([5, 40, 60])),
            "panneauPV" : (hsv[25][1290] - np.array([5, 20, 40]), hsv[25][1290] + np.array([5, 20, 40])),
            "centraleTherm" : (hsv[20][1320] - np.array([5, 40, 60]), hsv[20][1320] + np.array([5, 40, 60]))
            }
-    hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
 
     
     # Pour chaque couleur : application de masque + detection de contours
@@ -275,19 +287,19 @@ def main():
 
     # Output final
     result = {"carte":"", "annee":0, "stock":0,
-                "hdf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "idf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "est" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "nor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "occ" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "bre" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "cvl" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "pll" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "naq" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "ara" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "bfc" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0},
-                "cor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "centraleTherm":0 , "centraleNuc":0 , "biomasse":0}}
+                "hdf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "idf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "est" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "nor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "occ" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "bre" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "cvl" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "pll" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "naq" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "ara" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "bfc" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
+                "cor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0}}
 
 
 
@@ -301,9 +313,12 @@ def main():
         print("\n################\n")
 
         img = cv.imread(dictImg[k]) # Lecture de img
-        print(dictImg[k])
 
-        print("")
+        img = cv.resize(img, (1400,1000), interpolation = cv.INTER_AREA)
+        display('origine', img)
+
+
+        
 
         detColor(img, result)
     

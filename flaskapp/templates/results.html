@@ -21,6 +21,31 @@
     </head>
     <body>
 
+        <!--Pop-Up d'erreur-->
+        <div class="modal fade" id="errModal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+            
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Oups...</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+            
+                <!-- Modal body -->
+                <div class="modal-body" id="errorMsg"></div>
+            
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            
+                </div>
+            </div>
+        </div>
+
+        
+
         <h1 id="titre" class="container-fluid pt-2 pb-5 text-center">Interface du jeu de mix énergétique</h1>
 
         <div id="results" class="container pt-5" style="display: none;">

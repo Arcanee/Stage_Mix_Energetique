@@ -1,25 +1,15 @@
-""" Module de détection dans l'image des actions
-
-"""
 import numpy as np
 from collections import Counter
 import cv2 as cv
 import sys
 from math import sqrt
 import json
+from constantes import *
 
 
 # Localise la region
 def locateMap(box, pion, result, forme):
-    """Localise les 4 marqueurs des coins de la carte.
-    
-    :param box: gniagniagnia TODO
-    :param pion:
-    :param result:
-    :param forme:
-    :return:
-    """
-    locImg = cv.imread("/var/www/html/flaskapp/static/img/proto-REF.png")
+    locImg = cv.imread(dataPath+"static/img/proto-REF.png")
     hsv = cv.cvtColor(locImg, cv.COLOR_BGR2HSV)
     x = box[0][0]
     y = box[0][1]
@@ -40,7 +30,7 @@ def locateMap(box, pion, result, forme):
                 "cor" : (hsv[900][1100] - np.array([2, 20, 20]), hsv[900][1100] + np.array([2, 20, 20]))}
 
     
-    val = [1, 3, 5]
+    val = [1, 5, 3]
     
     for reg in regions:
         if (hsv[y][x] >= regions[reg][0]).all() and (hsv[y][x] <= regions[reg][1]).all():
@@ -125,6 +115,8 @@ def getBoardCorners(img, result):
 
     pts, ids, reject = det.detectMarkers(img)
     corners = []
+    # https://chev.me/arucogen/ 
+    # 4x4
 
     # On garde les coordonnees des Aruco dont l'id est 0
     for i in range(len(ids)):
@@ -180,16 +172,15 @@ def detColor(img, result):
     M = cv.getPerspectiveTransform(pts1,pts2)
     img = cv.warpPerspective(img,M,(1400,1000))
 
-    # On recupere les nouveaux coins
-    boardCorners = getBoardCorners(img, result)
+    # # On recupere les nouveaux coins
+    # boardCorners = getBoardCorners(img, result)
 
-    # Contours du plateau
-    cv.polylines(img, np.array([boardCorners]), True, (255,255,255), 2)
+    # # Contours du plateau
+    # cv.polylines(img, np.array([boardCorners]), True, (255,255,255), 2)
 
 
     # Etalonnage
-    hsv = cv.imread("/var/www/html/flaskapp/static/img/proto-REF.png")
-    hsv = cv.cvtColor(hsv, cv.COLOR_BGR2HSV)
+    hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     pions = {"centraleNuc" : (hsv[65][1290] - np.array([3, 40, 60]), hsv[65][1290] + np.array([3, 40, 60])), #jaune
            "biomasse" : (hsv[30][1210] - np.array([5, 40, 60]), hsv[30][1210] + np.array([5, 40, 60])), #orange
            "eolienneON" : (hsv[30][1250] - np.array([5, 35, 50]), hsv[30][1250] + np.array([5, 35, 50])), #bleu pale
@@ -198,9 +189,7 @@ def detColor(img, result):
            "methanation" : (hsv[60][1250] - np.array([5, 40, 60]), hsv[60][1250] + np.array([5, 40, 60])), #vert foret
            "curseur" : (hsv[20][1320] - np.array([5, 40, 60]), hsv[20][1320] + np.array([5, 40, 60])) #magenta (stock et année)
            }
-
-    hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
-
+           
     
     # Pour chaque couleur : application de masque + detection de contours
     for p in pions:
@@ -232,21 +221,21 @@ def detColor(img, result):
                 boxArea = whichPart(box)
 
                 if boxArea == "map":
-                    cv.drawContours(sketch,[approx],0,(0,255,0),2)
+                    # cv.drawContours(sketch,[approx],0,(0,255,0),2)
                     locateMap(box, p, result, l-4)
 
                 elif boxArea == "stock":
-                    cv.drawContours(sketch,[approx],0,(0,255,0),2)
+                    # cv.drawContours(sketch,[approx],0,(0,255,0),2)
                     locateStock(box, result)
 
                 elif boxArea == "time":
-                    cv.drawContours(sketch,[approx],0,(0,255,0),2)
+                    # cv.drawContours(sketch,[approx],0,(0,255,0),2)
                     locateTime(box, result)
 
 
 
 # Fonction principale
-def detection_main(group):
+def detection_main(group, team):
 
     # Output final
     result = {"carte":"", "annee":"default", "stock":0,
@@ -268,10 +257,13 @@ def detection_main(group):
 
 
     # Lecture de img
-    img = cv.imread("/var/www/html/flaskapp/static/img/image_groupe_{}.png".format(group))
+    img = cv.imread(dataPath+"game_data/{}/{}/image.png".format(group, team))
+
+    # Redimensionnement de l'image pour ne pas traiter des images de 5+ Mo
+    img = cv.resize(img, (1400,1000), interpolation = cv.INTER_AREA)
     detColor(img, result)
 
 
-    with open("/var/www/html/flaskapp/game_data/groupe{}/detection_output.json".format(group), "w") as f:
+    with open(dataPath+"game_data/{}/{}/detection.json".format(group, team), "w") as f:
         json.dump(result, f)
 

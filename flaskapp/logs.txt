@@ -1,11 +1,26 @@
-[2023-09-07 08:30:08.712179] Traceback (most recent call last):
-  File "/var/www/html/flaskapp/flaskapp.py", line 167, in imgProcess
-    detection.detection_main(group)
-  File "/var/www/html/flaskapp/detection.py", line 261, in detection_main
-    detColor(img, result)
-  File "/var/www/html/flaskapp/detection.py", line 164, in detColor
-    boardCorners = getBoardCorners(img, result)
-  File "/var/www/html/flaskapp/detection.py", line 141, in getBoardCorners
-    if corners[2][0][1] > corners[3][0][1]:
-IndexError: list index out of range
+[2023-09-12 11:41:49.970285] Groupe A Equipe 1 
+ Traceback (most recent call last):
+  File "/var/www/html/flaskapp/flaskapp.py", line 235, in imgProcess
+    mix = json.load(f)
+  File "/usr/lib/python3.10/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+  File "/usr/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3.10/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/usr/lib/python3.10/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+ 
+[2023-09-12 11:45:40.333506] Groupe A Equipe 1 
+ Traceback (most recent call last):
+  File "/var/www/html/flaskapp/flaskapp.py", line 235, in imgProcess
+    mix = json.load(f)
+  File "/usr/lib/python3.10/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+  File "/usr/lib/python3.10/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3.10/json/decoder.py", line 340, in decode
+    raise JSONDecodeError("Extra data", s, end)
+json.decoder.JSONDecodeError: Extra data: line 21 column 2 (char 1613)
  

@@ -5,6 +5,8 @@ import json
 import pandas as pd
 import os
 import datetime
+from constantes import *
+
 
                                 #########################
                                 ### TOUT EST EN GW(h) ###
@@ -576,9 +578,9 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 
 
     #carte aléa MEVUAPV  (lancé dé 1 / 2)
-    if alea == "MEVUAPV1" or alea == "MEVUAPV2" or alea == "MEVUPV3": 
+    if alea == "MEVUAPV1" or alea == "MEVUAPV2" or alea == "MEVUAPV3": 
         save["consoVE"] = 9e4
-        scenario += np.ones(H) * (9e4/H)
+    scenario += np.ones(H) * (save["consoVE"]/H)
     
     if alea == "MEVUAPV2" or alea == "MEVUAPV3":
         save["innovPV"] = 0.15
@@ -587,9 +589,9 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     if alea == "MEMDA3":
         scenario = 0.95 * scenario
 
-    fdc_on = pd.read_csv("/var/www/html/flaskapp/mix_data/fdc_on.csv")
-    fdc_off = pd.read_csv("/var/www/html/flaskapp/mix_data/fdc_off.csv")
-    fdc_pv = pd.read_csv("/var/www/html/flaskapp/mix_data/fdc_pv.csv")
+    fdc_on = pd.read_csv(dataPath+"mix_data/fdc_on.csv")
+    fdc_off = pd.read_csv(dataPath+"mix_data/fdc_off.csv")
+    fdc_pv = pd.read_csv(dataPath+"mix_data/fdc_pv.csv")
     
     prodOnshore = np.zeros(H)
     prodOffshore = np.zeros(H)
@@ -659,11 +661,11 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 
     # Definition des productions électriques des rivières et lacs 
     coefriv = 13
-    river = pd.read_csv("/var/www/html/flaskapp/mix_data/run_of_river.csv", header=None)
+    river = pd.read_csv(dataPath+"mix_data/run_of_river.csv", header=None)
     river.columns = ["heures", "prod2"]
     rivprod = np.array(river.prod2) * coefriv
 
-    lake = pd.read_csv("/var/www/html/flaskapp/mix_data/lake_inflows.csv", header=None)
+    lake = pd.read_csv(dataPath+"mix_data/lake_inflows.csv", header=None)
     lake.columns = ["month", "prod2"]
     lakeprod = np.array(lake.prod2)
 
@@ -687,7 +689,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 
     # Techno params : name, stored, prod, etain, etaout, Q, S, vol
 
-    initGaz = 80000
+    initGaz = 1000000
     gazBiomasse = nbBio * 2 * 0.1 * 0.71 * 6200
 
     #carte aléa MEMFDC (lancé 2 / 3)
@@ -698,7 +700,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     # Methanation : 1 pion = 10 unités de 100 MW = 1 GW
     P=Techno('Phs', np.ones(H)*16, np.zeros(H), 0.95, 0.9, 9.3, 9.3, 180)
     B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, factStock/10*20.08, factStock/10*20.08, factStock/10*74.14)
-    G=Techno('Gaz', np.ones(H)*(initGaz+gazBiomasse), np.zeros(H), 0.59, 0.45, 34.44, 1*nbMeth, 125000)    
+    G=Techno('Gaz', np.ones(H)*(initGaz+gazBiomasse), np.zeros(H), 0.59, 0.45, 34.44, 1*nbMeth, 10000000)    
     L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)
 
     # Puissance centrales territoire : 18.54 GWe répartis sur 24 centrales (EDF)
@@ -845,13 +847,14 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 
     ##calcul des productions par région
     nbTherm = 20
+    factNuc = 0 if nbprodNuc == 0 else prodNuc/nbprodNuc
 
     ##Occitanie
     popOCC = 0.09 ##pourcentage population
     prodOCC = (np.array(fdc_off.occ)*occ["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.occ)*occ["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.occ)*occ["panneauPV"]*powPV + 
-                (occ["centraleNuc"]-save["nvPionsParReg"]["occ"]["Nucleaire"]) *prodNuc/nbprodNuc +
+                (occ["centraleNuc"]-save["nvPionsParReg"]["occ"]["Nucleaire"]) * factNuc +
                 save["pionsParRegInit"]["occ"]["Thermique"] * prodGaz / nbTherm)
 
     ##Nouvelle-Aquitaine
@@ -859,7 +862,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodNA = (np.array(fdc_off.naq)*naq["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.naq)*naq["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.naq)*naq["panneauPV"]*powPV + 
-                (naq["centraleNuc"]-save["nvPionsParReg"]["naq"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (naq["centraleNuc"]-save["nvPionsParReg"]["naq"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["naq"]["Thermique"] * prodGaz / nbTherm)
 
     ##Bretagne
@@ -867,7 +870,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodBRE = (np.array(fdc_off.bre)*bre["eolienneOFF"]*powOffshore +
                 np.array(fdc_on.bre)*bre["eolienneON"]*powOnshore +
                 np.array(fdc_pv.bre)*bre["panneauPV"]*powPV + 
-                (bre["centraleNuc"]-save["nvPionsParReg"]["bre"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (bre["centraleNuc"]-save["nvPionsParReg"]["bre"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["bre"]["Thermique"] * prodGaz / nbTherm)
 
     ##Haut-de-France
@@ -875,7 +878,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodHDF = (np.array(fdc_off.hdf)*hdf["eolienneOFF"]*powOffshore +
                 np.array(fdc_on.hdf)*hdf["eolienneON"]*powOnshore +
                 np.array(fdc_pv.hdf)*hdf["panneauPV"]*powPV + 
-                (hdf["centraleNuc"]-save["nvPionsParReg"]["hdf"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (hdf["centraleNuc"]-save["nvPionsParReg"]["hdf"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["hdf"]["Thermique"] * prodGaz / nbTherm)
 
     ##Pays de la Loire
@@ -883,21 +886,21 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodPDL = (np.array(fdc_off.pll)*pll["eolienneOFF"]*powOffshore +
                 np.array(fdc_on.pll)*pll["eolienneON"]*powOnshore +
                 np.array(fdc_pv.pll)*pll["panneauPV"]*powPV + 
-                (pll["centraleNuc"]-save["nvPionsParReg"]["pll"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (pll["centraleNuc"]-save["nvPionsParReg"]["pll"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["pll"]["Thermique"] * prodGaz / nbTherm)
 
     ##Auvergne-Rhône-Alpes
     popARA = 0.12
     prodARA = (np.array(fdc_on.ara)*ara["eolienneON"]*powOnshore +
                 np.array(fdc_pv.ara)*ara["panneauPV"]*powPV +
-                (ara["centraleNuc"]-save["nvPionsParReg"]["ara"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (ara["centraleNuc"]-save["nvPionsParReg"]["ara"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["ara"]["Thermique"] * prodGaz / nbTherm)
 
     ##Grand Est
     popGE = 0.08
     prodGE = (np.array(fdc_on.est)*est["eolienneON"]*powOnshore +
                 np.array(fdc_pv.est)*est["panneauPV"]*powPV +
-                (est["centraleNuc"]-save["nvPionsParReg"]["est"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (est["centraleNuc"]-save["nvPionsParReg"]["est"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["est"]["Thermique"] * prodGaz / nbTherm)
 
     ##Normandie
@@ -905,21 +908,21 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodNOR = (np.array(fdc_off.naq)*nor["eolienneOFF"]*powOffshore +
                 np.array(fdc_on.nor)*nor["eolienneON"]*powOnshore +
                 np.array(fdc_pv.nor)*nor["panneauPV"]*powPV + 
-                (nor["centraleNuc"]-save["nvPionsParReg"]["nor"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (nor["centraleNuc"]-save["nvPionsParReg"]["nor"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["nor"]["Thermique"] * prodGaz / nbTherm)
 
     ##Bourgogne-Franche-Comté
     popBFC = 0.04
     prodBFC = (np.array(fdc_on.bfc)*bfc["eolienneON"]*powOnshore +
                 np.array(fdc_pv.bfc)*bfc["panneauPV"]*powPV +
-                (bfc["centraleNuc"]-save["nvPionsParReg"]["bfc"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (bfc["centraleNuc"]-save["nvPionsParReg"]["bfc"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["bfc"]["Thermique"] * prodGaz / nbTherm)
 
     ##Centre Val de Loire
     popCVL = 0.04
     prodCVL = (np.array(fdc_on.cvl)*cvl["eolienneON"]*powOnshore +
                 np.array(fdc_pv.cvl)*cvl["panneauPV"]*powPV +
-                (cvl["centraleNuc"]-save["nvPionsParReg"]["cvl"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (cvl["centraleNuc"]-save["nvPionsParReg"]["cvl"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["cvl"]["Thermique"] * prodGaz / nbTherm)
 
     ##PACA
@@ -927,14 +930,14 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodPAC = (np.array(fdc_off.pac)*pac["eolienneOFF"]*powOffshore +
                 np.array(fdc_on.pac)*pac["eolienneON"]*powOnshore +
                 np.array(fdc_pv.pac)*pac["panneauPV"]*powPV + 
-                (pac["centraleNuc"]-save["nvPionsParReg"]["pac"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (pac["centraleNuc"]-save["nvPionsParReg"]["pac"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["pac"]["Thermique"] * prodGaz / nbTherm)
 
     ##Ile-de-France
     popIDF = 0.19
     prodIDF = (np.array(fdc_on.idf)*idf["eolienneON"]*powOnshore +
                 np.array(fdc_pv.idf)*idf["panneauPV"]*powPV +
-                (idf["centraleNuc"]-save["nvPionsParReg"]["idf"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (idf["centraleNuc"]-save["nvPionsParReg"]["idf"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["idf"]["Thermique"] * prodGaz / nbTherm)
 
     ##Corse
@@ -942,7 +945,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     prodCOR = (np.array(fdc_off.cor)*cor["eolienneOFF"]*powOffshore +
                 np.array(fdc_on.cor)*cor["eolienneON"]*powOnshore +
                 np.array(fdc_pv.cor)*cor["panneauPV"]*powPV + 
-                (cor["centraleNuc"]-save["nvPionsParReg"]["cor"]["Nucleaire"]) *prodNuc/nbprodNuc + 
+                (cor["centraleNuc"]-save["nvPionsParReg"]["cor"]["Nucleaire"]) * factNuc + 
                 save["pionsParRegInit"]["cor"]["Thermique"] * prodGaz / nbTherm)
 
     ##production totale sur le territoire
@@ -1091,7 +1094,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
             save["nvPions"]["nbPV"] * 3.6 + 
             save["nvPions"]["nbNuc"] * 8.6 +
             save["nvPions"]["nbBio"] * 0.12 +
-            (G.S * 0.004825) +
+            save["nvPions"]["nbMeth"] * 4.85 +
             (B.Q * 0.0012) / 0.003 + 
             (P.Q * 0.455) / 0.91 + 
             (prodNuc * prixNuc) +
@@ -1147,8 +1150,10 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
     
 
     Bois = save["scores"]["Bois"]#disponibilité Bois
+    regen = 100 - Bois
     if nbBio > 0:
-        Bois -= nbBio + 1/2*Bois #au nombre de centrales Biomasse on enlève 1 quantité de bois --> au tour suivant 1/2 des stocks sont récupérés
+        Bois -= nbBio #au nombre de centrales Biomasse on enlève 1 quantité de bois --> au tour suivant 1/2 des stocks sont récupérés
+    Bois += regen / 2
     #carte aléa MEMP (lancé 1)
     if alea == "MEMP1" or alea == "MEMP2" or alea == "MEMP3":
         Bois -= 20
@@ -1188,7 +1193,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 
 
     #modification du fichier save
-    with open("/var/www/html/flaskapp/game_data/groupe{}/save_tmp.json".format(group), "w") as output:
+    with open(dataPath+"game_data/{}/{}/save_tmp.json".format(group, team), "w") as output:
         json.dump(save, output)
 
 
@@ -1243,7 +1248,7 @@ def mix(scenario, annee, hdf, idf, est, nor, occ, pac, bre, cvl, pll, naq, ara, 
 # nbOn - nbBio (int) : nombre de pions eoliennes onshore, offshore, ..., de biomasse
 # factStock (float) : facteur de qte de stockage, entre 0 et 1
 # alea (str) : code d'une carte alea        
-def strat_stockage_main(data, group):
+def strat_stockage_main(data, group, team):
     nbNuc = 0
     nbMeth = 0
     nbBio = 0
@@ -1272,32 +1277,30 @@ def strat_stockage_main(data, group):
     # Definition des scenarios (Negawatt, ADEME, RTE pour 2050)
     # Les autres scenarios sont faits mains à partir des données de Quirion
 
-    ADEME = pd.read_csv("/var/www/html/flaskapp/mix_data/ADEME_25-50.csv", header=None)
+    ADEME = pd.read_csv(dataPath+"mix_data/ADEME_25-50.csv", header=None)
     ADEME.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
-    RTE = pd.read_csv("/var/www/html/flaskapp/mix_data/RTE_25-50.csv", header=None)
+    RTE = pd.read_csv(dataPath+"mix_data/RTE_25-50.csv", header=None)
     RTE.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
-    NEGAWATT = pd.read_csv("/var/www/html/flaskapp/mix_data/NEGAWATT_25-50.csv", header=None)
+    NEGAWATT = pd.read_csv(dataPath+"mix_data/NEGAWATT_25-50.csv", header=None)
     NEGAWATT.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
     ScenarList = {"ADEME":ADEME , "RTE":RTE , "NEGAWATT":NEGAWATT}
 
     #lecture du fichier save.json qui lit les données du tour précédent
-    if data["annee"] == 2030:
-        with open('/var/www/html/flaskapp/game_data/save_template.json', 'r') as f:
-            save = json.load(f)
-    
-    else:
-        with open('/var/www/html/flaskapp/game_data/groupe{}/save.json'.format(group), 'r') as f:
-            save = json.load(f)
+
+    with open(dataPath+'game_data/{}/{}/save.json'.format(group, team), 'r') as f:
+        save = json.load(f)
 
     # Entrée : scenario, nb technos
     result = mix(ADEME["d{}".format(data["annee"])],
             data["annee"],
             data["hdf"], data["idf"], data["est"], data["nor"], data["occ"], data["pac"], data["bre"], 
             data["cvl"], data["pll"], data["naq"], data["ara"], data["bfc"], data["cor"], 
-            nbOn, nbOff, nbPv, nbNuc, nbMeth, nbBio, data["stock"], data["alea"], save, data["carte"], group)
+            nbOn, nbOff, nbPv, nbNuc, nbMeth, nbBio, data["stock"], data["alea"], save, data["carte"], group, team)
 
-    with open('/var/www/html/flaskapp/game_data/groupe{}/production_output.json'.format(group), 'w') as f:
-            json.dump(result, f)
+    with open(dataPath+'game_data/{}/{}/resultats.json'.format(group, team), 'wr') as f:
+        resultatGlobal = json.load(f)
+        resultatGlobal[str(data["annee"])] = result
+        json.dump(resultatGlobal, f)
