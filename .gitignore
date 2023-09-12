@@ -251,3 +251,14 @@ cython_debug/
 
 # emacs
 *~
+
+# fichiers de sauvegardes mis a jour a chaque simulation
+flaskapp/game_data/**/image.png
+flaskapp/game_data/**/detection.json
+flaskapp/game_data/**/mix.json
+flaskapp/game_data/**/save.json
+flaskapp/game_data/**/save_tmp.json
+flaskapp/game_data/**/results.json
+
+# repertoires python
+flaskapp/__pycache__/
