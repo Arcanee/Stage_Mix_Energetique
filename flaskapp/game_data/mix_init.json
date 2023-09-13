@@ -4,6 +4,7 @@
     "annee": "default", 
     "stock": 0, 
     "alea": "",
+    "politique": "",
 
     "hdf": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
     "idf": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 

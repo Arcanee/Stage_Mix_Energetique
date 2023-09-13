@@ -352,14 +352,14 @@ def prodCompute():
             nvPionsReg["nor"]["centraleNuc"] -= 8
 
             save["hdf"]["centraleNuc"][0:6] = [1995,1995,1995,1995,1995,1995]
-            save["occ"]["centraleNuc"][0:2] = [2015,2015]
-            save["naq"]["centraleNuc"][0:6] = [1995,1995,1995,1995,1995,1995]
-            save["pac"]["centraleNuc"][0:8] = [1995,2000,2000,2000,2000,2000,2000,2000]
-            save["cvl"]["centraleNuc"][0:7] = [2000,2000,2000,2000,2000,2000,2000]
-            save["bfc"]["centraleNuc"][0:2] = [2000,2000]
-            save["est"]["centraleNuc"][0:5] = [2005,2005,2005,2005,2005]
-            save["ara"]["centraleNuc"][0:3] = [2005,2005,2005]
-            save["nor"]["centraleNuc"][0:8] = [2005,2005,2005,2005,2005,2005,2005,2005]
+            save["occ"]["centraleNuc"][0:2] = [2020,2020]
+            save["naq"]["centraleNuc"][0:6] = [1995,1995,1995,1995,2000,2000]
+            save["pac"]["centraleNuc"][0:8] = [2000,2000,2000,2000,2000,2000,2000,2000]
+            save["cvl"]["centraleNuc"][0:7] = [2005,2005,2005,2005,2005,2005,2005]
+            save["bfc"]["centraleNuc"][0:2] = [2005,2005]
+            save["est"]["centraleNuc"][0:5] = [2005,2010,2010,2010,2010]
+            save["ara"]["centraleNuc"][0:3] = [2010,2010,2010]
+            save["nor"]["centraleNuc"][0:8] = [2010,2010,2010,2020,2020,2020,2020,2020]
 
         
         if data["alea"] == "MECS3":

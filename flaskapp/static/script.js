@@ -30,6 +30,9 @@ $(function() {
                     "MEGDT1", "MEGDT2", "MEGDT3"
     ];
 
+    const politiques = ["", "CPA1", "CPA2", "CPB1", "CPB2", "CPC1", "CPC2",
+                        "CPD1", "CPD2", "CPE1", "CPE2", "CPF1", "CPF2"];
+
     let exitConfirm = false; // METTRE A TRUE LORS DU DEPLOIEMENT
 
     onbeforeunload = function() {
@@ -290,6 +293,10 @@ $(function() {
                 alert("Le code aléa est invalide");
                 err = 1;
 
+            } else if (!(politiques.includes($("#politique").val()))) {
+                alert("Le code politique est invalide");
+                err = 1;
+
             } else if (stockStr == "" || stock < 1 || stock > 10 || !(Number.isInteger(stock))) {
                 alert("Veuillez entrer une valeur entière de stock entre 1 et 10");
                 err = 1;
@@ -300,6 +307,7 @@ $(function() {
                 data["annee"] = parseInt($("#annee").val());
                 data["stock"] = parseInt($("#stock").val());
                 data["alea"] = $("#alea").val();
+                data["politique"] = $("#politique").val();
 
 
                 for (const reg of maps[$("#carte").val()]) {
@@ -344,6 +352,8 @@ $(function() {
                 $("#annee").val(mixData.annee.toString());
                 $("#stock").val(mixData.stock.toString());
                 $("#alea").val(mixData.alea);
+                $("#politique").val(mixData.politique);
+                
                 initContent(mixData.carte);
     
                 for (const reg of maps[mixData.carte]) {
@@ -540,6 +550,10 @@ $(function() {
                 alert("Le code aléa est invalide");
                 err = 1;
 
+            } else if (!(politiques.includes($("#politique").val()))) {
+                alert("Le code politique est invalide");
+                err = 1;
+
             } else if (stockStr == "" || stock < 1 || stock > 10 || !(Number.isInteger(stock))) {
                 alert("Veuillez entrer une valeur entière de stock entre 1 et 10");
                 err = 1;
@@ -550,6 +564,7 @@ $(function() {
                 data["annee"] = parseInt($("#annee").val());
                 data["stock"] = parseInt($("#stock").val());
                 data["alea"] = $("#alea").val();
+                data["politique"] = $("#politique").val();
 
                 for (const reg of maps[$("#carte").val()]) {
                     data[reg[0]] = {};
@@ -575,6 +590,7 @@ $(function() {
                 $("#annee").val("default");
                 $("#stock").val("1");
                 $("#alea").val("");
+                $("#politique").val("");
             } 
             
             else {
@@ -582,6 +598,8 @@ $(function() {
                 $("#annee").val(mixData.annee.toString());
                 $("#stock").val(mixData.stock.toString());
                 $("#alea").val(mixData.alea);
+                $("#politique").val(mixData.politique);
+
                 initContent(mixData.carte);
     
                 for (const reg of maps[mixData.carte]) {
@@ -719,17 +737,56 @@ $(function() {
             let chart = new google.visualization.PieChart(document.getElementById('Chart_div'));
             chart.draw(result1, options);
         }
+        function conso(){
+            let result8 = google.visualization.arrayToDataTable([
+                ['Technologie', 'EON', 'EOFF', 'Batterie', 'Nucléaire',
+                 'PV', 'Hydraulique', 'Phs', 'Gaz', { role: 'annotation' } ],
+
+                ['2030', resultsData.prodOnshore["2030"], resultsData.prodOffshore["2030"], resultsData.prodBatterie["2030"],
+                resultsData.prodNucleaire["2030"], resultsData.prodPv["2030"], resultsData.prodEau["2030"],
+                resultsData.prodPhs["2030"], resultsData.prodGaz["2030"], ''],
+
+                ['2035', resultsData.prodOnshore["2035"], resultsData.prodOffshore["2035"], resultsData.prodBatterie["2035"],
+                resultsData.prodNucleaire["2035"], resultsData.prodPv["2035"], resultsData.prodEau["2035"],
+                resultsData.prodPhs["2035"], resultsData.prodGaz["2035"], ''],
+
+                ['2040', resultsData.prodOnshore["2040"], resultsData.prodOffshore["2040"], resultsData.prodBatterie["2040"],
+                resultsData.prodNucleaire["2040"], resultsData.prodPv["2040"], resultsData.prodEau["2040"],
+                resultsData.prodPhs["2040"], resultsData.prodGaz["2040"], ''],
+
+                ['2045', resultsData.prodOnshore["2045"], resultsData.prodOffshore["2045"], resultsData.prodBatterie["2045"],
+                resultsData.prodNucleaire["2045"], resultsData.prodPv["2045"], resultsData.prodEau["2045"],
+                resultsData.prodPhs["2045"], resultsData.prodGaz["2045"], ''],
+                
+                ['2050', resultsData.prodOnshore["2050"], resultsData.prodOffshore["2050"], resultsData.prodBatterie["2050"],
+                resultsData.prodNucleaire["2050"], resultsData.prodPv["2050"], resultsData.prodEau["2050"],
+                resultsData.prodPhs["2050"], resultsData.prodGaz["2050"], ''],
+              ]);
+        
+            let options = {
+                width: 600,
+                title : 'Production par technologie',
+                height: 400,
+                legend: { position: 'top', maxLines: 3 },
+                bar: { groupWidth: '75%' },
+                isStacked: true,
+            };
+
+
+            let chart = new google.visualization.ColumnChart(document.getElementById('Combine_div'));
+            chart.draw(result8, options);
+        }
         function Prod(){
             let result2 = google.visualization.arrayToDataTable([
                 ['Technologie', 'Production'],
-                ['EON', resultsData.prodEolienneON],            // RGB value
-                ['EOFF', resultsData.prodEolienneOFF],            // English color name
-                ['Batterie', resultsData.prodBatterie],
-                ['Hydraulique', resultsData.prodHydraulique], 
-                ['Gaz', resultsData.prodGaz],
-                ['Nucléaire', resultsData.prodNucleaire,],
-                ['PV', resultsData.prodPV],
-                ['Phs', resultsData.prodPhs],
+                ['EON', resultsData.prodOnshore[resultsData.annee]],            // RGB value
+                ['EOFF', resultsData.prodOffshore[resultsData.annee]],            // English color name
+                ['Batterie', resultsData.prodBatterie[resultsData.annee]],
+                ['Hydraulique', resultsData.prodEau[resultsData.annee]], 
+                ['Gaz', resultsData.prodGaz[resultsData.annee]],
+                ['Nucléaire', resultsData.prodNucleaire[resultsData.annee]],
+                ['PV', resultsData.prodPv[resultsData.annee]],
+                ['Phs', resultsData.prodPhs[resultsData.annee]],
                 // CSS-style declaration
             ]);
 
@@ -881,6 +938,18 @@ $(function() {
             let chart = new google.visualization.ColumnChart(document.getElementById("Score_div"));
             chart.draw(result7, options);
         }
+        function creerLegende(couleurs, min, coeff) {  
+            divStr = "";          
+            for (let i = 0; i < couleurs.length; i++) {
+                let debutIntervalle = Math.round(min + i * coeff);
+                let finIntervalle = Math.round(debutIntervalle + coeff);
+                let couleur = couleurs[i];
+
+                divStr += `<span class="legende-couleur" style="background-color: ${couleur};"></span>
+                            [${debutIntervalle}  ,  ${finIntervalle}] </br>`;
+            }
+            $("#legendeItem").html(divStr);
+        }
 
         
 
@@ -896,6 +965,7 @@ $(function() {
             google.charts.setOnLoadCallback(PenSurBar2);
             google.charts.setOnLoadCallback(Resultats);
             google.charts.setOnLoadCallback(Score);
+            google.charts.setOnLoadCallback(conso);
 
             let map = document.querySelector('#map')
 
@@ -944,12 +1014,14 @@ $(function() {
             for (const k in resultsData.transfert) {
                 let v = resultsData.transfert[k];
 
-                for (let i = 0; i < 6; i++) {
+                for (let i = 0; i < couleurs.length; i++) {
                     if (v >= min + i*coeff && v <= min + (i+1)*coeff) {
                         $(`#${k}`).css("fill", couleurs[i]);
                     }
                 }
             }
+
+            creerLegende(couleurs, min, coeff);
         }
 
 

@@ -418,10 +418,59 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     save["stock"] = mix["stock"]
 
 
+    ##Carte Choix politique --> 1 choix politique parmi les 3 proposés
+
+    #Carte politique A
+    if mix["politique"] == "CPA1" :
+        save["varConso"] -= 1e4
+        scenario += np.ones(H)*(save["varConso"]/H)
+    if mix["politique"] == "CPA2" :
+        save["varConso"] -= 6e3
+        scenario += np.ones(H)*(save["varConso"]/H)
+    
+    #Carte politique B
+    if mix["politique"] == "CPB1" :
+        save["varConso"] += 4.92e3
+        scenario += np.ones(H)*(save["varConso"]/H)
+    
+    #Carte politique C
+    if mix["politique"] == "CPC1" :
+        save["varConso"] -= 2e4
+        scenario += np.ones(H)*(save["varConso"]/H)
+    if mix["politique"] == "CPC2" :
+        save["varConso"] -= 6.3e4
+        scenario += np.ones(H)*(save["varConso"]/H)
+
+    #Carte politique D 
+    if mix["politique"] == "CPD1" :
+        save["varConso"] += 6.8e4
+        scenario += np.ones(H)*(save["varConso"]/H)
+    if mix["politique"] == "CPD2" :
+        save["varConso"] -= 1e4
+        scenario += np.ones(H)*(save["varConso"]/H)
+    
+    #Carte politique E
+    if mix["politique"] == "CPE1" :
+        save["varConso"] +=1.03e5
+        scenario += np.ones(H)*(save["varConso"]/H)
+    if mix["politique"] == "CPE2" :
+        save["varConso"] += 6.7e4
+        scenario += np.ones(H)*(save["varConso"]/H)
+
+    #Carte politique F
+    if mix["politique"] == "CPF1" :
+        save["varConso"] -= 3.5e4
+        scenario += np.ones(H)*(save["varConso"]/H)
+    if mix["politique"] == "CPF2" :
+        save["varConso"] -= 1.3e4
+        scenario += np.ones(H)*(save["varConso"]/H)
+
+
+
     #carte aléa MEVUAPV  (lancé dé 1 / 2)
-    if mix["alea"] == "MEVUAPV1" or mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUAPV3": 
-        save["consoVE"] = 9e4
-    scenario += np.ones(H) * (save["consoVE"]/H)
+    # if mix["alea"] == "MEVUAPV1" or mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUAPV3": 
+    #     save["varConso"] = 9e4
+    # scenario += np.ones(H) * (save["varConso"]/H)
     
     if mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUAPV3":
         save["innovPV"] = 0.15
@@ -642,6 +691,14 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodPhs = int(np.sum(P.prod))
     prodBat = int(np.sum(B.prod))
 
+    save["prodOnshore"][str(mix["annee"])] = prodOn
+    save["prodOffshore"][str(mix["annee"])] = prodOff
+    save["prodPv"][str(mix["annee"])] = prodPv
+    save["prodEau"][str(mix["annee"])] = prodEau
+    save["prodNucleaire"][str(mix["annee"])] = prodNuc
+    save["prodGaz"][str(mix["annee"])] = prodGaz
+    save["prodPhs"][str(mix["annee"])] = prodPhs
+    save["prodBatterie"][str(mix["annee"])] = prodBat
     
 
 
@@ -885,6 +942,12 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodGazFossile = 0 if consoGaz < gazBiomasse else (consoGaz-gazBiomasse)*G.etaout
 
     EmissionCO2 = prodOn*10 + prodOff*9 + prodPv*55 + prodEau*10 + prodNuc*6 + prodGazFossile*443 #variable EmissionCO2
+
+    #Carte politique B
+    if mix["politique"] == "CPB2" :
+        save["varEmissions"] -= 2.1
+        EmissionCO2 += save["varEmissions"]
+    
     save["co2"].append(EmissionCO2)
     demande = np.sum(scenario) #variable demande
     
@@ -969,13 +1032,20 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     
 
     Bois = save["scores"]["Bois"]#disponibilité Bois
-    regen = 100 - Bois
+    recup = save["scores"]["totstockbois"] - Bois 
+
     if nbPions["biomasse"] > 0:
-        Bois -= nbPions["biomasse"] #au nombre de centrales Biomasse on enlève 1 quantité de bois --> au tour suivant 1/2 des stocks sont récupérés
-    Bois += regen / 2
+        Bois -= nbPions["biomasse"] 
+    if nbPions["biomasse"] > 0 and recup >= 0 :
+        Bois+= 1/2*recup #au nombre de centrales Biomasse on enlève 1 quantité de bois --> au tour suivant 1/2 des stocks sont récupérés
     #carte aléa MEMP (lancé 1)
     if mix["alea"] == "MEMP1" or mix["alea"] == "MEMP2" or mix["alea"] == "MEMP3":
         Bois -= 20
+    
+    #carte aléa MEVUAPV  (lancé dé 1 / 2)
+    if mix["alea"] == "MEVUAPV1" or mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUPV3": 
+        Bois -= 10
+        save["bois"]["totstockbois"] -= 10
 
     save["scores"]["Bois"] = Bois #actualisation du score Bois
         
@@ -1025,14 +1095,14 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
                 "biogaz":gazBiomasse,
                 "demande":int(demande), "production":prodTotale,
                 "scoreUranium":Uranium, "scoreHydro":Hydro, "scoreBois":Bois, "scoreDechets":dechet,
-                "prodEolienneON":prodOn, "puissanceEolienneON":round(nbPions["eolienneON"]*powOnshore, 2),
-                "prodEolienneOFF":prodOff, "puissanceEolienneOFF":round(nbPions["eolienneOFF"]*powOffshore, 2),
-                "prodPV":prodPv, "puissancePV":round(nbPions["panneauPV"]*powPV, 2),
-                "prodHydraulique":prodEau,
-                "prodNucleaire":prodNuc, "puissanceNucleaire":round(N.Q, 2),
-                "prodGaz":prodGaz, "puissanceGaz":round(G.Q, 2),
-                "prodPhs":prodPhs, "puissancePhs":round(P.Q, 2),
-                "prodBatterie":prodBat, "puissanceBatterie":round(B.Q, 2),
+                "prodOnshore":save["prodOnshore"], "puissanceEolienneON":round(nbPions["eolienneON"]*powOnshore, 2),
+                "prodOffshore":save["prodOffshore"], "puissanceEolienneOFF":round(nbPions["eolienneOFF"]*powOffshore, 2),
+                "prodPv":save["prodPv"], "puissancePV":round(nbPions["panneauPV"]*powPV, 2),
+                "prodEau":save["prodEau"],
+                "prodNucleaire":save["prodNucleaire"], "puissanceNucleaire":round(N.Q, 2),
+                "prodGaz":save["prodGaz"], "puissanceGaz":round(G.Q, 2),
+                "prodPhs":save["prodPhs"], "puissancePhs":round(P.Q, 2),
+                "prodBatterie":save["prodBatterie"], "puissanceBatterie":round(B.Q, 2),
                 "co2":save["co2"],
                 "nbSurplus":nbS, "nbPenuries":nbP,
                 "surplusQuotidien":listeSurplusQuotidien, "surplusHoraire":listeSurplusHoraire,
@@ -1092,7 +1162,7 @@ def strat_stockage_main(mix, save, nbPions, nvPions, nvPionsReg, group, team):
     # # NEGAWATT.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
 
-    result = simulation(ADEME["d{}".format(mix["annee"])], mix, save, nbPions, nvPions, nvPionsReg, group, team)
+    result = simulation(ADEME.d2025, mix, save, nbPions, nvPions, nvPionsReg, group, team)
 
 
     with open(dataPath+'game_data/{}/{}/resultats.json'.format(group, team), 'r') as src:
