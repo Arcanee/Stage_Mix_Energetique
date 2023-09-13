@@ -187,7 +187,7 @@ def detColor(img, result):
            "eolienneOFF" : (hsv[65][1210] - np.array([5, 40, 60]), hsv[65][1210] + np.array([5, 40, 60])), #bleu marine
            "panneauPV" : (hsv[25][1290] - np.array([5, 20, 40]), hsv[25][1290] + np.array([5, 20, 40])), #vert pale
            "methanation" : (hsv[60][1250] - np.array([5, 40, 60]), hsv[60][1250] + np.array([5, 40, 60])), #vert foret
-           "curseur" : (hsv[20][1320] - np.array([5, 40, 60]), hsv[20][1320] + np.array([5, 40, 60])) #magenta (stock et année)
+           "EPR2" : (hsv[20][1320] - np.array([5, 40, 60]), hsv[20][1320] + np.array([5, 40, 60])) #magenta (sert aussi pour stock et année)
            }
            
     
@@ -239,19 +239,19 @@ def detection_main(group, team):
 
     # Output final
     result = {"carte":"", "annee":"default", "stock":0,
-                "hdf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "idf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "est" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "nor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "occ" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "bre" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "cvl" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "pll" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "naq" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "ara" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "bfc" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0},
-                "cor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0}}
+                "hdf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "idf" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "est" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "nor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "occ" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "pac" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "bre" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "cvl" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "pll" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "naq" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "ara" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "bfc" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0},
+                "cor" : {"eolienneON":0 , "eolienneOFF":0 , "panneauPV":0 , "methanation":0 , "centraleNuc":0 , "biomasse":0, "EPR2":0}}
 
 
 

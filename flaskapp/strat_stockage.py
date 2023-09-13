@@ -29,13 +29,13 @@ np.seterr('raise') # A ENLEVER SUR LE CODE FINAL
 class Techno:
     def __init__(self, name, stored, prod, etain, etaout, Q, S, Vol):
         self.name = name     # nom de la techno
-        self.stored = stored # ce qui est stocké
+        self.stored = stored # ce qui est stocke
         self.prod = prod     # ce qui est produit
         self.etain = etain     # coefficient de rendement à la charge
-        self.etaout = etaout   # coefficient de rendement à la décharge
-        self.Q=Q             # capacité installée (flux sortant)
-        self.S=S             # capacité de charge d'une techno de stockage (flux entrant)
-        self.vol=Vol         # Capacité maximale de stockage de la techno (Volume max)
+        self.etaout = etaout   # coefficient de rendement à la decharge
+        self.Q=Q             # capacite installee (flux sortant)
+        self.S=S             # capacite de charge d'une techno de stockage (flux entrant)
+        self.vol=Vol         # Capacite maximale de stockage de la techno (Volume max)
 
 
 # Recharge les moyens de stockage quand on a trop d'energie
@@ -91,15 +91,15 @@ def unload(tec, k, aproduire, endmonthlake, prod=True):
 # k (int) : heure courante
 def cycle(k):
 
-    # Sur ATH : pas de pénurie avec 56 centrales min.
+    # Sur ATH : pas de penurie avec 56 centrales min.
     # Sur ATL : 28 centrales min. (50%)
     # Diviser en 4 ou 8 groupes (plutôt 8 pour les besoins humains)
     # 1/8 = 0.125, 7/8 = 0.875
     # 2180, 2920, 3650, 4400, 5130, 5900, 6732, 7580
     # Tiers de 8760 : 2920(4*730), 5840, 8460
-    # DANS le dernier tiers : 50% croissance linéaire min, 25% baisse de 20% prod min/max, 25% arrêt
+    # DANS le dernier tiers : 50% croissance lineaire min, 25% baisse de 20% prod min/max, 25% arret
 
-    # La production nucléaire est divisée en 8 groupes, chacun a son cycle d'arrêt. 
+    # La production nucleaire est divisee en 8 groupes, chacun a son cycle d'arret. 
     # Dans cette fonction, on regarde dans quel partie du cycle on est pour chaque groupe, 
     # pour calibrer la production min et max.
 
@@ -148,7 +148,7 @@ def cycle(k):
     return (sMin, sMax)
 
 
-# Lance la production des centrales nucléaires
+# Lance la production des centrales nucleaires
 #
 # @params
 # tec : objet à utiliser pour la production  (ici, Techno Nucleaire)
@@ -159,7 +159,7 @@ def nucProd(tec, k, aproduire):
         out = 0
 
     else:
-        # Si la demande est trop faible ou nulle, on produit quand même à hauteur de 20%
+        # Si la demande est trop faible ou nulle, on produit quand meme à hauteur de 20%
         MinMax = cycle(k)
         Pmin = MinMax[0]
         Pmax = MinMax[1]
@@ -203,22 +203,22 @@ def thermProd(tec, k, aproduire):
 def certitudeglobal(y1, y2, y3, stockmax):
     certitude_interval = np.zeros(3)
     
-    ##distribution écretage : min, max, moyenne et écart-type
+    ##distribution ecretage : min, max, moyenne et ecart-type
     if y1[y1!=-1].size > 0:
-        emoy = np.mean(y1[y1!=-1]) ##moyenne de l'échantillon //
-        eetype = np.std(y1[y1!=-1]) ##ecart-type de l'échantillon //
-        certitude_interval[1] = emoy - 2.33 * eetype / np.sqrt(len(y1[y1!=-1])) ##99% sur écretage (valeur sup de l'IC)
+        emoy = np.mean(y1[y1!=-1]) ##moyenne de l'echantillon //
+        eetype = np.std(y1[y1!=-1]) ##ecart-type de l'echantillon //
+        certitude_interval[1] = emoy - 2.33 * eetype / np.sqrt(len(y1[y1!=-1])) ##99% sur ecretage (valeur sup de l'IC)
     else:
         # Si jamais de surplus
         certitude_interval[1] = stockmax - 10
 
-    ##distribution pénurie : min, max, moyenne, écart-type
+    ##distribution penurie : min, max, moyenne, ecart-type
     if y2[y2!=-1].size > 0:
         pmoy = np.mean(y2[y2!=-1])
         petype = np.std(y2[y2!=-1])
-        certitude_interval[0] = pmoy + 1.76 * petype / np.sqrt(len(y2[y2!=-1])) ##98% sur pénurie (valeur inf de l'IC)
+        certitude_interval[0] = pmoy + 1.76 * petype / np.sqrt(len(y2[y2!=-1])) ##98% sur penurie (valeur inf de l'IC)
     else:
-        # Si jamais de pénurie
+        # Si jamais de penurie
         certitude_interval[0] = 10
     
     certitude_interval[2] = (certitude_interval[0] + certitude_interval[1]) / 2 ##valeur moyenne entre 98% et 99% 
@@ -296,7 +296,7 @@ def StratStockage(prodres, H, Phs, Battery, Gas, Lake, Nuclear, endmonthlake):
     for k in range(1,H):
         if prodres[k]>0:
             
-            # La production min de nucléaire s'ajoute à la qté d'énergie à stocker
+            # La production min de nucleaire s'ajoute à la qte d'energie à stocker
             nucMin = nucProd(Nuclear, k, 0)
             Astocker = prodres[k] + abs(nucMin)
             
@@ -313,7 +313,7 @@ def StratStockage(prodres, H, Phs, Battery, Gas, Lake, Nuclear, endmonthlake):
             for tec in Tecdestock:
                 Aproduire = unload(Tecdestock[tec], k, Aproduire, endmonthlake)
                 
-            ##liste penurie --> pour savoir si il y a pénurie dans la production d'électricité 
+            ##liste penurie --> pour savoir si il y a penurie dans la production d'electricite 
             Manque[k] = Aproduire
                 
     return Surplus, Manque
@@ -325,7 +325,7 @@ def StratStockage(prodres, H, Phs, Battery, Gas, Lake, Nuclear, endmonthlake):
 # prodres (array) : production residuelle sur l'annee
 # H (int) : nombre d'heures dans l'annee
 # Battery - Nuclear : objets de la classe Techno
-# I0, I1, I2 (array) : seuils de stockage dirigeant la strat de stockage, et déduits de la strat naive
+# I0, I1, I2 (array) : seuils de stockage dirigeant la strat de stockage, et deduits de la strat naive
 # endmonthlake (array) : contient la qte d'energie restante dans les lacs jusqu'a la fin de chaque mois
 def StratStockagev2(prodres, H, Phs, Battery, Gas, Lake, Nuclear, I0, I1, I2, endmonthlake):
     Surplus=np.zeros(H)
@@ -344,7 +344,7 @@ def StratStockagev2(prodres, H, Phs, Battery, Gas, Lake, Nuclear, I0, I1, I2, en
     for k in range(H):
         stock_PB = Phs.stored[k] + Battery.stored[k]
         
-        # Suivant le niveau de stock, on change l'ordre de dé/stockage et on fait du power2gaz ou
+        # Suivant le niveau de stock, on change l'ordre de de/stockage et on fait du power2gaz ou
         # gaz2power si besoin
         
         if 0 <= stock_PB < I0[k%24] :
@@ -374,7 +374,7 @@ def StratStockagev2(prodres, H, Phs, Battery, Gas, Lake, Nuclear, I0, I1, I2, en
             
         
         if prodres[k]>0 :
-            # La production min de nucléaire s'ajoute à la qté d'énergie à stocker
+            # La production min de nucleaire s'ajoute à la qte d'energie à stocker
             nucMin = nucProd(Nuclear, k, 0)
             Astocker = prodres[k] + abs(nucMin)
             
@@ -391,24 +391,24 @@ def StratStockagev2(prodres, H, Phs, Battery, Gas, Lake, Nuclear, I0, I1, I2, en
             for tec in strat_destock:
                 Aproduire = unload(strat_destock[tec], k, Aproduire, endmonthlake)
             
-            ##liste penurie --> pour savoir si il y a pénurie dans la production d'électricité 
+            ##liste penurie --> pour savoir si il y a penurie dans la production d'electricite 
             Manque[k]=Aproduire
             
                 
     return Surplus, Manque
 
 
-# Optimisation de stratégie de stockage et de déstockage du Mix énergetique
+# Optimisation de strategie de stockage et de destockage du Mix energetique
 #
 # @params
 # scenario (array) : scenario de consommation heure par heure
-# mix (dict) : données du plateau
-# save (dict) : données du tour précédent
+# mix (dict) : donnees du plateau
+# save (dict) : donnees du tour precedent
 # nbPions (dict) : nombre de pions total pour chaque techno
 # nvPions (dict) : nombre de nouveaux pions total pour chaque techno ce tour-ci
 # nvPionsReg (dict) : nombre de pions total pour chaque techno
-# group (str) : groupe de TD de l'équipe qui joue
-# team (int) : numéro de l'équipe qui joue dans ce groupe
+# group (str) : groupe de TD de l'equipe qui joue
+# team (int) : numero de l'equipe qui joue dans ce groupe
 def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
 
     H = 8760
@@ -418,7 +418,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     save["stock"] = mix["stock"]
 
 
-    ##Carte Choix politique --> 1 choix politique parmi les 3 proposés
+    ##Carte Choix politique --> 1 choix politique parmi les 3 proposes
 
     #Carte politique A
     if mix["politique"] == "CPA1" :
@@ -467,7 +467,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
 
 
 
-    #carte aléa MEVUAPV  (lancé dé 1 / 2)
+    #carte alea MEVUAPV  (lance de 1 / 2)
     # if mix["alea"] == "MEVUAPV1" or mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUAPV3": 
     #     save["varConso"] = 9e4
     # scenario += np.ones(H) * (save["varConso"]/H)
@@ -475,7 +475,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     if mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUAPV3":
         save["innovPV"] = 0.15
 
-    #carte aléa MEMDA (lancé 3)
+    #carte alea MEMDA (lance 3)
     if mix["alea"] == "MEMDA3":
         scenario = 0.95 * scenario
 
@@ -501,17 +501,17 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
             prodOffshore += np.array(fdc_off[reg]) * mix[reg]["eolienneOFF"] * powOffshore
 
     
-    #carte aléa MEMFDC (lancé 1)
+    #carte alea MEMFDC (lance 1)
     if mix["alea"] == "MEMFDC1" or mix["alea"] == "MEMFDC2" or mix["alea"] == "MEMFDC3":
         prodOnshore -= (np.array(fdc_on["cvl"]) * mix["cvl"]["eolienneON"] * powOnshore) * 0.1
         
 
-    # Aléa +15% prod PV
+    # Alea +15% prod PV
     prodPV += save["innovPV"] * prodPV
 
 
 
-    # Definition des productions électriques des rivières et lacs 
+    # Definition des productions electriques des rivières et lacs 
     coefriv = 13
     river = pd.read_csv(dataPath+"mix_data/run_of_river.csv", header=None)
     river.columns = ["heures", "prod2"]
@@ -521,7 +521,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     lake.columns = ["month", "prod2"]
     lakeprod = np.array(lake.prod2)
 
-    # Calcul de ce qui est stocké dans les lacs pour chaque mois
+    # Calcul de ce qui est stocke dans les lacs pour chaque mois
     horlake = np.array([0,31,31+28,31+28+31,31+28+31+30,31+28+31+30+31,31+28+31+30+31+30,31+28+31+30+31+30+31\
                 ,31+28+31+30+31+30+31+31,31+28+31+30+31+30+31+31+30,31+28+31+30+31+30+31+31+30+31\
                 ,31+28+31+30+31+30+31+31+30+31+30,31+28+31+30+31+30+31+31+30+31+30+31])*24
@@ -544,34 +544,35 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     initGaz = 1000000
     gazBiomasse = nbPions["biomasse"] * 2 * 0.1 * 0.71 * 6200  # nbPions * nbCentraleParPion * puissance * fdc * nbHeures
 
-    #carte aléa MEMFDC (lancé 2 / 3)
+    #carte alea MEMFDC (lance 2 / 3)
     if mix["alea"] == "MEMFDC3":
         gazBiomasse -= mix["naq"]["biomasse"] * 2 * 0.1 * 0.71 * 6200
 
     # Definition des differentes technologies
-    # Methanation : 1 pion = 10 unités de 100 MW = 1 GW
+    # Methanation : 1 pion = 10 unites de 100 MW = 1 GW
     P=Techno('Phs', np.ones(H)*16, np.zeros(H), 0.95, 0.9, 9.3, 9.3, 180)
     B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, mix["stock"]/10*20.08, mix["stock"]/10*20.08, mix["stock"]/10*74.14)
     G=Techno('Gaz', np.ones(H)*(initGaz+gazBiomasse), np.zeros(H), 0.59, 0.45, 34.44, 1*nbPions["methanation"], 10000000)    
     L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)
 
-    # Puissance centrales territoire : 18.54 GWe répartis sur 24 centrales (EDF)
-    # Rendement méca (inutile ici) : ~35% généralement (Wiki)
+    # Puissance centrales territoire : 18.54 GWe repartis sur 24 centrales (EDF)
+    # Rendement meca (inutile ici) : ~35% generalement (Wiki)
     # T = Techno('Centrale thermique', None, np.zeros(H), None, 1, 0.7725*nbTherm, None, None)
     
     # Puissance : 1.08 GWe (EDF)
-    # Même rendement
-    #réacteurs nucléaires effectifs qu'après 1 tour
-    nbprodNuc = (nbPions["centraleNuc"]-nvPions["centraleNuc"])
-    N = Techno('Réacteur nucléaire', None, np.zeros(H), None, 1, 1.08*nbprodNuc, None, None)
+    # Meme rendement
+    #reacteurs nucleaires effectifs qu'après 1 tour
+    nbProdNuc = nbPions["centraleNuc"]
+    nbProdNuc2 = (nbPions["EPR2"]-nvPions["EPR2"])
+    N = Techno('Reacteur nucleaire', None, np.zeros(H), None, 1, 1.08*nbProdNuc + 1.67*nbProdNuc2, None, None)
     
     
     if mix["alea"] == "MEMFDC3" :
         N.Q *= 45 / 60
 
         
-    # résultats de la strat initiale
-    # Renvoie Surplus,Pénurie et met à jour Phs,Battery,Methanation,Lake,Therm,Nuc
+    # resultats de la strat initiale
+    # Renvoie Surplus,Penurie et met à jour Phs,Battery,Methanation,Lake,Therm,Nuc
     s, p = StratStockage(prodresiduelle, H, P, B, G, L, N, endmonthlake)
     
     
@@ -582,20 +583,20 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     
     stockmax = B.vol + P.vol ##stockage maximum total = max total stockage Phs + max total stockage Battery    
     
-    ##listes pour écrêtage : x1 enregistre les jours où le lendemain il y a écrêtage
-    ##y1 enregistre la valeur du stock Phs + Battery où le lendemain il y a écrêtage
+    ##listes pour ecretage : x1 enregistre les jours où le lendemain il y a ecretage
+    ##y1 enregistre la valeur du stock Phs + Battery où le lendemain il y a ecretage
     x1 = np.ones(365)*(-1)
     y1 = np.ones(365)*(-1)
     
-    ##pareil que précèdemment mais pour lendemains avec pénurie
+    ##pareil que precèdemment mais pour lendemains avec penurie
     x2 = np.ones(365)*(-1)
     y2 = np.ones(365)*(-1)
     
-    ##pareil que précèdemment mais pour lendemains avec demande satisfaite et sans perte
+    ##pareil que precèdemment mais pour lendemains avec demande satisfaite et sans perte
     x3 = np.ones(365)*(-1)
     y3 = np.ones(365)*(-1)
     
-    ##on enlevera les -1 des listes x1, x2, x3, y1, y2, y3 pour ne récupérer que les points essentiels
+    ##on enlevera les -1 des listes x1, x2, x3, y1, y2, y3 pour ne recuperer que les points essentiels
         
     StockPB = P.stored + B.stored ##valeur des deux stocks 
     
@@ -611,27 +612,27 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     seuils_bot = np.zeros(24)
     
     for h1 in range(24):
-        for jour in range(365): ##on regarde tous les jours de l'année
+        for jour in range(365): ##on regarde tous les jours de l'annee
         
             stockage_PB[jour]=StockPB[jour*24 + h1] #Au jour jour, valeur du stock Phs + Battery
         
-            ##on regarde dans les 24h qui suivent si il y a écrêtage, pénurie ou aucun des deux
+            ##on regarde dans les 24h qui suivent si il y a ecretage, penurie ou aucun des deux
             for h2 in range(24): 
                 t = (jour*24 + h1 + h2) % H
                 
-                if s[t] > 0 and StockPB[t] >= stockmax : ##cas écrêtage
-                    x1[jour] = jour + 1 ##on note le jour précèdant jour avec écrêtage
-                    y1[jour] = stockage_PB[jour] ##on note le stock du jour précèdant jour avec écrêtage
+                if s[t] > 0 and StockPB[t] >= stockmax : ##cas ecretage
+                    x1[jour] = jour + 1 ##on note le jour precèdant jour avec ecretage
+                    y1[jour] = stockage_PB[jour] ##on note le stock du jour precèdant jour avec ecretage
             
-                elif p[t] > 0 : ##cas pénurie
-                    x2[jour] = jour + 1 ##mêmes explications mais pour pénurie
+                elif p[t] > 0 : ##cas penurie
+                    x2[jour] = jour + 1 ##memes explications mais pour penurie
                     y2[jour] = stockage_PB[jour]
                 
-                else : ##cas ni écrêtage, ni pénurie
-                    x3[jour] = jour + 1 ##mêmes explications mais avec ni écrêtage, ni pénurie
+                else : ##cas ni ecretage, ni penurie
+                    x3[jour] = jour + 1 ##memes explications mais avec ni ecretage, ni penurie
                     y3[jour] = stockage_PB[jour]
                 
-                if x1[jour] == x2[jour]: ##si écretage et pénurie le même jour, on considère que c'est une pénurie 
+                if x1[jour] == x2[jour]: ##si ecretage et penurie le meme jour, on considère que c'est une penurie 
                     x1[jour] = -1
                     y1[jour] = -1
             
@@ -648,19 +649,19 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     
         
         
-    # Renvoie Surplus,Pénurie, et met à jour les technos
+    # Renvoie Surplus,Penurie, et met à jour les technos
     
-    #Décommenter pour méthode 1 (intervalles de confiance)
+    #Decommenter pour methode 1 (intervalles de confiance)
     s, p = StratStockagev2(prodresiduelle, H, P, B, G, L, N,
                         certitude_interval_inf, certitude_interval_med, certitude_interval_sup, endmonthlake)
     
-    #Décommenter pour méthode 2 (recherche itérative du meilleur seuil)
+    #Decommenter pour methode 2 (recherche iterative du meilleur seuil)
     #s,p=StratStockagev2(prodresiduelle, H, P, B, M, L, T, N,
     #                    seuils_bot, seuils_mid, seuils_top, endmonthlake)
     
     
     ####Demande des choix de la fiche Usage à l'utilisateur
-    # choix_utilisateur = input("Entrez les valeurs séparées par des espaces : ")
+    # choix_utilisateur = input("Entrez les valeurs separees par des espaces : ")
 
     # # Diviser la chaîne en valeurs individuelles
     # liste = choix_utilisateur.split(',')
@@ -672,14 +673,14 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
 
     
 
-    # Infos qu'on peut retourner (plusieurs axes temporels et 2 stratégies sont possibles):
+    # Infos qu'on peut retourner (plusieurs axes temporels et 2 strategies sont possibles):
     # - Stock PHS / Batteries 
-    # - Combien de surpus / pénurie ***
+    # - Combien de surpus / penurie ***
     # - Evolution des seuils
     # - (Mix des 2 premiers points)
     # - Stocks de gaz ***
     # - Courbes de production X demande ***
-    # - Prod résiduelle
+    # - Prod residuelle
     # - CO2 ***
 
     prodOn = int(np.sum(prodOnshore))
@@ -705,7 +706,8 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodTotale = prodOn + prodOff + prodPv + prodEau + prodNuc + prodGaz + prodPhs + prodBat
 
 
-    ##calcul des productions par région
+    #calcul des productions par region
+
     nbTherm = 20
     nbThermReg = {
         "hdf" : 0,
@@ -722,14 +724,15 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
         "bfc" : 0,
         "cor" : 0
     }
-    factNuc = 0 if nbprodNuc == 0 else prodNuc/nbprodNuc
+
+    factNuc = 0 if (nbProdNuc + nbProdNuc2 == 0) else prodNuc / (nbProdNuc + nbProdNuc2)
 
     ##Occitanie
     popOCC = 0.09 ##pourcentage population
     prodOCC = (np.array(fdc_off.occ)*mix["occ"]["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.occ)*mix["occ"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.occ)*mix["occ"]["panneauPV"]*powPV + 
-                (mix["occ"]["centraleNuc"]-nvPionsReg["occ"]["centraleNuc"]) * factNuc +
+                (mix["occ"]["EPR2"]-nvPionsReg["occ"]["EPR2"] + mix["occ"]["centraleNuc"]) * factNuc +
                 nbThermReg["occ"] * prodGaz / nbTherm)
 
     ##Nouvelle-Aquitaine
@@ -737,7 +740,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodNA = (np.array(fdc_off.naq)*mix["naq"]["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.naq)*mix["naq"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.naq)*mix["naq"]["panneauPV"]*powPV + 
-                (mix["naq"]["centraleNuc"]-nvPionsReg["naq"]["centraleNuc"]) * factNuc +
+                (mix["naq"]["EPR2"]-nvPionsReg["naq"]["EPR2"] + mix["naq"]["centraleNuc"]) * factNuc +
                 nbThermReg["naq"] * prodGaz / nbTherm)
 
     ##Bretagne
@@ -745,7 +748,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodBRE = (np.array(fdc_off.bre)*mix["bre"]["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.bre)*mix["bre"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.bre)*mix["bre"]["panneauPV"]*powPV + 
-                (mix["bre"]["centraleNuc"]-nvPionsReg["bre"]["centraleNuc"]) * factNuc +
+                (mix["bre"]["EPR2"]-nvPionsReg["bre"]["EPR2"] + mix["bre"]["centraleNuc"]) * factNuc +
                 nbThermReg["bre"] * prodGaz / nbTherm)
 
     ##Haut-de-France
@@ -753,7 +756,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodHDF = (np.array(fdc_off.hdf)*mix["hdf"]["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.hdf)*mix["hdf"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.hdf)*mix["hdf"]["panneauPV"]*powPV + 
-                (mix["hdf"]["centraleNuc"]-nvPionsReg["hdf"]["centraleNuc"]) * factNuc +
+                (mix["hdf"]["EPR2"]-nvPionsReg["hdf"]["EPR2"] + mix["hdf"]["centraleNuc"]) * factNuc +
                 nbThermReg["hdf"] * prodGaz / nbTherm)
 
     ##Pays de la Loire
@@ -761,21 +764,21 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodPDL = (np.array(fdc_off.pll)*mix["pll"]["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.pll)*mix["pll"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.pll)*mix["pll"]["panneauPV"]*powPV + 
-                (mix["pll"]["centraleNuc"]-nvPionsReg["pll"]["centraleNuc"]) * factNuc +
+                (mix["pll"]["EPR2"]-nvPionsReg["pll"]["EPR2"] + mix["pll"]["centraleNuc"]) * factNuc +
                 nbThermReg["pll"] * prodGaz / nbTherm)
 
     ##Auvergne-Rhône-Alpes
     popARA = 0.12
     prodARA = (np.array(fdc_on.ara)*mix["ara"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.ara)*mix["ara"]["panneauPV"]*powPV + 
-                (mix["ara"]["centraleNuc"]-nvPionsReg["ara"]["centraleNuc"]) * factNuc +
+                (mix["ara"]["EPR2"]-nvPionsReg["ara"]["EPR2"] + mix["ara"]["centraleNuc"]) * factNuc +
                 nbThermReg["ara"] * prodGaz / nbTherm)
 
     ##Grand Est
     popGE = 0.08
     prodGE = (np.array(fdc_on.est)*mix["est"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.est)*mix["est"]["panneauPV"]*powPV + 
-                (mix["est"]["centraleNuc"]-nvPionsReg["est"]["centraleNuc"]) * factNuc +
+                (mix["est"]["EPR2"]-nvPionsReg["est"]["EPR2"] + mix["est"]["centraleNuc"]) * factNuc +
                 nbThermReg["est"] * prodGaz / nbTherm)
 
     ##Normandie
@@ -783,21 +786,21 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodNOR = (np.array(fdc_off.nor)*mix["nor"]["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.nor)*mix["nor"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.nor)*mix["nor"]["panneauPV"]*powPV + 
-                (mix["nor"]["centraleNuc"]-nvPionsReg["nor"]["centraleNuc"]) * factNuc +
+                (mix["nor"]["EPR2"]-nvPionsReg["nor"]["EPR2"] + mix["nor"]["centraleNuc"]) * factNuc +
                 nbThermReg["nor"] * prodGaz / nbTherm)
 
-    ##Bourgogne-Franche-Comté
+    ##Bourgogne-Franche-Comte
     popBFC = 0.04
     prodBFC = (np.array(fdc_on.bfc)*mix["bfc"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.bfc)*mix["bfc"]["panneauPV"]*powPV + 
-                (mix["bfc"]["centraleNuc"]-nvPionsReg["bfc"]["centraleNuc"]) * factNuc +
+                (mix["bfc"]["EPR2"]-nvPionsReg["bfc"]["EPR2"] + mix["bfc"]["centraleNuc"]) * factNuc +
                 nbThermReg["bfc"] * prodGaz / nbTherm)
 
     ##Centre Val de Loire
     popCVL = 0.04
     prodCVL = (np.array(fdc_on.cvl)*mix["cvl"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.cvl)*mix["cvl"]["panneauPV"]*powPV + 
-                (mix["cvl"]["centraleNuc"]-nvPionsReg["cvl"]["centraleNuc"]) * factNuc +
+                (mix["cvl"]["EPR2"]-nvPionsReg["cvl"]["EPR2"] + mix["cvl"]["centraleNuc"]) * factNuc +
                 nbThermReg["cvl"] * prodGaz / nbTherm)
 
     ##PACA
@@ -805,14 +808,14 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodPAC = (np.array(fdc_off.pac)*mix["pac"]["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.pac)*mix["pac"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.pac)*mix["pac"]["panneauPV"]*powPV + 
-                (mix["pac"]["centraleNuc"]-nvPionsReg["pac"]["centraleNuc"]) * factNuc +
+                (mix["pac"]["EPR2"]-nvPionsReg["pac"]["EPR2"] + mix["pac"]["centraleNuc"]) * factNuc +
                 nbThermReg["pac"] * prodGaz / nbTherm)
 
     ##Ile-de-France
     popIDF = 0.19
     prodIDF = (np.array(fdc_on.idf)*mix["idf"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.idf)*mix["idf"]["panneauPV"]*powPV + 
-                (mix["idf"]["centraleNuc"]-nvPionsReg["idf"]["centraleNuc"]) * factNuc +
+                (mix["idf"]["EPR2"]-nvPionsReg["idf"]["EPR2"] + mix["idf"]["centraleNuc"]) * factNuc +
                 nbThermReg["idf"] * prodGaz / nbTherm)
 
     ##Corse
@@ -820,13 +823,13 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     prodCOR = (np.array(fdc_off.cor)*mix["cor"]["eolienneOFF"]*powOffshore + 
                 np.array(fdc_on.cor)*mix["cor"]["eolienneON"]*powOnshore + 
                 np.array(fdc_pv.cor)*mix["cor"]["panneauPV"]*powPV + 
-                (mix["cor"]["centraleNuc"]-nvPionsReg["cor"]["centraleNuc"]) * factNuc +
+                (mix["cor"]["EPR2"]-nvPionsReg["cor"]["EPR2"] + mix["cor"]["centraleNuc"]) * factNuc +
                 nbThermReg["cor"] * prodGaz / nbTherm)
 
     ##production totale sur le territoire
     prod = prodOCC + prodNA + prodBRE + prodHDF + prodPDL + prodARA + prodGE + prodNOR + prodBFC + prodCVL + prodPAC + prodIDF + prodCOR
 
-    ##calcul des ratios (prod de la région/pros totale --> heure par heure)
+    ##calcul des ratios (prod de la region/pros totale --> heure par heure)
     ratioOCC = np.zeros(H)
     ratioNA = np.zeros(H)
     ratioBRE = np.zeros(H)
@@ -842,22 +845,22 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     ratioCOR = np.zeros(H)
 
     for i in range(H):
-        ratioOCC[i] = prodOCC[i]/prod[i]
-        ratioNA[i] = prodNA[i]/prod[i]
-        ratioBRE[i] = prodBRE[i]/prod[i]
-        ratioHDF[i] = prodHDF[i]/prod[i]
-        ratioPDL[i] = prodPDL[i]/prod[i]
-        ratioARA[i] = prodARA[i]/prod[i]
-        ratioGE[i] = prodGE[i]/prod[i]
-        ratioNOR[i] = prodNOR[i]/prod[i]
-        ratioBFC[i] = prodBFC[i]/prod[i]
-        ratioCVL[i] = prodCVL[i]/prod[i]
-        ratioPAC[i] = prodPAC[i]/prod[i]
-        ratioIDF[i] = prodIDF[i]/prod[i]
-        ratioCOR[i] = prodCOR[i]/prod[i]
+        ratioOCC[i] = prodOCC[i]/prod[i] if prod[i] != 0 else 0 
+        ratioNA[i] = prodNA[i]/prod[i] if prod[i] != 0 else 0 
+        ratioBRE[i] = prodBRE[i]/prod[i] if prod[i] != 0 else 0 
+        ratioHDF[i] = prodHDF[i]/prod[i] if prod[i] != 0 else 0 
+        ratioPDL[i] = prodPDL[i]/prod[i] if prod[i] != 0 else 0 
+        ratioARA[i] = prodARA[i]/prod[i] if prod[i] != 0 else 0 
+        ratioGE[i] = prodGE[i]/prod[i] if prod[i] != 0 else 0 
+        ratioNOR[i] = prodNOR[i]/prod[i] if prod[i] != 0 else 0 
+        ratioBFC[i] = prodBFC[i]/prod[i] if prod[i] != 0 else 0 
+        ratioCVL[i] = prodCVL[i]/prod[i] if prod[i] != 0 else 0 
+        ratioPAC[i] = prodPAC[i]/prod[i] if prod[i] != 0 else 0 
+        ratioIDF[i] = prodIDF[i]/prod[i] if prod[i] != 0 else 0 
+        ratioCOR[i] = prodCOR[i]/prod[i] if prod[i] != 0 else 0 
     
     # print(ratioOCC)
-    ##différence des rations prod et ratios pop régions par régions
+    ##difference des rations prod et ratios pop regions par regions
     
     diffOCC = np.zeros(H)
     diffNA = np.zeros(H)
@@ -887,7 +890,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     diffIDF = ratioIDF - popIDF*np.ones(H)
     diffCOR = ratioCOR - popCOR*np.ones(H)
 
-    ##moyenne sur les heures de l'année des différences
+    ##moyenne sur les heures de l'annee des differences
     moyOCC = np.sum(diffOCC)/8760*100
     moyNA = np.sum(diffNA)/8760*100
     moyBRE = np.sum(diffBRE)/8760*100
@@ -952,10 +955,10 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     demande = np.sum(scenario) #variable demande
     
 
-    prixGaz = 324.6e-6 #prix de l'électricité produite à partir du gaz/charbon --> moyenne des deux (35€ le MWh)
-    prixNuc = 7.6e-6 #part du combustible dans le prix de l'électricité nucléaire (7.6€ le MWh)
+    prixGaz = 324.6e-6 #prix de l'electricite produite à partir du gaz/charbon --> moyenne des deux (35€ le MWh)
+    prixNuc = 7.6e-6 #part du combustible dans le prix de l'electricite nucleaire (7.6€ le MWh)
 
-    #carte alea MEGC (lancé 1 / 3)
+    #carte alea MEGC (lance 1 / 3)
     if mix["alea"] == "MEGC1" or mix["alea"] == "MEGC2" or mix["alea"] == "MEGC3":
         prixGaz *= 1.5 #alea1
     
@@ -964,16 +967,39 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
         prixNuc *= 1.4 #alea3
 
 
-    #carte alea MEMP (lancé 3)
+    #carte alea MEMP (lance 3)
     if mix["alea"] == "MEMP3":
         prixGaz *= 1.3
         prixNuc *= 1.2
 
     #variable cout (Md€) --> pour le tour titre
-    cout = (nvPions["eolienneON"] * 3.5 + 
-            nvPions["eolienneOFF"] * 1.2 + 
+
+    nucProlong = 0
+    onshoreRemplac = 0
+    offshoreRemplac = 0
+
+    for reg in save["capacite"]:
+        listNuc = save[reg]["centraleNuc"]
+        listOn = save[reg]["eolienneON"]
+        listOff = save[reg]["eolienneOFF"]
+
+        for n in listNuc :
+            if n == mix["annee"] - 40 :
+                nucProlong += 1
+
+        for n in listOn :
+            if n == mix["annee"] - 15 :
+                onshoreRemplac += 1
+
+        for n in listOff :
+            if n == mix["annee"] - 15 :
+                offshoreRemplac += 1
+
+    cout = ((nvPions["eolienneON"] + onshoreRemplac) * 3.5 + 
+            (nvPions["eolienneOFF"] + offshoreRemplac) * 1.2 + 
             nvPions["panneauPV"] * 3.6 + 
-            nvPions["centraleNuc"] * 8.6 +
+            nvPions["EPR2"]*8.6 + 
+            nucProlong*5 +
             nvPions["biomasse"] * 0.12 +
             nvPions["methanation"] * 4.85 +
             (B.Q * 0.0012) / 0.003 + 
@@ -981,22 +1007,24 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
             (prodNuc * prixNuc) +
             (prodGazFossile * prixGaz))
 
+    if mix["annee"]!=2030 :
+        cout +=  (10 - nucProlong) *0.5
 
-    #budget à chaque tour sauf si carte évènement bouleverse les choses
+    #budget à chaque tour sauf si carte evènement bouleverse les choses
     budget = 60
 
-    #carte alea MEVUAPV : lancé 3
+    #carte alea MEVUAPV : lance 3
     if mix["alea"] == "MEVUAPV3":
         budget -= 10
 
-    #carte MEMDA : lancé 1 / 2
+    #carte MEMDA : lance 1 / 2
     if mix["alea"] == "MEMDA1" or mix["alea"] == "MEMDA2" or mix["alea"] == "MEMDA3":
         budget += 3.11625
 
     if mix["alea"] == "MEMDA2" or mix["alea"] == "MEMDA3":
         cout -= 1.445
     
-    #carte MEGDT : lancé 1 / 3
+    #carte MEGDT : lance 1 / 3
     if mix["alea"] == "MEGDT1" or mix["alea"] == "MEGDT2" or mix["alea"] == "MEGDT3":
         cout += 1/3*nvPionsReg["pac"]["panneauPV"]*3.6
 
@@ -1008,41 +1036,41 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
             nbPions["centraleNuc"]*1.5 + nbPions["biomasse"]*0.8) #occupation au sol de toutes les technologies (km2)
 
 
-    Uranium = save["scores"]["Uranium"] #disponibilité Uranium initiale
-    if nbPions["centraleNuc"] > 0:
-        Uranium -= 10 #à chaque tour où on maintient des technos nucléaires
-    if nvPions["centraleNuc"] > 0:
-        Uranium -= 5*nvPions["centraleNuc"]/2 #à chaque paire de réacteurs posées sur le territoire
-    #carte aléa MEGC (lancé 2)
+    Uranium = save["scores"]["Uranium"] #disponibilite Uranium initiale
+    if nbPions["centraleNuc"] > 0 or nbPions["EPR2"] :
+        Uranium -= 10 #à chaque tour où on maintient des technos nucleaires
+    if nvPions["EPR2"] > 0:
+        Uranium -= nvPions["EPR2"] 
+    #carte alea MEGC (lance 2)
     if mix["alea"] == "MEGC2" or mix["alea"] == "MEGC3":
         Uranium -= 10 
     
     save["scores"]["Uranium"] = Uranium #actualisation du score Uranium
 
 
-    Hydro = save["scores"]["Hydro"]#disponibilité Hydrocarbures et Charbon
+    Hydro = save["scores"]["Hydro"]#disponibilite Hydrocarbures et Charbon
     if prodGazFossile > 0:
         Hydro -= 20 #à chaque tour où on consomme du gaz fossile
     
-    #carte aléa MEMP (lancé 2)
+    #carte alea MEMP (lance 2)
     if mix["alea"] == "MEMP2" or mix["alea"] == "MEMP3":
         Hydro -= 20
 
     save["scores"]["Hydro"] = Hydro #actualisation du score Hydro
     
 
-    Bois = save["scores"]["Bois"]#disponibilité Bois
+    Bois = save["scores"]["Bois"]#disponibilite Bois
     recup = save["scores"]["totstockbois"] - Bois 
 
     if nbPions["biomasse"] > 0:
         Bois -= nbPions["biomasse"] 
     if nbPions["biomasse"] > 0 and recup >= 0 :
-        Bois+= 1/2*recup #au nombre de centrales Biomasse on enlève 1 quantité de bois --> au tour suivant 1/2 des stocks sont récupérés
-    #carte aléa MEMP (lancé 1)
+        Bois+= 1/2*recup #au nombre de centrales Biomasse on enlève 1 quantite de bois --> au tour suivant 1/2 des stocks sont recuperes
+    #carte alea MEMP (lance 1)
     if mix["alea"] == "MEMP1" or mix["alea"] == "MEMP2" or mix["alea"] == "MEMP3":
         Bois -= 20
     
-    #carte aléa MEVUAPV  (lancé dé 1 / 2)
+    #carte alea MEVUAPV  (lance de 1 / 2)
     if mix["alea"] == "MEVUAPV1" or mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUPV3": 
         Bois -= 10
         save["bois"]["totstockbois"] -= 10
@@ -1051,12 +1079,12 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
         
 
     dechet = save["scores"]["Dechet"]
-    # dechet += nbTherm*2 + nbNuc*1 #déchets générés par les technologies Nucléaires et Thermiques
-    dechet += nbPions["centraleNuc"]
+    # dechet += nbTherm*2 + nbNuc*1 #dechets generes par les technologies Nucleaires et Thermiques
+    dechet += nbPions["centraleNuc"] + nbPions["EPR2"]
     save["scores"]["Dechet"] = dechet
 
     capmax_info = save["capacite"]
-    #carte alea MECS (lancé 1 / 2)
+    #carte alea MECS (lance 1 / 2)
     if mix["alea"] == "MECS1" or mix["alea"] == "MECS2" or mix["alea"] == "MECS3":
         for k in capmax_info:
             capmax_info[k]["eolienneON"] = int(capmax_info[k]["eolienneON"] * 0.4)
@@ -1065,7 +1093,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
         capmax_info["occ"]["eolienneON"] *= 2
         capmax_info["occ"]["panneauPV"] *= 2
 
-    #carte alea MEGDT (lancé 2)
+    #carte alea MEGDT (lance 2)
     if mix["alea"] == "MEGDT2" or mix["alea"] == "MEGDT3":
         capmax_info["naq"]["eolienneOFF"] += 1
         capmax_info["pac"]["eolienneOFF"] += 1
@@ -1131,26 +1159,26 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
 # Fonction principale
 #
 # @params
-# mix (dict) : données du plateau
-# save (dict) : données du tour précédent
+# mix (dict) : donnees du plateau
+# save (dict) : donnees du tour precedent
 # nbPions (dict) : nombre de pions total pour chaque techno
 # nvPions (dict) : nombre de nouveaux pions total pour chaque techno ce tour-ci
 # nvPionsReg (dict) : nombre de pions total pour chaque techno
-# group (str) : groupe de TD de l'équipe qui joue
-# team (int) : numéro de l'équipe qui joue dans ce groupe      
+# group (str) : groupe de TD de l'equipe qui joue
+# team (int) : numero de l'equipe qui joue dans ce groupe      
 def strat_stockage_main(mix, save, nbPions, nvPions, nvPionsReg, group, team):
 
-    # Infos sur les unités de data :
-    # eolienneON --> 1 unité = 10 parcs = 700 eoliennes
-    # eolienneOFF --> 1 unité = 5 parcs = 400 eoliennes
-    # panneauPV --> 1 unité = 10 parcs = 983 500 modules
-    # centraleTherm --> 1 unité = 1 centrale
-    # centraleNuc --> 1 unité = 1 réacteur
-    # biomasse --> 1 unité = une fraction de flux E/S en méthanation
+    # Infos sur les unites de data :
+    # eolienneON --> 1 unite = 10 parcs = 700 eoliennes
+    # eolienneOFF --> 1 unite = 5 parcs = 400 eoliennes
+    # panneauPV --> 1 unite = 10 parcs = 983 500 modules
+    # centraleTherm --> 1 unite = 1 centrale
+    # centraleNuc --> 1 unite = 1 reacteur
+    # biomasse --> 1 unite = une fraction de flux E/S en methanation
 
 
     # Definition des scenarios (Negawatt, ADEME, RTE pour 2050)
-    # Les autres scenarios sont faits mains à partir des données de Quirion
+    # Les autres scenarios sont faits mains à partir des donnees de Quirion
 
     ADEME = pd.read_csv(dataPath+"mix_data/ADEME_25-50.csv", header=None)
     ADEME.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]

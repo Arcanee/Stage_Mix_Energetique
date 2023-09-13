@@ -19,9 +19,10 @@ $(function() {
     const pions = [ ["eolienneON", "Eoliennes on."],
                     ["eolienneOFF", "Eoliennes off."],
                     ["panneauPV", "Panneaux PV"],
-                    ["centraleNuc", "Centrales nuc."],
+                    ["centraleNuc", "Ancien nuc."],
+                    ["EPR2", "EPR 2"],
                     ["methanation", "Méthanation"],
-                    ["biomasse", "Biomasse"],
+                    ["biomasse", "Biomasse"]
     ];
 
     const aleas = ["", "MEGC1", "MEGC2", "MEGC3", "MEMFDC1", "MEMFDC2", "MEMFDC3",
@@ -907,7 +908,7 @@ $(function() {
             result6.addColumn('string', 'Bilan');
             result6.addColumn('number', '');
             result6.addRows([
-                ['Dépense (en Md€)',  {v :resultsData.cout, f : resultsData.cout + ' €'}],
+                ['Dépense (en Md€)',  {v :resultsData.cout, f : resultsData.cout + ''}],
                 ['Demande',   {v:resultsData.demande,   f: resultsData.demande + ' Gwh'}],
                 ['Production', {v: resultsData.production, f: resultsData.production + ' GWh'}],
                 ['Production - Demande',   {v: resultsData.production - resultsData.demande,  f: resultsData.production - resultsData.demande + ' GWh'}],
