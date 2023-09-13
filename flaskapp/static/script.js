@@ -954,13 +954,7 @@ $(function() {
 
 
         $('#commitResults').click(() => {
-            $.ajax({
-                url: "/commit",
-                type: "GET",
-                error: function(jqXHR, textStatus, errorThrown) {
-                    displayError("http");
-                }
-            });
+            location.href = "/commit";
         });
 
 

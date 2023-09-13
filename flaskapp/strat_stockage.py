@@ -402,13 +402,14 @@ def StratStockagev2(prodres, H, Phs, Battery, Gas, Lake, Nuclear, I0, I1, I2, en
 #
 # @params
 # scenario (array) : scenario de consommation heure par heure
-# titre (int) : annee de deroulement du scenario (25, 30, 35, 40, 45, 50)
-# est - cor (dict) : contient le nombre d'installations pour la region concernee
-# nbOn - nbBio (int) : nombre de pions eoliennes onshore, offshore, ..., de biomasse
-# factStock (float) : facteur de qte de stockage, entre 0 et 1
-# cout (int) : cout cumulé des tours précédent
-# alea (str) : code d'une carte alea
-def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
+# mix (dict) : données du plateau
+# save (dict) : données du tour précédent
+# nbPions (dict) : nombre de pions total pour chaque techno
+# nvPions (dict) : nombre de nouveaux pions total pour chaque techno ce tour-ci
+# nvPionsReg (dict) : nombre de pions total pour chaque techno
+# group (str) : groupe de TD de l'équipe qui joue
+# team (int) : numéro de l'équipe qui joue dans ce groupe
+def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
 
     H = 8760
 
@@ -418,15 +419,15 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
 
 
     #carte aléa MEVUAPV  (lancé dé 1 / 2)
-    if alea == "MEVUAPV1" or alea == "MEVUAPV2" or alea == "MEVUAPV3": 
+    if mix["alea"] == "MEVUAPV1" or mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUAPV3": 
         save["consoVE"] = 9e4
     scenario += np.ones(H) * (save["consoVE"]/H)
     
-    if alea == "MEVUAPV2" or alea == "MEVUAPV3":
+    if mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUAPV3":
         save["innovPV"] = 0.15
 
     #carte aléa MEMDA (lancé 3)
-    if alea == "MEMDA3":
+    if mix["alea"] == "MEMDA3":
         scenario = 0.95 * scenario
 
     fdc_on = pd.read_csv(dataPath+"mix_data/fdc_on.csv")
@@ -444,15 +445,15 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
 
     # On fait la somme des prods par region pour chaque techno (FacteurDeCharge * NbPions * PuissanceParPion)
 
-    for reg in save[capacite]:
+    for reg in save["capacite"]:
         prodOnshore += np.array(fdc_on[reg]) * mix[reg]["eolienneON"] * powOnshore
         prodPV += np.array(fdc_pv[reg]) * mix[reg]["panneauPV"] * powPV
-        if reg!="bfc" or reg!="ara" or reg!="cvl" or reg!="idf" or reg!="est":
+        if reg!="bfc" and reg!="ara" and reg!="cvl" and reg!="idf" and reg!="est":
             prodOffshore += np.array(fdc_off[reg]) * mix[reg]["eolienneOFF"] * powOffshore
 
     
     #carte aléa MEMFDC (lancé 1)
-    if alea == "MEMFDC1" or alea == "MEMFDC2" or alea == "MEMFDC3":
+    if mix["alea"] == "MEMFDC1" or mix["alea"] == "MEMFDC2" or mix["alea"] == "MEMFDC3":
         prodOnshore -= (np.array(fdc_on["cvl"]) * mix["cvl"]["eolienneON"] * powOnshore) * 0.1
         
 
@@ -492,17 +493,17 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
     # Techno params : name, stored, prod, etain, etaout, Q, S, vol
 
     initGaz = 1000000
-    gazBiomasse = nbBio * 2 * 0.1 * 0.71 * 6200
+    gazBiomasse = nbPions["biomasse"] * 2 * 0.1 * 0.71 * 6200  # nbPions * nbCentraleParPion * puissance * fdc * nbHeures
 
     #carte aléa MEMFDC (lancé 2 / 3)
-    if alea == "MEMFDC2" or alea == "MEMFDC3":
-        gazBio -= 0
+    if mix["alea"] == "MEMFDC3":
+        gazBiomasse -= mix["naq"]["biomasse"] * 2 * 0.1 * 0.71 * 6200
 
     # Definition des differentes technologies
     # Methanation : 1 pion = 10 unités de 100 MW = 1 GW
     P=Techno('Phs', np.ones(H)*16, np.zeros(H), 0.95, 0.9, 9.3, 9.3, 180)
-    B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, factStock/10*20.08, factStock/10*20.08, factStock/10*74.14)
-    G=Techno('Gaz', np.ones(H)*(initGaz+gazBiomasse), np.zeros(H), 0.59, 0.45, 34.44, 1*nbMeth, 10000000)    
+    B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, mix["stock"]/10*20.08, mix["stock"]/10*20.08, mix["stock"]/10*74.14)
+    G=Techno('Gaz', np.ones(H)*(initGaz+gazBiomasse), np.zeros(H), 0.59, 0.45, 34.44, 1*nbPions["methanation"], 10000000)    
     L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)
 
     # Puissance centrales territoire : 18.54 GWe répartis sur 24 centrales (EDF)
@@ -512,11 +513,11 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
     # Puissance : 1.08 GWe (EDF)
     # Même rendement
     #réacteurs nucléaires effectifs qu'après 1 tour
-    nbprodNuc = (nbNuc-save["nvPions"]["nbNuc"])
+    nbprodNuc = (nbPions["centraleNuc"]-nvPions["centraleNuc"])
     N = Techno('Réacteur nucléaire', None, np.zeros(H), None, 1, 1.08*nbprodNuc, None, None)
     
     
-    if alea == "MEMFDC3" :
+    if mix["alea"] == "MEMFDC3" :
         N.Q *= 45 / 60
 
         
@@ -649,106 +650,121 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
 
     ##calcul des productions par région
     nbTherm = 20
+    nbThermReg = {
+        "hdf" : 0,
+        "idf" : 0,
+        "est" : 0,
+        "nor" : 0,
+        "occ" : 0,
+        "pac" : 0,
+        "bre" : 0,
+        "cvl" : 0,
+        "pll" : 0,
+        "naq" : 0,
+        "ara" : 0,
+        "bfc" : 0,
+        "cor" : 0
+    }
     factNuc = 0 if nbprodNuc == 0 else prodNuc/nbprodNuc
 
     ##Occitanie
     popOCC = 0.09 ##pourcentage population
-    prodOCC = (np.array(fdc_off.occ)*occ["eolienneOFF"]*powOffshore + 
-                np.array(fdc_on.occ)*occ["eolienneON"]*powOnshore + 
-                np.array(fdc_pv.occ)*occ["panneauPV"]*powPV + 
-                (occ["centraleNuc"]-save["nvPionsParReg"]["occ"]["Nucleaire"]) * factNuc +
-                save["pionsParRegInit"]["occ"]["Thermique"] * prodGaz / nbTherm)
+    prodOCC = (np.array(fdc_off.occ)*mix["occ"]["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.occ)*mix["occ"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.occ)*mix["occ"]["panneauPV"]*powPV + 
+                (mix["occ"]["centraleNuc"]-nvPionsReg["occ"]["centraleNuc"]) * factNuc +
+                nbThermReg["occ"] * prodGaz / nbTherm)
 
     ##Nouvelle-Aquitaine
     popNA = 0.09
-    prodNA = (np.array(fdc_off.naq)*naq["eolienneOFF"]*powOffshore + 
-                np.array(fdc_on.naq)*naq["eolienneON"]*powOnshore + 
-                np.array(fdc_pv.naq)*naq["panneauPV"]*powPV + 
-                (naq["centraleNuc"]-save["nvPionsParReg"]["naq"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["naq"]["Thermique"] * prodGaz / nbTherm)
+    prodNA = (np.array(fdc_off.naq)*mix["naq"]["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.naq)*mix["naq"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.naq)*mix["naq"]["panneauPV"]*powPV + 
+                (mix["naq"]["centraleNuc"]-nvPionsReg["naq"]["centraleNuc"]) * factNuc +
+                nbThermReg["naq"] * prodGaz / nbTherm)
 
     ##Bretagne
     popBRE = 0.05
-    prodBRE = (np.array(fdc_off.bre)*bre["eolienneOFF"]*powOffshore +
-                np.array(fdc_on.bre)*bre["eolienneON"]*powOnshore +
-                np.array(fdc_pv.bre)*bre["panneauPV"]*powPV + 
-                (bre["centraleNuc"]-save["nvPionsParReg"]["bre"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["bre"]["Thermique"] * prodGaz / nbTherm)
+    prodBRE = (np.array(fdc_off.bre)*mix["bre"]["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.bre)*mix["bre"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.bre)*mix["bre"]["panneauPV"]*powPV + 
+                (mix["bre"]["centraleNuc"]-nvPionsReg["bre"]["centraleNuc"]) * factNuc +
+                nbThermReg["bre"] * prodGaz / nbTherm)
 
     ##Haut-de-France
     popHDF = 0.09
-    prodHDF = (np.array(fdc_off.hdf)*hdf["eolienneOFF"]*powOffshore +
-                np.array(fdc_on.hdf)*hdf["eolienneON"]*powOnshore +
-                np.array(fdc_pv.hdf)*hdf["panneauPV"]*powPV + 
-                (hdf["centraleNuc"]-save["nvPionsParReg"]["hdf"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["hdf"]["Thermique"] * prodGaz / nbTherm)
+    prodHDF = (np.array(fdc_off.hdf)*mix["hdf"]["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.hdf)*mix["hdf"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.hdf)*mix["hdf"]["panneauPV"]*powPV + 
+                (mix["hdf"]["centraleNuc"]-nvPionsReg["hdf"]["centraleNuc"]) * factNuc +
+                nbThermReg["hdf"] * prodGaz / nbTherm)
 
     ##Pays de la Loire
     popPDL = 0.06
-    prodPDL = (np.array(fdc_off.pll)*pll["eolienneOFF"]*powOffshore +
-                np.array(fdc_on.pll)*pll["eolienneON"]*powOnshore +
-                np.array(fdc_pv.pll)*pll["panneauPV"]*powPV + 
-                (pll["centraleNuc"]-save["nvPionsParReg"]["pll"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["pll"]["Thermique"] * prodGaz / nbTherm)
+    prodPDL = (np.array(fdc_off.pll)*mix["pll"]["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.pll)*mix["pll"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.pll)*mix["pll"]["panneauPV"]*powPV + 
+                (mix["pll"]["centraleNuc"]-nvPionsReg["pll"]["centraleNuc"]) * factNuc +
+                nbThermReg["pll"] * prodGaz / nbTherm)
 
     ##Auvergne-Rhône-Alpes
     popARA = 0.12
-    prodARA = (np.array(fdc_on.ara)*ara["eolienneON"]*powOnshore +
-                np.array(fdc_pv.ara)*ara["panneauPV"]*powPV +
-                (ara["centraleNuc"]-save["nvPionsParReg"]["ara"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["ara"]["Thermique"] * prodGaz / nbTherm)
+    prodARA = (np.array(fdc_on.ara)*mix["ara"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.ara)*mix["ara"]["panneauPV"]*powPV + 
+                (mix["ara"]["centraleNuc"]-nvPionsReg["ara"]["centraleNuc"]) * factNuc +
+                nbThermReg["ara"] * prodGaz / nbTherm)
 
     ##Grand Est
     popGE = 0.08
-    prodGE = (np.array(fdc_on.est)*est["eolienneON"]*powOnshore +
-                np.array(fdc_pv.est)*est["panneauPV"]*powPV +
-                (est["centraleNuc"]-save["nvPionsParReg"]["est"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["est"]["Thermique"] * prodGaz / nbTherm)
+    prodGE = (np.array(fdc_on.est)*mix["est"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.est)*mix["est"]["panneauPV"]*powPV + 
+                (mix["est"]["centraleNuc"]-nvPionsReg["est"]["centraleNuc"]) * factNuc +
+                nbThermReg["est"] * prodGaz / nbTherm)
 
     ##Normandie
     popNOR = 0.05
-    prodNOR = (np.array(fdc_off.naq)*nor["eolienneOFF"]*powOffshore +
-                np.array(fdc_on.nor)*nor["eolienneON"]*powOnshore +
-                np.array(fdc_pv.nor)*nor["panneauPV"]*powPV + 
-                (nor["centraleNuc"]-save["nvPionsParReg"]["nor"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["nor"]["Thermique"] * prodGaz / nbTherm)
+    prodNOR = (np.array(fdc_off.nor)*mix["nor"]["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.nor)*mix["nor"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.nor)*mix["nor"]["panneauPV"]*powPV + 
+                (mix["nor"]["centraleNuc"]-nvPionsReg["nor"]["centraleNuc"]) * factNuc +
+                nbThermReg["nor"] * prodGaz / nbTherm)
 
     ##Bourgogne-Franche-Comté
     popBFC = 0.04
-    prodBFC = (np.array(fdc_on.bfc)*bfc["eolienneON"]*powOnshore +
-                np.array(fdc_pv.bfc)*bfc["panneauPV"]*powPV +
-                (bfc["centraleNuc"]-save["nvPionsParReg"]["bfc"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["bfc"]["Thermique"] * prodGaz / nbTherm)
+    prodBFC = (np.array(fdc_on.bfc)*mix["bfc"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.bfc)*mix["bfc"]["panneauPV"]*powPV + 
+                (mix["bfc"]["centraleNuc"]-nvPionsReg["bfc"]["centraleNuc"]) * factNuc +
+                nbThermReg["bfc"] * prodGaz / nbTherm)
 
     ##Centre Val de Loire
     popCVL = 0.04
-    prodCVL = (np.array(fdc_on.cvl)*cvl["eolienneON"]*powOnshore +
-                np.array(fdc_pv.cvl)*cvl["panneauPV"]*powPV +
-                (cvl["centraleNuc"]-save["nvPionsParReg"]["cvl"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["cvl"]["Thermique"] * prodGaz / nbTherm)
+    prodCVL = (np.array(fdc_on.cvl)*mix["cvl"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.cvl)*mix["cvl"]["panneauPV"]*powPV + 
+                (mix["cvl"]["centraleNuc"]-nvPionsReg["cvl"]["centraleNuc"]) * factNuc +
+                nbThermReg["cvl"] * prodGaz / nbTherm)
 
     ##PACA
     popPAC = 0.08
-    prodPAC = (np.array(fdc_off.pac)*pac["eolienneOFF"]*powOffshore +
-                np.array(fdc_on.pac)*pac["eolienneON"]*powOnshore +
-                np.array(fdc_pv.pac)*pac["panneauPV"]*powPV + 
-                (pac["centraleNuc"]-save["nvPionsParReg"]["pac"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["pac"]["Thermique"] * prodGaz / nbTherm)
+    prodPAC = (np.array(fdc_off.pac)*mix["pac"]["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.pac)*mix["pac"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.pac)*mix["pac"]["panneauPV"]*powPV + 
+                (mix["pac"]["centraleNuc"]-nvPionsReg["pac"]["centraleNuc"]) * factNuc +
+                nbThermReg["pac"] * prodGaz / nbTherm)
 
     ##Ile-de-France
     popIDF = 0.19
-    prodIDF = (np.array(fdc_on.idf)*idf["eolienneON"]*powOnshore +
-                np.array(fdc_pv.idf)*idf["panneauPV"]*powPV +
-                (idf["centraleNuc"]-save["nvPionsParReg"]["idf"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["idf"]["Thermique"] * prodGaz / nbTherm)
+    prodIDF = (np.array(fdc_on.idf)*mix["idf"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.idf)*mix["idf"]["panneauPV"]*powPV + 
+                (mix["idf"]["centraleNuc"]-nvPionsReg["idf"]["centraleNuc"]) * factNuc +
+                nbThermReg["idf"] * prodGaz / nbTherm)
 
     ##Corse
     popCOR = 0.005
-    prodCOR = (np.array(fdc_off.cor)*cor["eolienneOFF"]*powOffshore +
-                np.array(fdc_on.cor)*cor["eolienneON"]*powOnshore +
-                np.array(fdc_pv.cor)*cor["panneauPV"]*powPV + 
-                (cor["centraleNuc"]-save["nvPionsParReg"]["cor"]["Nucleaire"]) * factNuc + 
-                save["pionsParRegInit"]["cor"]["Thermique"] * prodGaz / nbTherm)
+    prodCOR = (np.array(fdc_off.cor)*mix["cor"]["eolienneOFF"]*powOffshore + 
+                np.array(fdc_on.cor)*mix["cor"]["eolienneON"]*powOnshore + 
+                np.array(fdc_pv.cor)*mix["cor"]["panneauPV"]*powPV + 
+                (mix["cor"]["centraleNuc"]-nvPionsReg["cor"]["centraleNuc"]) * factNuc +
+                nbThermReg["cor"] * prodGaz / nbTherm)
 
     ##production totale sur le territoire
     prod = prodOCC + prodNA + prodBRE + prodHDF + prodPDL + prodARA + prodGE + prodNOR + prodBFC + prodCVL + prodPAC + prodIDF + prodCOR
@@ -877,26 +893,26 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
     prixNuc = 7.6e-6 #part du combustible dans le prix de l'électricité nucléaire (7.6€ le MWh)
 
     #carte alea MEGC (lancé 1 / 3)
-    if alea == "MEGC1" or alea == "MEGC2" or alea == "MEGC3":
+    if mix["alea"] == "MEGC1" or mix["alea"] == "MEGC2" or mix["alea"] == "MEGC3":
         prixGaz *= 1.5 #alea1
     
     
-    if alea == "MEGC3":
+    if mix["alea"] == "MEGC3":
         prixNuc *= 1.4 #alea3
 
 
     #carte alea MEMP (lancé 3)
-    if alea == "MEMP3":
+    if mix["alea"] == "MEMP3":
         prixGaz *= 1.3
         prixNuc *= 1.2
 
     #variable cout (Md€) --> pour le tour titre
-    cout = (save["nvPions"]["nbeolON"] * 3.5 + 
-            save["nvPions"]["nbeolOFF"] * 1.2 + 
-            save["nvPions"]["nbPV"] * 3.6 + 
-            save["nvPions"]["nbNuc"] * 8.6 +
-            save["nvPions"]["nbBio"] * 0.12 +
-            save["nvPions"]["nbMeth"] * 4.85 +
+    cout = (nvPions["eolienneON"] * 3.5 + 
+            nvPions["eolienneOFF"] * 1.2 + 
+            nvPions["panneauPV"] * 3.6 + 
+            nvPions["centraleNuc"] * 8.6 +
+            nvPions["biomasse"] * 0.12 +
+            nvPions["methanation"] * 4.85 +
             (B.Q * 0.0012) / 0.003 + 
             (P.Q * 0.455) / 0.91 + 
             (prodNuc * prixNuc) +
@@ -904,37 +920,38 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
 
 
     #budget à chaque tour sauf si carte évènement bouleverse les choses
-    budget = 80
+    budget = 60
 
     #carte alea MEVUAPV : lancé 3
-    if alea == "MEVUAPV3":
+    if mix["alea"] == "MEVUAPV3":
         budget -= 10
 
     #carte MEMDA : lancé 1 / 2
-    if alea == "MEMDA1" or alea == "MEMDA2" or alea == "MEMDA3":
+    if mix["alea"] == "MEMDA1" or mix["alea"] == "MEMDA2" or mix["alea"] == "MEMDA3":
         budget += 3.11625
 
-    if alea == "MEMDA2" or alea == "MEMDA3":
+    if mix["alea"] == "MEMDA2" or mix["alea"] == "MEMDA3":
         cout -= 1.445
     
     #carte MEGDT : lancé 1 / 3
-    if alea == "MEGDT1" or alea == "MEGDT2" or alea == "MEGDT3":
-        cout += 1/3*save["nvPionsParReg"]["pac"]["panneauPV"]*3.6
+    if mix["alea"] == "MEGDT1" or mix["alea"] == "MEGDT2" or mix["alea"] == "MEGDT3":
+        cout += 1/3*nvPionsReg["pac"]["panneauPV"]*3.6
 
-    if alea == "MEGDT3":
-        cout += save["nvPionsParReg"]["pll"]["eolienneOFF"]*1.2
+    if mix["alea"] == "MEGDT3":
+        cout += nvPionsReg["pll"]["eolienneOFF"]*1.2
 
     
-    Sol = nbOn*300 + nbOff*400 + nbPv*26 + nbNuc*1.5 + nbBio*0.8 #occupation au sol de toutes les technologies (km2)
+    Sol = (nbPions["eolienneON"]*300 + nbPions["eolienneOFF"]*400 + nbPions["panneauPV"]*26 + 
+            nbPions["centraleNuc"]*1.5 + nbPions["biomasse"]*0.8) #occupation au sol de toutes les technologies (km2)
 
 
     Uranium = save["scores"]["Uranium"] #disponibilité Uranium initiale
-    if nbNuc > 0:
+    if nbPions["centraleNuc"] > 0:
         Uranium -= 10 #à chaque tour où on maintient des technos nucléaires
-    if save["nvPions"]["nbNuc"] > 0:
-        Uranium -= 5*save["nvPions"]["nbNuc"]/2 #à chaque paire de réacteurs posées sur le territoire
+    if nvPions["centraleNuc"] > 0:
+        Uranium -= 5*nvPions["centraleNuc"]/2 #à chaque paire de réacteurs posées sur le territoire
     #carte aléa MEGC (lancé 2)
-    if alea == "MEGC2" or alea == "MEGC3":
+    if mix["alea"] == "MEGC2" or mix["alea"] == "MEGC3":
         Uranium -= 10 
     
     save["scores"]["Uranium"] = Uranium #actualisation du score Uranium
@@ -945,7 +962,7 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
         Hydro -= 20 #à chaque tour où on consomme du gaz fossile
     
     #carte aléa MEMP (lancé 2)
-    if alea == "MEMP2" or alea == "MEMP3":
+    if mix["alea"] == "MEMP2" or mix["alea"] == "MEMP3":
         Hydro -= 20
 
     save["scores"]["Hydro"] = Hydro #actualisation du score Hydro
@@ -953,11 +970,11 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
 
     Bois = save["scores"]["Bois"]#disponibilité Bois
     regen = 100 - Bois
-    if nbBio > 0:
-        Bois -= nbBio #au nombre de centrales Biomasse on enlève 1 quantité de bois --> au tour suivant 1/2 des stocks sont récupérés
+    if nbPions["biomasse"] > 0:
+        Bois -= nbPions["biomasse"] #au nombre de centrales Biomasse on enlève 1 quantité de bois --> au tour suivant 1/2 des stocks sont récupérés
     Bois += regen / 2
     #carte aléa MEMP (lancé 1)
-    if alea == "MEMP1" or alea == "MEMP2" or alea == "MEMP3":
+    if mix["alea"] == "MEMP1" or mix["alea"] == "MEMP2" or mix["alea"] == "MEMP3":
         Bois -= 20
 
     save["scores"]["Bois"] = Bois #actualisation du score Bois
@@ -965,33 +982,33 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
 
     dechet = save["scores"]["Dechet"]
     # dechet += nbTherm*2 + nbNuc*1 #déchets générés par les technologies Nucléaires et Thermiques
-    dechet += nbNuc
+    dechet += nbPions["centraleNuc"]
     save["scores"]["Dechet"] = dechet
 
     capmax_info = save["capacite"]
     #carte alea MECS (lancé 1 / 2)
-    if alea == "MECS1" or alea == "MECS2" or alea == "MECS3":
+    if mix["alea"] == "MECS1" or mix["alea"] == "MECS2" or mix["alea"] == "MECS3":
         for k in capmax_info:
             capmax_info[k]["eolienneON"] = int(capmax_info[k]["eolienneON"] * 0.4)
 
-    if alea == "MECS2" or alea == "MECS3":
+    if mix["alea"] == "MECS2" or mix["alea"] == "MECS3":
         capmax_info["occ"]["eolienneON"] *= 2
         capmax_info["occ"]["panneauPV"] *= 2
 
     #carte alea MEGDT (lancé 2)
-    if alea == "MEGDT2" or alea == "MEGDT3":
+    if mix["alea"] == "MEGDT2" or mix["alea"] == "MEGDT3":
         capmax_info["naq"]["eolienneOFF"] += 1
         capmax_info["pac"]["eolienneOFF"] += 1
     
     save["capacite"] = capmax_info
 
     for k in capmax_info : 
-        if (nbOn > capmax_info[k]["eolienneON"] 
-            or nbOff > capmax_info[k]["eolienneOFF"] 
-            or nbPv > capmax_info[k]["panneauPV"]-11*nbOn
-            or nbBio > capmax_info[k]["biomasse"]-33*nbOn-3*nbPv) :
-            print("vous empiétez sur des territoires agricoles ou surfaces maritimes --> mécontentement de la population !!!")
-
+        if (nbPions["eolienneON"] > capmax_info[k]["eolienneON"] 
+            or nbPions["eolienneOFF"] > capmax_info[k]["eolienneOFF"] 
+            or nbPions["panneauPV"] > capmax_info[k]["panneauPV"]-11*nbPions["eolienneON"]
+            or nbPions["biomasse"] > capmax_info[k]["biomasse"]-33*nbPions["eolienneON"]-3*nbPions["panneauPV"]) :
+            pass
+            # AVERTISSEMENT
 
 
     #modification du fichier save
@@ -999,18 +1016,18 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
         json.dump(save, output)
 
 
-    result = {"carte":carte, 
-                "annee":annee, 
-                "alea":alea, 
+    result = {"carte":mix["carte"], 
+                "annee":mix["annee"], 
+                "alea":mix["alea"], 
                 "cout":round(cout), 
                 "sol":round(Sol/551695*100, 2),
                 "stockGaz":list(G.stored),
                 "biogaz":gazBiomasse,
                 "demande":int(demande), "production":prodTotale,
                 "scoreUranium":Uranium, "scoreHydro":Hydro, "scoreBois":Bois, "scoreDechets":dechet,
-                "prodEolienneON":prodOn, "puissanceEolienneON":round(nbOn*powOnshore, 2),
-                "prodEolienneOFF":prodOff, "puissanceEolienneOFF":round(nbOff*powOffshore, 2),
-                "prodPV":prodPv, "puissancePV":round(nbPv*powPV, 2),
+                "prodEolienneON":prodOn, "puissanceEolienneON":round(nbPions["eolienneON"]*powOnshore, 2),
+                "prodEolienneOFF":prodOff, "puissanceEolienneOFF":round(nbPions["eolienneOFF"]*powOffshore, 2),
+                "prodPV":prodPv, "puissancePV":round(nbPions["panneauPV"]*powPV, 2),
                 "prodHydraulique":prodEau,
                 "prodNucleaire":prodNuc, "puissanceNucleaire":round(N.Q, 2),
                 "prodGaz":prodGaz, "puissanceGaz":round(G.Q, 2),
@@ -1044,13 +1061,14 @@ def simulation(scenario, mix, save, nvPions, nvPionsReg, group, team):
 # Fonction principale
 #
 # @params
-# scenario (str) : au choix entre ADEME, RTE et Negawatt
-# tour (int) : valeur parmi 25, 30, .., 45, 50
-# est - cor (dict) : contient le nombre d'installations pour la region concernee
-# nbOn - nbBio (int) : nombre de pions eoliennes onshore, offshore, ..., de biomasse
-# factStock (float) : facteur de qte de stockage, entre 0 et 1
-# alea (str) : code d'une carte alea        
-def strat_stockage_main(mix, save, nvPions, nvPionsReg, group, team):
+# mix (dict) : données du plateau
+# save (dict) : données du tour précédent
+# nbPions (dict) : nombre de pions total pour chaque techno
+# nvPions (dict) : nombre de nouveaux pions total pour chaque techno ce tour-ci
+# nvPionsReg (dict) : nombre de pions total pour chaque techno
+# group (str) : groupe de TD de l'équipe qui joue
+# team (int) : numéro de l'équipe qui joue dans ce groupe      
+def strat_stockage_main(mix, save, nbPions, nvPions, nvPionsReg, group, team):
 
     # Infos sur les unités de data :
     # eolienneON --> 1 unité = 10 parcs = 700 eoliennes
@@ -1074,13 +1092,13 @@ def strat_stockage_main(mix, save, nvPions, nvPionsReg, group, team):
     # # NEGAWATT.columns = ["heures", "d2050", "d2045", "d2040", "d2035", "d2030", "d2025"]
 
 
-    result = simulation(ADEME["d{}".format(mix["annee"])], mix, save, nvPions, nvPionsReg, group, team)
+    result = simulation(ADEME["d{}".format(mix["annee"])], mix, save, nbPions, nvPions, nvPionsReg, group, team)
 
 
     with open(dataPath+'game_data/{}/{}/resultats.json'.format(group, team), 'r') as src:
         resultatGlobal = json.load(src)
 
-    resultatGlobal[str(data["annee"])] = result
+    resultatGlobal[str(mix["annee"])] = result
 
-    with open(dataPath+'game_data/{}/{}/resultats.json'.format(group, team), 'r') as dst:
+    with open(dataPath+'game_data/{}/{}/resultats.json'.format(group, team), 'w') as dst:
         json.dump(resultatGlobal, dst)

@@ -184,7 +184,10 @@ def results_bis_html():
 @cross_origin(supports_credentials=True)
 def commitResults():
     group = request.cookies.get("groupe")
-    team = request.cookies.get("equipe")    
+    team = request.cookies.get("equipe")
+
+    with open(dataPath+"game_data/{}/{}/save_tmp.json".format(group, team), "r") as src:
+        newSave = json.load(src)  
 
     if newSave["annee"] == 2055:
         with open(dataPath+"game_data/mix_init.json", "r") as src:
@@ -198,9 +201,6 @@ def commitResults():
             json.dump(newResultats, dst)
 
         with open(dataPath+"game_data/save_init.json".format(group), "r") as src:
-            newSave = json.load(src)
-    else:
-        with open(dataPath+"game_data/{}/{}/save_tmp.json".format(group, team), "r") as src:
             newSave = json.load(src)
 
 
@@ -288,7 +288,7 @@ def prodCompute():
 
 
 
-        # CALCUL NOMBRE DE NOUVEAU PIONS A CE TOUR
+        # CALCUL NOMBRE DE NOUVEAU PIONS + TOTAL A CE TOUR
         nvPionsReg = {
             "hdf": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
             "idf": {"eolienneON": 0, "eolienneOFF": 0, "panneauPV": 0, "methanation": 0, "centraleNuc": 0, "biomasse": 0}, 
@@ -314,10 +314,21 @@ def prodCompute():
             "biomasse": 0
         }
 
+        nbPions = {
+            "eolienneON": 0,
+            "eolienneOFF": 0,
+            "panneauPV": 0,
+            "methanation": 0,
+            "centraleNuc": 0,
+            "biomasse": 0
+        }
+                
+
         for reg in save["capacite"]:
             for p in data[reg]:
                 nvPionsReg[reg][p] = data[reg][p] - len(save[reg][p])
                 nvPions[p] += data[reg][p] - len(save[reg][p])
+                nbPions[p] += data[reg][p]
                 
                 for i in range(nvPionsReg[reg][p]):
                     save[reg][p].append(data["annee"])
@@ -357,7 +368,7 @@ def prodCompute():
                 raise exc.errNuc
                 
 
-        strat_stockage.strat_stockage_main(data, save, nvPions, nvPionsReg, group, team)
+        strat_stockage.strat_stockage_main(data, save, nbPions, nvPions, nvPionsReg, group, team)
         resp = ["success"]
 
 
@@ -384,3 +395,10 @@ def prodCompute():
     resp = jsonify(resp)
 
     return resp
+
+
+
+# TESTS EN LOCAL:
+#
+# if __name__ == "__main__":
+#     app.run(debug=True)
