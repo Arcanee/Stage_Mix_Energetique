@@ -12,3 +12,6 @@ class errCarte(Exception):
 
 class errNuc(Exception):
     pass
+
+class errMixInit(Exception):
+    pass

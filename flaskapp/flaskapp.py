@@ -335,7 +335,14 @@ def prodCompute():
             "EPR2" : 0,
             "biomasse": 0
         }
-                
+
+        for reg in save["capacite"]:
+            nbPions["centraleNuc"] += data[reg]["centraleNuc"]
+        if data["annee"] == 2030 and nbPions["centraleNuc"] != 47:
+            raise exc.errMixInit
+        else:
+            nbPions["centraleNuc"] = 0
+
 
         for reg in save["capacite"]:
             for p in data[reg]:
@@ -356,9 +363,6 @@ def prodCompute():
                     nucSuppr = len(save[reg][p]) - data[reg][p]
                     for i in range(nucSuppr):
                         save[reg][p].remove(data["annee"]-40)
-
-                
-                        
 
         
         if data["alea"] == "MECS3":
@@ -384,6 +388,8 @@ def prodCompute():
         resp = ["errSol", errDetails]
     except exc.errNuc:
         resp = ["errNuc", errDetails]
+    except exc.errMixInit:
+        resp = ["errMixInit", None]
 
     except:
         resp = ["err", None]

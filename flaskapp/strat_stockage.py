@@ -1109,6 +1109,26 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
             # AVERTISSEMENT
 
 
+    replaceList = []
+    nbReplace = 0
+    for reg in save["capacite"]:
+        for p in save[reg]:
+            nbReplace = 0
+
+            if p == "centraleNuc":
+                for y in save[reg][p]:
+                    if y == save["annee"] - 40:
+                        nbReplace += 1
+
+            elif p == "eolienneON" or p == "eolienneOFF":
+                for y in save[reg][p]:
+                    if y == save["annee"] - 15:
+                        nbReplace += 1
+
+            if nbReplace > 0:
+                replaceList.append([nbReplace, p, reg])
+
+
     #modification du fichier save
     with open(dataPath+"game_data/{}/{}/save_tmp.json".format(group, team), "w") as output:
         json.dump(save, output)
@@ -1132,6 +1152,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
                 "prodPhs":save["prodPhs"], "puissancePhs":round(P.Q, 2),
                 "prodBatterie":save["prodBatterie"], "puissanceBatterie":round(B.Q, 2),
                 "co2":save["co2"],
+                "remplacement":replaceList,
                 "nbSurplus":nbS, "nbPenuries":nbP,
                 "surplusQuotidien":listeSurplusQuotidien, "surplusHoraire":listeSurplusHoraire,
                 "penuriesQuotidien":listePenuriesQuotidien, "penuriesHoraire":listePenuriesHoraire,

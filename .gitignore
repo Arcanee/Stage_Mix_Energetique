@@ -260,5 +260,8 @@ flaskapp/game_data/**/save.json
 flaskapp/game_data/**/save_tmp.json
 flaskapp/game_data/**/results.json
 
+# logs d'erreur
+flaskapp/logs.txt
+
 # repertoires python
 flaskapp/__pycache__/

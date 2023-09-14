@@ -16,6 +16,22 @@ $(function() {
                     ["cor", "Corse"]]
     };
 
+    const regConvert = {
+        "hdf" : "Hauts-de-France",
+        "bre" : "Bretagne",
+        "nor" : "Normandie",
+        "idf" : "Ile-de-France",
+        "est" : "Grand Est",
+        "cvl" : "Centre-Val de Loire",
+        "pll" : "Pays de la Loire",
+        "bfc" : "Bourgogne-Franche-Comté",
+        "naq" : "Nouvelle-Aquitaine",
+        "ara" : "Auvergne-Rhône-Alpes",
+        "occ" : "Occitanie",
+        "pac" : "Provence-Alpes-Côte d'Azur",
+        "cor" : "Corse"
+    }
+
     const pions = [ ["eolienneON", "Eoliennes on."],
                     ["eolienneOFF", "Eoliennes off."],
                     ["panneauPV", "Panneaux PV"],
@@ -24,6 +40,16 @@ $(function() {
                     ["methanation", "Méthanation"],
                     ["biomasse", "Biomasse"]
     ];
+
+    const pionsConvert = {
+        "eolienneON" : "Eoliennes on.",
+        "eolienneOFF" : "Eoliennes off.",
+        "panneauPV" : "Panneaux PV",
+        "centraleNuc" : "Ancien nuc.",
+        "EPR2" : "EPR 2",
+        "methanation" : "Méthanation",
+        "biomasse" : "Biomasse"
+    }
 
     const aleas = ["", "MEGC1", "MEGC2", "MEGC3", "MEMFDC1", "MEMFDC2", "MEMFDC3",
                     "MECS1", "MECS2", "MECS3", "MEVUAPV1", "MEVUAPV2", "MEVUAPV3",
@@ -266,6 +292,9 @@ $(function() {
                     break;
                 case "errNuc":
                     msg = `La crise sociale en cours vous empêche de placer plus de réacteurs nucléaires (vous en avez ajouté ${details}).`;
+                    break;
+                case "errMixInit":
+                    msg = "Votre mix ne correspond pas au mix initial imposé. Veuillez vérifier le nombre de réacteurs dans chaque région.";
                     break;
                 default:
                     break;
@@ -523,6 +552,9 @@ $(function() {
                     break;
                 case "errNuc":
                     msg = `La crise sociale en cours vous empêche de placer plus de réacteurs nucléaires (vous en avez ajouté ${details}).`;
+                    break;
+                case "errMixInit":
+                    msg = "Votre mix ne correspond pas au mix initial imposé. Veuillez vérifier le nombre de réacteurs dans chaque région.";
                     break;
                 default:
                     break;
@@ -1023,11 +1055,26 @@ $(function() {
             }
 
             creerLegende(couleurs, min, coeff);
+
+            const replace = resultsData.remplacement;
+            if (replace.length > 0) {
+                let replaceStr = "REPLACEMENTS A EFFECTUER AUX PROCHAINS TOURS :</br>";
+                for (const i of replace) {
+                    replaceStr += `${i[0]} ${pionsConvert[i[1]]} en ${regConvert[i[2]]}</br>`;
+                }
+                $("#replaceInfo").html(replaceStr);
+            }
+            
+            $("#turn").text(`Tour ${(resultsData.annee.toString() - 2030) / 5 + 1}`);
         }
 
 
         $('#commitResults').click(() => {
             location.href = "/commit";
+        });
+
+        $('#previousYear').click(() => {
+            ;
         });
 
 
