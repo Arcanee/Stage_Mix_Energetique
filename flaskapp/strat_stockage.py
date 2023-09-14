@@ -423,49 +423,38 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     #Carte politique A
     if mix["politique"] == "CPA1" :
         save["varConso"] -= 1e4
-        scenario += np.ones(H)*(save["varConso"]/H)
     if mix["politique"] == "CPA2" :
         save["varConso"] -= 6e3
-        scenario += np.ones(H)*(save["varConso"]/H)
     
     #Carte politique B
     if mix["politique"] == "CPB1" :
         save["varConso"] += 4.92e3
-        scenario += np.ones(H)*(save["varConso"]/H)
     
     #Carte politique C
     if mix["politique"] == "CPC1" :
         save["varConso"] -= 2e4
-        scenario += np.ones(H)*(save["varConso"]/H)
     if mix["politique"] == "CPC2" :
         save["varConso"] -= 6.3e4
-        scenario += np.ones(H)*(save["varConso"]/H)
 
     #Carte politique D 
     if mix["politique"] == "CPD1" :
         save["varConso"] += 6.8e4
-        scenario += np.ones(H)*(save["varConso"]/H)
     if mix["politique"] == "CPD2" :
         save["varConso"] -= 1e4
-        scenario += np.ones(H)*(save["varConso"]/H)
     
     #Carte politique E
     if mix["politique"] == "CPE1" :
         save["varConso"] +=1.03e5
-        scenario += np.ones(H)*(save["varConso"]/H)
     if mix["politique"] == "CPE2" :
         save["varConso"] += 6.7e4
-        scenario += np.ones(H)*(save["varConso"]/H)
 
     #Carte politique F
     if mix["politique"] == "CPF1" :
         save["varConso"] -= 3.5e4
-        scenario += np.ones(H)*(save["varConso"]/H)
     if mix["politique"] == "CPF2" :
         save["varConso"] -= 1.3e4
-        scenario += np.ones(H)*(save["varConso"]/H)
 
-
+    scenario += np.ones(H)*(save["varConso"]/H)
 
     #carte alea MEVUAPV  (lance de 1 / 2)
     # if mix["alea"] == "MEVUAPV1" or mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUAPV3": 
@@ -1073,7 +1062,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     #carte alea MEVUAPV  (lance de 1 / 2)
     if mix["alea"] == "MEVUAPV1" or mix["alea"] == "MEVUAPV2" or mix["alea"] == "MEVUPV3": 
         Bois -= 10
-        save["bois"]["totstockbois"] -= 10
+        save["scores"]["totstockbois"] -= 10
 
     save["scores"]["Bois"] = Bois #actualisation du score Bois
         
