@@ -760,6 +760,7 @@ $(function() {
             let options = {
                 title: 'Puissance installée'
             };
+            
 
             // Concaténez la valeur à la chaîne 'Puissance Installée' et affichez-la dans l'élément <div>
             let powStr = options.title + " : " + Math.round(TotalP) + " GW";
@@ -770,30 +771,52 @@ $(function() {
             let chart = new google.visualization.PieChart(document.getElementById('Chart_div'));
             chart.draw(result1, options);
         }
+
+
+        function Sol() {
+
+            let result9 = google.visualization.arrayToDataTable([['Type', 'Pourcentage'],
+                ['Technologie', resultsData.sol],
+                ['Le reste de la France', 1 - resultsData.sol]
+            ]);
+
+            let options = {
+                title: 'Occupation au sol des infrastructures', 
+                slices : {
+                    0 : {color : '#33ac71'}, 
+                    1 : {color : '#b97940'}
+                }
+            };
+        
+            // Instantiate and draw the chart.
+            let chart = new google.visualization.PieChart(document.getElementById('Sol_div'));
+            chart.draw(result9, options);
+        }
+
         function conso(){
             let result8 = google.visualization.arrayToDataTable([
                 ['Technologie', 'EON', 'EOFF', 'Batterie', 'Nucléaire',
-                 'PV', 'Hydraulique', 'Phs', 'Gaz', { role: 'annotation' } ],
+                 'PV', 'Hydraulique', 'Phs', 'Gaz Fossile', 'Gaz autres', { role: 'annotation' } ],
 
                 ['2030', resultsData.prodOnshore["2030"], resultsData.prodOffshore["2030"], resultsData.prodBatterie["2030"],
                 resultsData.prodNucleaire["2030"], resultsData.prodPv["2030"], resultsData.prodEau["2030"],
-                resultsData.prodPhs["2030"], resultsData.prodGaz["2030"], ''],
+                resultsData.prodPhs["2030"], resultsData.prodGazFossile["2030"], (resultsData.prodGaz["2030"]-resultsData.prodGazFossile["2030"]), ''],
 
                 ['2035', resultsData.prodOnshore["2035"], resultsData.prodOffshore["2035"], resultsData.prodBatterie["2035"],
                 resultsData.prodNucleaire["2035"], resultsData.prodPv["2035"], resultsData.prodEau["2035"],
-                resultsData.prodPhs["2035"], resultsData.prodGaz["2035"], ''],
+                resultsData.prodPhs["2035"], resultsData.prodGazFossile["2035"], (resultsData.prodGaz["2035"]-resultsData.prodGazFossile["2035"]),''],
 
                 ['2040', resultsData.prodOnshore["2040"], resultsData.prodOffshore["2040"], resultsData.prodBatterie["2040"],
                 resultsData.prodNucleaire["2040"], resultsData.prodPv["2040"], resultsData.prodEau["2040"],
-                resultsData.prodPhs["2040"], resultsData.prodGaz["2040"], ''],
+                resultsData.prodPhs["2040"], resultsData.prodGazFossile["2040"], (resultsData.prodGaz["2040"]-resultsData.prodGazFossile["2040"]), ''],
 
                 ['2045', resultsData.prodOnshore["2045"], resultsData.prodOffshore["2045"], resultsData.prodBatterie["2045"],
                 resultsData.prodNucleaire["2045"], resultsData.prodPv["2045"], resultsData.prodEau["2045"],
-                resultsData.prodPhs["2045"], resultsData.prodGaz["2045"], ''],
+                resultsData.prodPhs["2045"], resultsData.prodGazFossile["2045"], (resultsData.prodGaz["2045"]-resultsData.prodGazFossile["2045"]), ''],
                 
                 ['2050', resultsData.prodOnshore["2050"], resultsData.prodOffshore["2050"], resultsData.prodBatterie["2050"],
                 resultsData.prodNucleaire["2050"], resultsData.prodPv["2050"], resultsData.prodEau["2050"],
-                resultsData.prodPhs["2050"], resultsData.prodGaz["2050"], ''],
+                resultsData.prodPhs["2050"], resultsData.prodGazFossile["2050"], (resultsData.prodGaz["2050"]-resultsData.prodGazFossile["2050"]), ''],
               ]);
         
             let options = {
@@ -941,6 +964,7 @@ $(function() {
             result6.addColumn('number', '');
             result6.addRows([
                 ['Dépense (en Md€)',  {v :resultsData.cout, f : resultsData.cout + ''}],
+                ['Budget disponible (en Md€)', {v : resultsData.budget, f : resultsData.budget + ''}],
                 ['Demande',   {v:resultsData.demande,   f: resultsData.demande + ' Gwh'}],
                 ['Production', {v: resultsData.production, f: resultsData.production + ' GWh'}],
                 ['Production - Demande',   {v: resultsData.production - resultsData.demande,  f: resultsData.production - resultsData.demande + ' GWh'}],
@@ -999,6 +1023,7 @@ $(function() {
             google.charts.setOnLoadCallback(Resultats);
             google.charts.setOnLoadCallback(Score);
             google.charts.setOnLoadCallback(conso);
+            google.charts.setOnLoadCallback(Sol);
 
             let map = document.querySelector('#map')
 
