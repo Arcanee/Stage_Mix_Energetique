@@ -1,5 +1,0 @@
-[2023-09-14 13:32:27.944551] Traceback (most recent call last):
-  File "/var/www/html/flaskapp/flaskapp.py", line 365, in prodCompute
-    save[reg][p].remove(data["annee"]-40)
-ValueError: list.remove(x): x not in list
- 

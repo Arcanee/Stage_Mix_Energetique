@@ -253,17 +253,17 @@ cython_debug/
 *~
 
 # fichiers de sauvegardes mis a jour a chaque simulation
-flaskapp/game_data/**/image.png
-flaskapp/game_data/**/detection.json
-flaskapp/game_data/**/mix.json
-flaskapp/game_data/**/save.json
-flaskapp/game_data/**/save_tmp.json
-flaskapp/game_data/**/results.json
+flaskapp/game_data/*/
+flaskapp/game_data/*/*/
+flaskapp/game_data/*/*/*.json
+
+
 
 # logs d'erreur
 flaskapp/logs.txt
 
 # repertoires python
 flaskapp/__pycache__/
-flaskapp/game_data/?
 _*
+logs.txt
+flaskapp/logs.txt
