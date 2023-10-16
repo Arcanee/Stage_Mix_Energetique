@@ -747,14 +747,14 @@ $(function() {
                             resultsData.puissancePhs);
 
 
-            let result1 = google.visualization.arrayToDataTable([['Technologie', 'Pourcentage'],
-                ['EON', resultsData.puissanceEolienneON/TotalP],
-                ['EOFF', resultsData.puissanceEolienneOFF/TotalP],
-                ['Batterie', resultsData.puissanceBatterie/TotalP],
-                ['Nucléaire', resultsData.puissanceNucleaire/TotalP],
-                ['PV', resultsData.puissancePV/TotalP],
-                ['Phs', resultsData.puissancePhs/TotalP],
-                ['Gaz', resultsData.puissanceGaz/TotalP]
+            let result1 = google.visualization.arrayToDataTable([['Technologie', 'Pourcentage', 'Unité'],
+                ['EON', resultsData.puissanceEolienneON/TotalP, 'GW'],
+                ['EOFF', resultsData.puissanceEolienneOFF/TotalP, 'GW'],
+                ['Batterie', resultsData.puissanceBatterie/TotalP, 'GW'],
+                ['Nucléaire', resultsData.puissanceNucleaire/TotalP, 'GW'],
+                ['PV', resultsData.puissancePV/TotalP, 'GW'],
+                ['Phs', resultsData.puissancePhs/TotalP, 'GW'],
+                ['Gaz', resultsData.puissanceGaz/TotalP, 'GW']
             ]);
 
             let options = {
@@ -775,9 +775,9 @@ $(function() {
 
         function Sol() {
 
-            let result9 = google.visualization.arrayToDataTable([['Type', 'Pourcentage'],
-                ['Technologie', resultsData.sol],
-                ['Le reste de la France', 1 - resultsData.sol]
+            let result9 = google.visualization.arrayToDataTable([['Type', 'Pourcentage', 'Unité'],
+                ['Technologie', resultsData.sol, '%'],
+                ['Le reste de la France', 1 - resultsData.sol, '%']
             ]);
 
             let options = {
@@ -795,8 +795,8 @@ $(function() {
 
         function conso(){
             let result8 = google.visualization.arrayToDataTable([
-                ['Technologie', 'EON', 'EOFF', 'Batterie', 'Nucléaire',
-                 'PV', 'Hydraulique', 'Phs', 'Gaz Fossile', 'Gaz autres', { role: 'annotation' } ],
+                ['Année', 'EON', 'EOFF', 'Batterie', 'Nucléaire',
+                 'PV', 'Hydraulique', 'Phs', 'Gaz Fossile', 'Gaz autres', { role: 'annotation' }],
 
                 ['2030', resultsData.prodOnshore["2030"], resultsData.prodOffshore["2030"], resultsData.prodBatterie["2030"],
                 resultsData.prodNucleaire["2030"], resultsData.prodPv["2030"], resultsData.prodEau["2030"],
@@ -821,7 +821,7 @@ $(function() {
         
             let options = {
                 width: 600,
-                title : 'Production par technologie',
+                title : 'Production par technologie (en GWh)',
                 height: 400,
                 legend: { position: 'top', maxLines: 3 },
                 bar: { groupWidth: '75%' },
@@ -847,7 +847,7 @@ $(function() {
             ]);
 
             let options = {
-                title: 'Production', 
+                title: 'Production (en GWh)', 
                 legend : 'none'
             };
 
@@ -862,6 +862,7 @@ $(function() {
 
             let result3 = google.visualization.arrayToDataTable([
                 ['Année', 'Emissions CO2', { role: "style" }],
+                ['2025', 26494417, 'color : green'],
                 ['2030',  co2Array[0], 'color : green'],
                 ['2035',  co2Array[1], 'color : green'],
                 ['2040',  co2Array[2], 'color : green'],
@@ -870,7 +871,7 @@ $(function() {
             ]);
 
             let options = {
-                title: 'Emissions de CO2',
+                title: 'Emissions de CO2 (en Millions de tonnes de CO2)',
                 hAxis: {title: 'Année',  titleTextStyle: {color: 'black'}},
                 vAxis: {minValue: 0},
                 legend: 'none'
@@ -911,7 +912,7 @@ $(function() {
             ]);
 
             let options = {
-                title: 'Pénuries et Surplus au fil des heures',
+                title: 'Nombre de Pénuries et Surplus par heure sur une année',
                 colors: ['#9575cd', '#33ac71'],
                 hAxis: {
                     title: 'Heures',
@@ -940,7 +941,7 @@ $(function() {
             }
 
             let options = {
-                title: 'Pénuries et Surplus au fil des jours',
+                title: 'Nombre de Pénuries et Surplus par jour',
                 colors: ['#9575cd', '#33ac71'],
                 hAxis: {
                     title: 'Jours',
@@ -970,8 +971,8 @@ $(function() {
                 ['Production - Demande',   {v: resultsData.production - resultsData.demande,  f: resultsData.production - resultsData.demande + ' GWh'}],
                 ['Nb Pénuries', {v : resultsData.nbPenuries}], 
                 ['Nb Surplus', {v : resultsData.nbSurplus}], 
-                ['Stock Gaz (fin - debut)', {v : resultsData.stockGaz[8759]-resultsData.stockGaz[0]}],
-                ['Biogaz généré', {v: resultsData.biogaz}]
+                ['Stock Gaz (fin - debut)', {v : resultsData.stockGaz[8759]-resultsData.stockGaz[0], f: resultsData.stockGaz[8759]-resultsData.stockGaz[0] + ' GW'}],
+                ['Biogaz généré', {v: resultsData.biogaz, f: resultsData.biogaz + ' GW'}]
             ]);
 
             let table = new google.visualization.Table(document.getElementById('table_div'));
@@ -988,7 +989,7 @@ $(function() {
             ]);
 
             let options = {
-                title: 'Matières Premières', 
+                title: 'Matières Premières (sur 100)', 
                 legend : 'none'
             };
 

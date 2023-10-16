@@ -216,7 +216,7 @@ def certitudeglobal(y1, y2, y3, stockmax):
     if y2[y2!=-1].size > 0:
         pmoy = np.mean(y2[y2!=-1])
         petype = np.std(y2[y2!=-1])
-        certitude_interval[0] = pmoy + 1.76 * petype / np.sqrt(len(y2[y2!=-1])) ##98% sur penurie (valeur inf de l'IC)
+        certitude_interval[0] = pmoy + 1.76 * petype / np.sqrt(len(y2[y2!=-1])) ##96% sur penurie (valeur inf de l'IC)
     else:
         # Si jamais de penurie
         certitude_interval[0] = 10
@@ -540,7 +540,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
     # Definition des differentes technologies
     # Methanation : 1 pion = 10 unites de 100 MW = 1 GW
     P=Techno('Phs', np.ones(H)*16, np.zeros(H), 0.95, 0.9, 9.3, 9.3, 180)
-    B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, mix["stock"]/10*20.08, mix["stock"]/10*20.08, mix["stock"]/10*74.14)
+    B=Techno('Battery', np.ones(H)*2, np.zeros(H), 0.9, 0.95, mix["stock"]/10*20.08, (mix["stock"]/10)*20.08, (mix["stock"]/10)*74.14)
     G=Techno('Gaz', np.ones(H)*(initGaz+gazBiomasse), np.zeros(H), 0.59, 0.45, 34.44, 1*nbPions["methanation"], 10000000)    
     L=Techno('Lake', storedlake, np.zeros(H), 1, 1, 10, 10, 2000)
 
@@ -932,6 +932,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
 
     consoGaz = G.stored[0] - G.stored[8759]
     prodGazFossile = 0 if consoGaz < gazBiomasse else (consoGaz-gazBiomasse)*G.etaout
+    save["prodGazFossile"][str(mix["annee"])] = prodGazFossile
 
     EmissionCO2 = prodOn*10 + prodOff*9 + prodPv*55 + prodEau*10 + prodNuc*6 + prodGazFossile*443 #variable EmissionCO2
 
@@ -985,10 +986,10 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
                 offshoreRemplac += 1
 
     cout = ((nvPions["eolienneON"] + onshoreRemplac) * 3.5 + 
-            (nvPions["eolienneOFF"] + offshoreRemplac) * 1.2 + 
+            (nvPions["eolienneOFF"] + offshoreRemplac) * 6 + 
             nvPions["panneauPV"] * 3.6 + 
             nvPions["EPR2"]*8.6 + 
-            nucProlong*5 +
+            nucProlong*2 +
             nvPions["biomasse"] * 0.12 +
             nvPions["methanation"] * 4.85 +
             (B.Q * 0.0012) / 0.003 + 
@@ -1000,7 +1001,7 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
         cout +=  (10 - nucProlong) *0.5
 
     #budget à chaque tour sauf si carte evènement bouleverse les choses
-    budget = 60
+    budget = 70
 
     #carte alea MEVUAPV : lance 3
     if mix["alea"] == "MEVUAPV3":
@@ -1127,9 +1128,11 @@ def simulation(scenario, mix, save, nbPions, nvPions, nvPionsReg, group, team):
                 "annee":mix["annee"], 
                 "alea":mix["alea"], 
                 "cout":round(cout), 
-                "sol":round(Sol/551695*100, 2),
+                "budget":round(budget),
+                "sol":round((Sol/551695)*100, 4),
                 "stockGaz":list(G.stored),
-                "biogaz":gazBiomasse,
+                "biogaz": round(gazBiomasse),
+                "prodGazFossile": save["prodGazFossile"],
                 "demande":int(demande), "production":prodTotale,
                 "scoreUranium":Uranium, "scoreHydro":Hydro, "scoreBois":Bois, "scoreDechets":dechet,
                 "prodOnshore":save["prodOnshore"], "puissanceEolienneON":round(nbPions["eolienneON"]*powOnshore, 2),

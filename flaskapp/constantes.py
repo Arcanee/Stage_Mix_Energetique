@@ -1,1 +1,1 @@
-dataPath = "/var/www/html/flaskapp/"
+dataPath = ""

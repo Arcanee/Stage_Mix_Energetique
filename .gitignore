@@ -265,3 +265,5 @@ flaskapp/logs.txt
 
 # repertoires python
 flaskapp/__pycache__/
+flaskapp/game_data/?
+_*
