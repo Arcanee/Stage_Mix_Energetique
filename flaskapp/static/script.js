@@ -660,7 +660,7 @@ $(function() {
         });
 
         $('.backHome').click(() => {
-            location.href = "/photo";
+            location.href = "/manual";
         });
 
         $('#computeResults').click(() => {

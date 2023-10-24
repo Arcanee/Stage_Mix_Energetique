@@ -5,6 +5,8 @@
 === Machine à état des pages
 
 ```mermaid
+%% Syntaxe ici https://mermaid.js.org/intro/syntax-reference.html
+%% Un diagrame de séquence serait plus approprié
   graph TD;
   subgraph "client html"
      index["index.html"] 
@@ -12,10 +14,9 @@
      manual["manual.html"]
      
      cookie[("cookie \nGroupe+Equipe")]     
-
-     photo -- noPhotoBtn --> manual
-
      cookphoto{ }
+     photo -- noPhotoBtn --> rendermanual
+
 
   end
   subgraph "serveur flask"
@@ -31,12 +32,12 @@
 
      root -- "render" --> index
      index -- logInButton --> setgroup
-     setgroup -- init --> cookie & save & mix & results 
-     cookie -- successsetgroup --> rendermanual
+     setgroup -.- init -.-> cookie & save & mix & results 
+     setgroup -- successs --> rendermanual
 
      ajaxphoto -- cookie présent --> cookphoto --> photo
      ajaxphoto -- cookie absent --> root
-     cookie --> cookphoto
+     cookie -.-> cookphoto
      rendermanual -- render --> manual
   end
 ```
