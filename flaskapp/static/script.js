@@ -104,7 +104,7 @@ $(function() {
                     dataType: "json",
                     success: function (data, textStatus, jqXHR) {
                         if (data[0] == "log_in_success") {
-                            location.href = "/photo";
+                            location.href = "/manual";
                         } else {
                             displayError("http");
                         }
